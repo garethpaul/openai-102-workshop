@@ -4,6 +4,15 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
+openai = "*"
+numpy = "*"
+matplotlib = "*"
+pandas = "*"
+scipy = "*"
+scikit-learn = "*"
+seaborn = "*"
+tiktoken = "*"
+langchain = "*"
 
 [dev-packages]
 
