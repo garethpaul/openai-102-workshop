@@ -27,6 +27,23 @@ def api_token():
         st.session_state["api_token"] = api_token_input
 
 
+def add_logo():
+    st.markdown(
+        """
+        <style>
+            [data-testid="stSidebar"]::before {
+                content: "OpenAI 102";
+                margin-left: 20px;
+                margin-top: 20px;
+                font-size: 30px;
+                position: relative;
+                top: 100px;
+            }
+        </style>
+        """,
+        unsafe_allow_html=True,
+    )
+
 def cost_calc():
     if "cost" not in st.session_state:
         st.session_state['cost'] = "$0.00"
@@ -39,6 +56,7 @@ def cost_calc():
 
 
 def sidebar():
+    add_logo()
     api_token()
     github_logo()
     cost_calc()
