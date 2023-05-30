@@ -1,0 +1,162 @@
+[
+  {
+    "customer_id": 1,
+    "name": "Customer 1",
+    "industry": "E-commerce",
+    "products": [
+      "Programmable Messaging"
+    ]
+  },
+  {
+    "customer_id": 2,
+    "name": "Customer 2",
+    "industry": "Entertainment",
+    "products": [
+      "Programmable Messaging"
+    ]
+  },
+  {
+    "customer_id": 3,
+    "name": "Customer 3",
+    "industry": "Telecommunications",
+    "products": []
+  },
+  {
+    "customer_id": 4,
+    "name": "Customer 4",
+    "industry": "Automotive",
+    "products": [
+      "Programmable Messaging"
+    ]
+  },
+  {
+    "customer_id": 5,
+    "name": "Customer 5",
+    "industry": "Technology",
+    "products": [
+      "Programmable Messaging"
+    ]
+  },
+  {
+    "customer_id": 6,
+    "name": "Customer 6",
+    "industry": "Telecommunications",
+    "products": [
+      "Programmable Messaging"
+    ]
+  },
+  {
+    "customer_id": 7,
+    "name": "Customer 7",
+    "industry": "Transportation",
+    "products": []
+  },
+  {
+    "customer_id": 8,
+    "name": "Customer 8",
+    "industry": "Insurance",
+    "products": [
+      "Programmable Messaging"
+    ]
+  },
+  {
+    "customer_id": 9,
+    "name": "Customer 9",
+    "industry": "Nonprofit",
+    "products": [
+      "Programmable Messaging"
+    ]
+  },
+  {
+    "customer_id": 10,
+    "name": "Customer 10",
+    "industry": "Insurance",
+    "products": [
+      "Programmable Messaging"
+    ]
+  },
+  {
+    "customer_id": 11,
+    "name": "Customer 11",
+    "industry": "Real Estate",
+    "products": [
+      "Programmable Messaging"
+    ]
+  },
+  {
+    "customer_id": 12,
+    "name": "Customer 12",
+    "industry": "Nonprofit",
+    "products": [
+      "Programmable Messaging"
+    ]
+  },
+  {
+    "customer_id": 13,
+    "name": "Customer 13",
+    "industry": "Nonprofit",
+    "products": [
+      "Programmable Messaging",
+      "Marketing Campaigns"
+    ]
+  },
+  {
+    "customer_id": 14,
+    "name": "Customer 14",
+    "industry": "Insurance",
+    "products": [
+      "Programmable Messaging",
+      "Programmable Video"
+    ]
+  },
+  {
+    "customer_id": 15,
+    "name": "Customer 15",
+    "industry": "Media",
+    "products": [
+      "Programmable Messaging"
+    ]
+  },
+  {
+    "customer_id": 16,
+    "name": "Customer 16",
+    "industry": "Marketing",
+    "products": [
+      "Programmable Messaging",
+      "Intelligence"
+    ]
+  },
+  {
+    "customer_id": 17,
+    "name": "Customer 17",
+    "industry": "Finance",
+    "products": [
+      "Programmable Messaging"
+    ]
+  },
+  {
+    "customer_id": 18,
+    "name": "Customer 18",
+    "industry": "Food & Beverage",
+    "products": [
+      "Programmable Messaging"
+    ]
+  },
+  {
+    "customer_id": 19,
+    "name": "Customer 19",
+    "industry": "Telecommunications",
+    "products": [
+      "Programmable Messaging",
+      "Twilio Frontline"
+    ]
+  },
+  {
+    "customer_id": 20,
+    "name": "Customer 20",
+    "industry": "Retail",
+    "products": [
+      "Programmable Messaging"
+    ]
+  }
+]

@@ -1,0 +1,2 @@
+embeddings.pkl filter=lfs diff=lfs merge=lfs -text
+test_embeddings.pkl filter=lfs diff=lfs merge=lfs -text
