@@ -13,6 +13,7 @@ scikit-learn = "*"
 seaborn = "*"
 tiktoken = "*"
 langchain = "*"
+beautifulsoup4 = "*"
 
 [dev-packages]
 
