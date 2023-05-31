@@ -26,3 +26,5 @@ st.write(
 st.write("## Contact")
 st.write(
     "If you have any questions, please contact [@gpj](https://twitter.com/gpj)")
+
+common.add_logo()

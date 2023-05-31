@@ -1,3 +1,4 @@
+from components import common
 import streamlit as st
 
 st.markdown("""
@@ -107,3 +108,4 @@ The response from the API is a JSON object.
 To learn more about the API visit the [OpenAI API Documentation](https://beta.openai.com/docs/introduction).
 
 """)
+common.add_logo()

@@ -32,10 +32,19 @@ def add_logo():
         """
         <style>
             [data-testid="stSidebar"]::before {
-                content: "OpenAI 102";
-                margin-left: 20px;
+                content: "";
+                background-image: url("https://storage.googleapis.com/artifacts.gjones-webinar.appspot.com/102_logo.png");
+                background-size: contain;
+                background-repeat: no-repeat;
+                background-position: center;
+                width: 200px;
+                height: 30px;
+                margin-left: 10px;
                 margin-top: 20px;
-                font-size: 30px;
+                display: block;
+                }
+            [data-testid="stSidebar"] ul {
+                padding-top:2.5rem;
             }
         </style>
         """,
