@@ -8,6 +8,7 @@ blinker==1.6.2
 blis==0.7.9
 boltons
 brotlipy
+BeautifulSoup4==4.10.0
 cachetools==5.3.0
 catalogue==2.0.8
 certifi==2022.12.7
