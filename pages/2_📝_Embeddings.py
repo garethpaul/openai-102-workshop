@@ -37,6 +37,15 @@ def page():
     st.write("To get started with embeddings, we need to understand how to measure the distance between two vectors. There are many ways to measure distance. The most common are Cosine Similarity,  Euclidean distance and Manhattan distance. The choice of distance metric depends on the specific use case and the nature of the embeddings. ")
     st.write("Example: The embedding for 'cat' is closer to the embedding for 'dog' than it is to the embedding for 'car'.")
     st.write("**Note**: To get started pls enter your API token in the sidebar 👈")
+    # use get pass to hide the API key
+    # get the user input
+    openai_api_key = st.text_input(
+        "OpenAI API Key", type="password")
+    # save the API key in the session state
+    st.session_state.openai_api_key = openai_api_key
+    import os
+    os.environ["OPENAI_API_KEY"] = openai_api_key
+
     st.write("## Word Embeddings Example")
     # write out a task list for the user
     # if the user selects the task, show the task

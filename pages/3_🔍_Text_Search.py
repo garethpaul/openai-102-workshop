@@ -16,6 +16,14 @@ def page():
     common.sidebar()
     st.write("# 🔍 Text Search")
     st.write("## Text Search using Embeddings")
+    # get the user input
+    openai_api_key = st.text_input(
+        "OpenAI API Key", type="password")
+    # save the API key in the session state
+    st.session_state.openai_api_key = openai_api_key
+    import os
+    os.environ["OPENAI_API_KEY"] = openai_api_key
+
     st.write("Now we can crawl a list of URLs and generate embeddings for each page. We can use these embeddings to compare a query to most similar text from crawled pages.")
     # User input for text list and new text
     col1, col2 = st.columns(2)
