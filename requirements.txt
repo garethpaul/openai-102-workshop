@@ -46,6 +46,7 @@ jsonschema==4.17.3
 jupyter_core==5.2.0
 kiwisolver
 langcodes==3.3.0
+langchain
 loguru==0.7.0
 markdown-it-py==2.2.0
 MarkupSafe==2.1.2
