@@ -53,7 +53,7 @@ def page():
         "We can use OpenAI's API to generate embeddings for words. Let's try it out!")
     # Task 1: Generate embeddings for a word
     st.write("### Step 1: Generate Embeddings for a word")
-    input_text = st.text_input("Enter a word to get started", "")
+    input_text = st.text_input("Enter a word to get started", "pizza")
     # button to generate embeddings
     if st.button("Generate Embeddings"):
         embeddings = generate.get_embeddings(input_text)
@@ -80,7 +80,7 @@ def page():
 
         st.write("### Step 2: Compare", input_text, "with another word")
     if input_text:
-        input_text_2 = st.text_input("Enter another word", "")
+        input_text_2 = st.text_input("Enter another word", "pasta")
         if st.button("Compare Similarity of words"):
             # get embeddings for both words
             embedding_1 = generate.get_embeddings(input_text)
@@ -151,7 +151,8 @@ div.stButton > button:first-child:focus:not(:active) {
     st.write("## Multiple Words Example")
     st.write("We can also generate embeddings for a list of words and compare the similarity of that word against the others in the list.")
     st.write("### Step 1: Enter a list of words")
-    word_input = st.text_area("Enter a list of words", "")
+    word_input = st.text_area(
+        "Enter a list of words", "burritos\npizza\npasta\nsushi\nchicken\nbeef\npork\nfish\nrice\nbeans\nbike")
     st.write("### Step 2: Enter a word to compare with the list of words")
     new_word = st.text_input("Enter a word", "")
 

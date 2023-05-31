@@ -30,7 +30,7 @@ def page():
 
     with col1:
         st.write("**Question**")
-        new_text = st.text_input("Query:")
+        new_text = st.text_input("Query:", "What is A2P 10DLC?")
         new_text = new_text.strip()
 
     with col2:
@@ -182,7 +182,8 @@ def cosine_similarity(embedding1, embedding2):
 
     nn_model, metadata = generate.load_embeddings_and_train_model(
         PICKLE_FILE_PATH)
-    query = st.text_input("Prompt", "Ask me a question about Twilio")
+    query = st.text_input("Ask me a question about Twilio",
+                          "What is Twilio Verify?")
     use_embeddings = st.checkbox("Use Embeddings")
 
     if use_embeddings:
