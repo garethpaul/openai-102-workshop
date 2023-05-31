@@ -7,9 +7,9 @@ st.set_page_config(
 common.github_logo()
 # show success message for 5 seconds
 # st.sidebar.success("API Token saved")
-st.write("# Welcome 👋")
+st.write("# Welcome to OpenAI 102👋")
 st.write(
-    "This application contains a demo for using Embeddings with OpenAI.")
+    "This application contains a demo for OpenAI 102. This workshop is designed to help you learn more about OpenAI and how to use it")
 st.write("## How to use this app")
 st.markdown("""
 1. Select a page from the sidebar 👈

@@ -36,8 +36,6 @@ def add_logo():
                 margin-left: 20px;
                 margin-top: 20px;
                 font-size: 30px;
-                position: relative;
-                top: 100px;
             }
         </style>
         """,

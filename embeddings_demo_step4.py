@@ -1,7 +1,9 @@
+import requests
 import numpy as np
 import pickle
 from sklearn.neighbors import NearestNeighbors
 import openai
+import os
 
 # Goal: Provide users with an interface to query our developer docs.
 query = "what are the params for scheduling messages?"
@@ -18,8 +20,22 @@ query_embedding = res['data'][0]['embedding']
 #    See https://colab.research.google.com/drive/1ehvjQylrTece3JQkUxd1-3ncGw9Nh_ra#scrollTo=8ftM8KfU3OZs for more details on crawling and embedding data.
 #
 # To save sometime I've already crawled the Twilio Docs and put the embeddings in this pickle file.
-PICKLE_FILE_PATH = 'embeddings.pkl'
-with open(PICKLE_FILE_PATH, 'rb') as file:
+# PICKLE_FILE_PATH = 'embeddings.pkl'
+# save the pickle file
+pickle_file_path = 'embeddings.pkl'
+
+# Check if the file already exists
+if not os.path.exists(pickle_file_path):
+    # Download the pickle file
+    pkl_file_download = requests.get(
+        'https://storage.googleapis.com/artifacts.gjones-webinar.appspot.com/embeddings.pkl')
+
+    # Save the pickle file
+    with open(pickle_file_path, 'wb') as file:
+        file.write(pkl_file_download.content)
+
+# Load the pickle file
+with open(pickle_file_path, 'rb') as file:
     saved_embeddings = pickle.load(file)
 ids, embeddings, metadata = zip(*saved_embeddings)
 embeddings_array = np.stack(embeddings)
