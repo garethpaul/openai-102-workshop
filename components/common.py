@@ -41,6 +41,15 @@ def add_logo():
         """,
         unsafe_allow_html=True,
     )
+    st.markdown(
+        """
+        <style>
+            footer {visibility: hidden;}
+        </style>
+        """, unsafe_allow_html=True
+    )
+
+
 
 def cost_calc():
     if "cost" not in st.session_state:

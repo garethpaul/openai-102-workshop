@@ -7,6 +7,7 @@ import streamlit as st
 import pickle
 from sklearn.neighbors import NearestNeighbors
 import numpy as np
+import requests
 
 
 @st.cache_resource
@@ -23,6 +24,16 @@ def load_embeddings_and_train_model(pickle_file_path):
         nn_model (NearestNeighbors): The trained NearestNeighbors model.
         metadata (list): The metadata associated with the embeddings.
     """
+    # Check if the file already exists
+    if not os.path.exists(pickle_file_path):
+        # Download the pickle file
+        pkl_file_download = requests.get(
+            'https://storage.googleapis.com/artifacts.gjones-webinar.appspot.com/embeddings.pkl')
+
+        # Save the pickle file
+        with open(pickle_file_path, 'wb') as file:
+            file.write(pkl_file_download.content)
+
     with open(pickle_file_path, 'rb') as file:
         saved_embeddings = pickle.load(file)
     ids, embeddings, metadata = zip(*saved_embeddings)
