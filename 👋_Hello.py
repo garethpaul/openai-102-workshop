@@ -19,12 +19,9 @@ st.markdown("""
 """)
 
 st.write("## About this app")
-st.write(
-    "This app was created by [Streamlit](https://streamlit.io) and [OpenAI](https://openai.com) to demonstrate how to use Embeddings with OpenAI")
+
 st.write(
     "The source code for this app is available on [GitHub](https://github.com/garethpaul/embeddings-app)")
-st.write(
-    "The app is hosted on [Streamlit Sharing](https://share.streamlit.io/garethpaul/embeddings-app/main/app.py)")
 
 st.write("## Contact")
 st.write(
