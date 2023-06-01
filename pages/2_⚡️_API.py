@@ -2,7 +2,9 @@ from components import common
 import streamlit as st
 
 st.markdown("""
-# Prerequisites 📚
+# ⚡️ API
+
+To follow along see the following [Colab Notebook](https://colab.research.google.com/drive/1q40Wa4cocOLQayC_lRSKPcu0FkWeMET2).
 
 Here is some reading to get you started.
 

@@ -16,6 +16,8 @@ def page():
     common.sidebar()
     st.write("# 🔍 Text Search")
     st.write("## Text Search using Embeddings")
+    st.markdown(
+        "To follow along see the following [Colab Notebook](https://colab.research.google.com/drive/1UEz-s__IUTNqF7JPTx-FdFpaJN1Lz9Wl).")
     st.image("https://substackcdn.com/image/fetch/w_1456,c_limit,f_webp,q_auto:good,fl_progressive:steep/https%3A%2F%2Fsubstack-post-media.s3.amazonaws.com%2Fpublic%2Fimages%2F4063347e-8920-40c6-86b3-c520084b303c_1272x998.jpeg")
     # get the user input
     openai_api_key = st.text_input(

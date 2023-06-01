@@ -4,55 +4,78 @@ import os
 st.markdown("# Fine-tuning")
 
 st.markdown(
-    "**Demo**: We will build a tool for this demo to create descriptions of imaginary superheroes. In the end, the tool will receive the age and power of the superhero, and it will automatically produce a description of our superhero.")
+    "**Demo**: We will build a tool for this demo to create descriptions of imaginary superanimals. In the end, the tool will receive the age and power of the superhero, and it will automatically produce a description of our superanimal.")
 st.markdown("# Step 1. Generate data")
 with st.expander("Show Code"):
     st.code("""
 import os
 import openai
 import pandas as pd
+import time
+import random
 
-l_age = ['18', '20', '30', '40', '50', '60', '90']
-l_gender = ['man', 'woman']
-l_power = ['invisibility', 'read in the thoughts', 'turning lead into gold', 'immortality', 'telepathy', 'teleport', 'flight'] 
+l_animal = ['cat', 'dog', 'chicken']
+l_power = ['invisibility', 'read in the thoughts', 'turning lead into gold', 'immortality', 'telepathy', 'teleport', 'flight']
 
-f_prompt = "Imagine a complete and detailed description of a {age}-year-old {gender} fictional character who has the superpower of {power}. Write out the entire description in a maximum of 100 words in great detail:"
-f_sub_prompt = "{age}, {gender}, {power}"
+f_prompt = "Imagine a complete and detailed description of a {animal} highly fictional character who has the superpower of {power}. Write out the entire description in a maximum of 100 words in great detail:"
+f_sub_prompt = "{animal}, {power}"
 
 df = pd.DataFrame()
-for age in l_age:
- for gender in l_gender:
-  for power in l_power:
-   for i in range(3): ## 3 times each
-    prompt = f_prompt.format(age=age, gender=gender, power=power)
-    sub_prompt = f_sub_prompt.format(age=age, gender=gender, power=power)
-    print(sub_prompt)
+for animal in l_animal:
+    for power in l_power:
+        for i in range(3): ## 3 times each
+            prompt = f_prompt.format(animal=animal, power=power)
+            sub_prompt = f_sub_prompt.format(animal=animal, power=power)
+            print(sub_prompt)
 
-    response = openai.Completion.create(
-     model="text-davinci-003",
-     prompt=prompt,
-     temperature=1,
-     max_tokens=500,
-     top_p=1,
-     frequency_penalty=0,
-     presence_penalty=0
-    )
-    
-    finish_reason = response['choices'][0]['finish_reason']
-    response_txt = response['choices'][0]['text']
-    
-    new_row = {
-      'age':age, 
-      'gender':gender, 
-      'power':power, 
-      'prompt':prompt, 
-      'sub_prompt':sub_prompt, 
-      'response_txt':response_txt, 
-      'finish_reason':finish_reason}
-    new_row = pd.DataFrame([new_row])
-    df = pd.concat([df, new_row], axis=0, ignore_index=True)
+            for j in range(10):  # max number of retries
+                try:
+                    response = openai.Completion.create(
+                        model="text-davinci-003",
+                        prompt=prompt,
+                        temperature=1,
+                        max_tokens=500,
+                        top_p=1,
+                        frequency_penalty=0,
+                        presence_penalty=0
+                    )
+                    finish_reason = response['choices'][0]['finish_reason']
+                    response_txt = response['choices'][0]['text']
+                    break  # successful request, break the retry loop
+                except:
+                    sleep_time = (2 ** j) + random.random()  # exponential backoff with jitter
+                    print(f"Rate limit hit. Retrying in {sleep_time} seconds")
+                    time.sleep(sleep_time)
+                    continue
+                else:
+                    raise  # re-throw the exception if it's not a rate limit error
 
-df.to_csv("out_openai_completion.csv")    
+            new_row = {
+                'animal': animal,
+                'power': power,
+                'prompt': prompt,
+                'sub_prompt': sub_prompt,
+                'response_txt': response_txt,
+                'finish_reason': finish_reason
+            }
+            new_row = pd.DataFrame([new_row])
+            df = pd.concat([df, new_row], axis=0, ignore_index=True)
+
+        df.to_csv("out_openai_completion.csv")
+    
+    """)
+
+    st.code("""# Then we convert out_openai_completion.csv to the format that corresponds to
+# key-value pair (prompt -> completion).
+prepared_data = df.loc[:,['sub_prompt','response_txt']]
+prepared_data.rename(columns={'sub_prompt':'prompt', 'response_txt':'completion'}, inplace=True)
+prepared_data.to_csv('prepared_data.csv',index=False)
+    """)
+
+    st.code("""
+    !openai tools fine_tunes.prepare_data --file prepared_data.csv --quiet
+    !mv prepared_data_prepared.jsonl animal_data.jsonl
+    !openai api fine_tunes.create --training_file animal_data.jsonl --model davinci --suffix 'SuperAnimals'
     """)
 # get public/prepared_data.csv
 # get current file path and get "prepared_data.csv"
