@@ -5,6 +5,7 @@ st.markdown("# Fine-tuning")
 
 st.markdown(
     "**Demo**: We will build a tool for this demo to create descriptions of imaginary superanimals. In the end, the tool will receive the age and power of the superhero, and it will automatically produce a description of our superanimal.")
+st.markdown("# See [Colab File]() to follow along.")
 st.markdown("# Step 1. Generate data")
 with st.expander("Show Code"):
     st.code("""
