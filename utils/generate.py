@@ -24,6 +24,7 @@ def load_embeddings_and_train_model(pickle_file_path):
         nn_model (NearestNeighbors): The trained NearestNeighbors model.
         metadata (list): The metadata associated with the embeddings.
     """
+    """
     # Check if the file already exists
     if not os.path.exists(pickle_file_path):
         # Download the pickle file
@@ -33,7 +34,7 @@ def load_embeddings_and_train_model(pickle_file_path):
         # Save the pickle file
         with open(pickle_file_path, 'wb') as file:
             file.write(pkl_file_download.content)
-
+    """
     with open(pickle_file_path, 'rb') as file:
         saved_embeddings = pickle.load(file)
     ids, embeddings, metadata = zip(*saved_embeddings)

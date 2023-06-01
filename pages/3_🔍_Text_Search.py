@@ -16,6 +16,7 @@ def page():
     common.sidebar()
     st.write("# 🔍 Text Search")
     st.write("## Text Search using Embeddings")
+    st.image("https://substackcdn.com/image/fetch/w_1456,c_limit,f_webp,q_auto:good,fl_progressive:steep/https%3A%2F%2Fsubstack-post-media.s3.amazonaws.com%2Fpublic%2Fimages%2F4063347e-8920-40c6-86b3-c520084b303c_1272x998.jpeg")
     # get the user input
     openai_api_key = st.text_input(
         "OpenAI API Key", type="password")
@@ -169,47 +170,6 @@ def cosine_similarity(embedding1, embedding2):
     similarity = dot_product / (norm_vector1 * norm_vector2)
     return similarity
     """)
-    st.write("## Augmented Text Search w/Twilio Docs (local)")
-    st.markdown("""
-    Recently semantic search has exploded. Everyone is chatting with their data, using the same basic recipe:
-1. Take a set of documents and split them into paragraphs.
-2. Convert each paragraph into a vector of embeddings that represent its coordinates in the semantic space.
-3. Given a question, embed it in the same space. Find a few relevant paragraphs via semantic similarity between the vectors.
-4. Tell GPT to answer the question using the information contained in them, with a prompt like “You are an expert on the Twilio and helpful Q&A bot. The user just asked you a question about this subject. Answer it using only the information contained in the following paragraphs.”
-    """)
-    st.write(
-        "We can use a similar technique to compare a query to most similar text from crawled pages")
-
-    nn_model, metadata = generate.load_embeddings_and_train_model(
-        PICKLE_FILE_PATH)
-    query = st.text_input("Ask me a question about Twilio",
-                          "What is Twilio Verify?")
-    use_embeddings = st.checkbox("Use Embeddings")
-
-    if use_embeddings:
-        xq = generate.get_embeddings(query)[0]['embedding']
-        top_k_metadata = generate.get_top_k_metadata(xq, nn_model, metadata)
-        with st.expander("Preview Top K Metadata"):
-            st.write(top_k_metadata)
-        augmented_query = generate.create_augmented_query(
-            top_k_metadata, query)
-        with st.expander("Show Augmented Query"):
-            st.write(top_k_metadata)
-
-        response = generate.get_model_response(augmented_query)
-        st.write(response['message']['content'])
-
-        st.write("Sources:")
-        for i, item in enumerate(top_k_metadata):
-            st.write(f"URL for item {i+1}: {item['url']}")
-    else:
-        if query != "Ask me a question about Twilio":
-            response = generate.get_generic_response(query)
-            st.write(response)
-
-    with st.expander("Show code for augmented text search"):
-        st.code("""GIST""")
-
 
 if __name__ == "__main__":
     page()

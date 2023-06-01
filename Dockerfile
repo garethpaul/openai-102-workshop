@@ -8,6 +8,10 @@ WORKDIR /app
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
+# Get the embeddings file
+RUN apt-get update && apt-get install -y wget
+RUN wget -O embeddings.pkl https://storage.googleapis.com/artifacts.gjones-webinar.appspot.com/embeddings.pkl
+
 # Copy all the remaining files into the container
 COPY . .
 

@@ -49,6 +49,15 @@ The OpenAI Python SDK is a Python library that can be installed using pip.
 pip install openai
 ```
 
+# APIs and Models
+- Text Completion (gpt-3, gpt-4)
+- Chat Completion (gpt-3.5-turbo)
+- Image Generation
+- Fine Tuning
+- Embeddings
+- Text to Speech
+- Moderation
+
 To make a request to the OpenAI API, you need to create an instance of the OpenAI class. You can then use the instance to make requests to the API.
 
 ```python
@@ -108,4 +117,40 @@ The response from the API is a JSON object.
 To learn more about the API visit the [OpenAI API Documentation](https://beta.openai.com/docs/introduction).
 
 """)
+
+st.markdown("## Chat Completion")
+st.code("""
+import openai
+
+res = openai.ChatCompletion.create(
+  model="gpt-3.5-turbo",
+  messages=[
+        {"role": "system", "content": "You are a helpful assistant."},
+        {"role": "user", "content": "Who won the world series in 2020?"},
+        {"role": "assistant", "content": "The Los Angeles Dodgers won the World Series in 2020."},
+        {"role": "user", "content": "Where was it played?"}
+    ]
+)
+""")
+
+with st.expander("Counting Tokens"):
+    st.code("""
+def num_tokens_from_messages(messages, model="gpt-3.5-turbo-0301"):
+  try:
+      encoding = tiktoken.encoding_for_model(model)
+  except KeyError:
+      encoding = tiktoken.get_encoding("cl100k_base")
+  if model == "gpt-3.5-turbo-0301":  # note: future models may deviate from this
+      num_tokens = 0
+      for message in messages:
+          num_tokens += 4  # every message follows <im_start>{role/name}\n{content}<im_end>\n
+          for key, value in message.items():
+              num_tokens += len(encoding.encode(value))
+              if key == "name":  # if there's a name, the role is omitted
+                  num_tokens += -1  # role is always required and always 1 token
+      num_tokens += 2  # every reply is primed with <im_start>assistant
+      return num_tokens
+  else:
+      raise NotImplementedError(f"num_tokens_from_messages not implemented for model {model}")
+    """)
 common.add_logo()

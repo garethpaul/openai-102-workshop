@@ -7,24 +7,25 @@ st.set_page_config(
 common.github_logo()
 # show success message for 5 seconds
 # st.sidebar.success("API Token saved")
-st.write("# Welcome to OpenAI 102👋")
-st.write(
-    "This application contains a demo for OpenAI 102. This workshop is designed to help you learn more about OpenAI and how to use it")
-st.write("## How to use this app")
-st.markdown("""
-1. Select a page from the sidebar 👈
-2. Enter your API token 🔑
-3. Follow the instructions on the page 📄
-3. Have fun! 🤪
+st.write("# OpenAI Workshop👋")
+
+st.code("""
+- 👋 Welcome! We're all new here! 👨‍💻👩‍💻
+- 🤗🧠 Let's apply some Emotional Intelligence to Artificial Intelligence
+- 🔨 Workshop
+    - 🧐 Getting Started with OpenAI APIs
+    - 💊 LLMs - Large Language Models
+    - 📝 Embeddings
+    - 🔎 Text Search
+    - 🤞 Recommendations
+    - 🤹‍♀️ Clustering
+    - 🦾 Fine Tuning (time permitting)
+    - ⛓️ Langchain (time permitting)
 """)
-
-st.write("## About this app")
-
+st.write("# Follow along!")
 st.write(
-    "The source code for this app is available on [GitHub](https://github.com/garethpaul/embeddings-app)")
+    "The source code for this app is available on [GitHub](https://github.com/garethpaul/openai-102-workshop)")
 
-st.write("## Contact")
-st.write(
-    "If you have any questions, please contact [@gpj](https://twitter.com/gpj)")
+
 
 common.add_logo()
