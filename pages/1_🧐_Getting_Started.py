@@ -10,8 +10,6 @@ st.markdown("""## Concepts
 - [Models](#models)
 - [Prompts](#prompts)
 - [Tokens](#tokens)
-- [Embedding](#embedding)
-- [Fine Tuning](#fine-tuning)
 """)
 
 st.markdown("## Models")
@@ -97,6 +95,8 @@ def num_tokens_from_string(string: str, encoding_name: str) -> int:
 
 num_tokens_from_string("this workshop is great!", "cl100k_base")""")
 
+st.markdown("# Appendix")
+
 st.markdown("""## Embedding
 OpenAI’s text embeddings measure the relatedness of text strings. They can be used for a variety of tasks, including semantic search, semantic similarity, and zero-shot classification.
 
@@ -126,7 +126,6 @@ These tools include AutoGPT, Langchain, and more. See the [Langchain](./Langchai
 
 """)
 
-st.markdown("# Appendix")
 st.markdown("""
 # How we got to LLMs?
 The history of large language models can be traced back to the development of neural networks and natural language processing (NLP) techniques. 
