@@ -5,6 +5,8 @@ from sklearn.neighbors import NearestNeighbors
 import openai
 import os
 
+REQUEST_TIMEOUT = 10
+
 # Goal: Provide users with an interface to query our developer docs.
 query = "what are the params for scheduling messages?"
 
@@ -28,7 +30,8 @@ pickle_file_path = 'embeddings.pkl'
 if not os.path.exists(pickle_file_path):
     # Download the pickle file
     pkl_file_download = requests.get(
-        'https://storage.googleapis.com/artifacts.gjones-webinar.appspot.com/embeddings.pkl')
+        'https://storage.googleapis.com/artifacts.gjones-webinar.appspot.com/embeddings.pkl',
+        timeout=REQUEST_TIMEOUT)
 
     # Save the pickle file
     with open(pickle_file_path, 'wb') as file:
