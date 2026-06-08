@@ -1,6 +1,7 @@
 import streamlit as st
 import time
 import threading
+import os
 
 
 def github_logo():
@@ -18,13 +19,12 @@ def github_logo():
 
 def api_token():
     st.sidebar.write("## 🔑 OpenAI API Token")
-    api_token = st.session_state.get("api_token")
-    if not api_token:
-        api_token = "sk-"
+    api_token = st.session_state.get("api_token", "")
     api_token_input = st.sidebar.text_input(
-        "Enter OpenAI API Token", value=api_token)
+        "Enter OpenAI API Token", value=api_token, type="password")
     if api_token_input:
         st.session_state["api_token"] = api_token_input
+        os.environ["OPENAI_API_KEY"] = api_token_input
 
 
 def add_logo():

@@ -33,14 +33,25 @@ Helpful reports include:
 - Review found infrastructure, deployment, proxy, or cloud configuration; changes in those areas should receive security-focused review before merge.
 - Review found secret-like configuration names that require careful review before use; changes in those areas should receive security-focused review before merge.
 - Dependency manifests detected: requirements.txt, Pipfile. Dependency updates should preserve lockfiles when present and avoid introducing packages without a clear maintenance reason.
+- Workshop users should provide OpenAI credentials through local UI input or `OPENAI_API_KEY`; credentials must not be committed, printed, or placed in generated caches.
+- Generated caches under `cache/`, `url_cache/`, `query_cache/`, and pickle fixtures may contain prompts, crawled text, or embeddings. Treat cache refreshes as reviewable data changes.
+- Local generated files such as `embedding_cache.pkl` should remain ignored and
+  untracked unless they are converted into deliberate, reproducible fixtures.
 
 ## Service and API Notes
 
 For web services, APIs, sockets, or scraping workflows, prioritize reports involving authentication bypass, authorization errors, injection, server-side request forgery, unsafe deserialization, credential leakage, data exposure, or denial-of-service conditions. Use test accounts and minimal proof-of-concept traffic only.
 
+For this workshop, also prioritize reports involving API-token persistence,
+unsafe generated cache filenames, untrusted pickle loading, hidden network calls,
+or lesson code that sends data to APIs outside the visible exercise.
+
 ## Dependency and Supply Chain Security
 
 Dependency updates should come from trusted package managers and should keep lockfiles in sync when lockfiles exist. Do not commit credentials, private keys, tokens, generated secrets, or machine-local configuration. If a vulnerability depends on a compromised package, typosquatting risk, insecure transitive dependency, or unsafe build step, include the package name, affected version, and the path through which it is used.
+
+The app contains legacy OpenAI SDK examples. Model, endpoint, or SDK migrations
+should be reviewed as compatibility work and verified with `make check`.
 
 ## Safe Research Guidelines
 

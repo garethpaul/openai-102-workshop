@@ -2,6 +2,9 @@
 __pycache__/
 *.py[cod]
 *$py.class
+.env
+.env.*
+*.env
 
 # Distribution / packaging
 build/
@@ -71,6 +74,11 @@ streamlit-storage
 
 # Data Files
 **/uber-raw-data-sep14.csv
+cache/
+url_cache/
+query_cache/
+embedding_cache.pkl
+embeddings.pkl
 
 lib/Pipfile.lock
 

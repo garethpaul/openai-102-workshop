@@ -20,8 +20,11 @@ Priority:
 
 - Preserve the Streamlit lesson flow and local Docker path
 - Keep generated caches and prepared data clearly separated from source logic
+- Keep local generated cache files such as `embedding_cache.pkl` out of source
+  control
 - Make API-token handling explicit and local to the learner
 - Document model, SDK, and Pinecone assumptions when examples depend on them
+- Keep `make check` fast and free of OpenAI API calls
 
 Next priorities:
 
@@ -29,6 +32,7 @@ Next priorities:
 - Mark stale API examples before updating them
 - Add lightweight tests for embedding-cache loading and nearest-neighbor lookup
 - Document which files are workshop fixtures versus generated output
+- Add compatibility notes before migrating legacy OpenAI SDK examples
 
 Contribution rules:
 
@@ -36,6 +40,7 @@ Contribution rules:
 - Do not commit real API keys, customer data, or private workshop material.
 - Keep code examples small enough for learners to trace.
 - Explain model or API migrations in the README.
+- Run `make check` before pushing changes.
 
 ## Security And Responsible Use
 
@@ -46,6 +51,8 @@ Canonical security policy and reporting:
 Workshop users provide their own API credentials. The app should not persist,
 print, or transmit those credentials except to the APIs that the user
 explicitly enables while running the lesson.
+Generated caches and pickle fixtures should remain reproducible workshop data,
+not private learner output.
 
 ## What We Will Not Merge (For Now)
 

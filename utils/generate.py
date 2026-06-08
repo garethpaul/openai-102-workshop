@@ -2,12 +2,33 @@ import openai
 import os
 import json
 import math
+import hashlib
 from uuid import uuid4
 import streamlit as st
 import pickle
 from sklearn.neighbors import NearestNeighbors
 import numpy as np
 import requests
+
+
+def get_cache_file(cache_folder, query):
+    """
+    Return a cache file path that cannot escape the cache folder.
+
+    Existing simple cache files such as ``cache/pizza.json`` are still read
+    when present, but new writes use a stable SHA-256 filename.
+    """
+    cache_root = os.path.abspath(cache_folder)
+    legacy_candidate = os.path.abspath(
+        os.path.join(cache_root, f"{query}.json"))
+    if (
+        os.path.commonpath([cache_root, legacy_candidate]) == cache_root
+        and os.path.isfile(legacy_candidate)
+    ):
+        return legacy_candidate
+
+    digest = hashlib.sha256(query.encode("utf-8")).hexdigest()
+    return os.path.join(cache_root, f"{digest}.json")
 
 
 @st.cache_resource
@@ -88,7 +109,7 @@ def get_embeddings(query, embedding_type='text'):
         cache_file = os.path.join(cache_folder, f"{query_id}.json")
     else:
         cache_folder = "cache"
-        cache_file = os.path.join(cache_folder, f"{query}.json")
+        cache_file = get_cache_file(cache_folder, query)
 
     # Check if the cache file exists
     if os.path.exists(cache_file):

@@ -11,7 +11,8 @@ def get_text(url):
                     AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.114 Safari/537.36'
     }
 
-    response = requests.get(url, headers=headers)
+    response = requests.get(url, headers=headers, timeout=15)
+    response.raise_for_status()
     html_content = response.text
 
     # Parse HTML content using BeautifulSoup
