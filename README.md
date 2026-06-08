@@ -1,5 +1,8 @@
 # Level 2 - API 101? What’s an embedding? How do you use APIs?
 
+<!-- README-OVERVIEW-IMAGE -->
+![Project overview](docs/readme-overview.svg)
+
 # Code Sample
 <https://github.com/garethpaul/gpt-docs-api>
 
@@ -18,7 +21,6 @@ If you'd prefer to use Docker to build and run.
 
 ```docker build -t streamlit-app .```
 ```docker run -p 8502:8502 streamlit-app```
-
 
 # App Information
 
@@ -50,7 +52,6 @@ Functions in this module include:
   OpenAI's Completion API.
 - main(): The main function for the Streamlit app, responsible for handling
   user input and generating responses.
-
 
 ## Example usage:
 To run the Streamlit application, execute the following command:
