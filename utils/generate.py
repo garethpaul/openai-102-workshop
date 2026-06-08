@@ -29,7 +29,8 @@ def load_embeddings_and_train_model(pickle_file_path):
     if not os.path.exists(pickle_file_path):
         # Download the pickle file
         pkl_file_download = requests.get(
-            'https://storage.googleapis.com/artifacts.gjones-webinar.appspot.com/embeddings.pkl')
+            'https://storage.googleapis.com/artifacts.gjones-webinar.appspot.com/embeddings.pkl',
+            timeout=10)
 
         # Save the pickle file
         with open(pickle_file_path, 'wb') as file:

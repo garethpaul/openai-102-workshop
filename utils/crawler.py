@@ -1,6 +1,8 @@
 import requests
 from bs4 import BeautifulSoup
 
+REQUEST_TIMEOUT = 10
+
 
 def get_text(url):
     # crawl the url with requests and get the text back
@@ -11,7 +13,7 @@ def get_text(url):
                     AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.114 Safari/537.36'
     }
 
-    response = requests.get(url, headers=headers)
+    response = requests.get(url, headers=headers, timeout=REQUEST_TIMEOUT)
     html_content = response.text
 
     # Parse HTML content using BeautifulSoup
