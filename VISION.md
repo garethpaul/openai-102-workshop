@@ -1,5 +1,8 @@
 ## OpenAI 102 Workshop Vision
 
+This document explains the current state and direction of the project.
+Project overview and developer docs: [`README.md`](README.md)
+
 OpenAI 102 Workshop is a Streamlit learning app for API concepts, embeddings,
 search, recommendations, clustering, fine-tuning exercises, and retrieval-style
 question answering.
