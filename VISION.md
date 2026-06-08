@@ -46,3 +46,6 @@ explicitly enables while running the lesson.
 - Hidden network calls outside the lesson being demonstrated
 - Model upgrades without compatibility notes
 - Large cache refreshes that are not reproducible
+
+This list is a roadmap guardrail, not a permanent rule.
+Strong user demand and strong technical rationale can change it.
