@@ -24,6 +24,7 @@ embeddings, search, recommendations, clustering, fine-tuning, and LangChain.
   lessons use the pre-1.0 API surface.
 - `embedding_cache.pkl` was a generated local pickle cache tracked in source
   control.
+- The cost counter initialized the first charged API request to `$0`.
 
 ## Work Completed
 
@@ -39,6 +40,8 @@ embeddings, search, recommendations, clustering, fine-tuning, and LangChain.
 - Added generated cache ignores, Docker hardening, changelog, README, security,
   vision, and overview updates.
 - Pinned the OpenAI dependency contract to `openai<1.0`.
+- Added NumPy and pytest compatibility metadata.
+- Consolidated cost tracking so the first request records its estimate.
 - Removed `embedding_cache.pkl` from source control while keeping it ignored for
   local regeneration.
 

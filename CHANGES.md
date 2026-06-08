@@ -17,3 +17,5 @@
 - Documented generated cache handling and legacy OpenAI SDK assumptions.
 - Pinned the legacy OpenAI SDK contract to `openai<1.0` in both dependency
   manifests.
+- Added NumPy and pytest compatibility metadata and fixed first-request cost
+  accounting.

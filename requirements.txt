@@ -59,7 +59,7 @@ murmurhash==1.0.9
 nbformat==5.7.3
 networkx==3.0
 nodeenv==1.7.0
-numpy
+numpy<2
 openai<1.0
 openpyxl==3.1.1
 packaging
@@ -91,6 +91,7 @@ pyparsing
 pyperclip==1.8.2
 pyrsistent==0.19.3
 PySocks
+pytest==7.4.4
 python-dateutil
 python-dotenv==1.0.0
 pytz

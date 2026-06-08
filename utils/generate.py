@@ -92,6 +92,13 @@ def manhattan_distance(vector1, vector2):
     return distance
 
 
+def _record_estimated_cost(num_tokens, cost_per_1k_token):
+    estimated_cost = num_tokens * (cost_per_1k_token / 1000)
+    st_state = st.session_state
+    current_cost = float(st_state.get('cost', "$0").replace("$", ""))
+    st_state['cost'] = f"${current_cost + estimated_cost:.10f}"
+
+
 def get_embeddings(query, embedding_type='text'):
     """
     Retrieve embeddings for the specified query using OpenAI's Embedding API.
@@ -124,19 +131,7 @@ def get_embeddings(query, embedding_type='text'):
     # add to total cost
     num_tokens = res['usage']['total_tokens']
     print(f"Number of tokens: {num_tokens}")
-    cost_per_1k_token = 0.0004
-    cost_per_token = cost_per_1k_token / 1000
-    estimated_cost = num_tokens * cost_per_token
-
-    # add the estimated cost to the total cost
-    # get the current st_state cost
-    st_state = st.session_state
-    if 'cost' not in st_state:
-        st_state['cost'] = f"${0:.10f}"
-    else:
-        current_cost = float(st_state['cost'].replace("$", ""))
-        updated_cost = current_cost + estimated_cost
-        st_state['cost'] = f"${updated_cost:.10f}"
+    _record_estimated_cost(num_tokens, 0.0004)
 
     # Create the cache folder if it doesn't exist
     if not os.path.exists(cache_folder):
@@ -204,18 +199,7 @@ def get_model_response(augmented_query):
     )
     # add to total cost
     num_tokens = res['usage']['total_tokens']
-    cost_per_1k_token = 0.002
-    cost_per_token = cost_per_1k_token / 1000
-    estimated_cost = num_tokens * cost_per_token
-    # add the estimated cost to the total cost
-    # get the current st_state cost
-    st_state = st.session_state
-    if 'cost' not in st_state:
-        st_state['cost'] = f"${0:.10f}"
-    else:
-        current_cost = float(st_state['cost'].replace("$", ""))
-        updated_cost = current_cost + estimated_cost
-        st_state['cost'] = f"${updated_cost:.10f}"
+    _record_estimated_cost(num_tokens, 0.002)
 
     return res['choices'][0]
 
@@ -236,17 +220,6 @@ def get_generic_response(query):
     )
     # add to total cost
     num_tokens = res['usage']['total_tokens']
-    cost_per_1k_token = 0.02
-    cost_per_token = cost_per_1k_token / 1000
-    estimated_cost = num_tokens * cost_per_token
-    # add the estimated cost to the total cost
-    # get the current st_state cost
-    st_state = st.session_state
-    if 'cost' not in st_state:
-        st_state['cost'] = f"${0:.10f}"
-    else:
-        current_cost = float(st_state['cost'].replace("$", ""))
-        updated_cost = current_cost + estimated_cost
-        st_state['cost'] = f"${updated_cost:.10f}"
+    _record_estimated_cost(num_tokens, 0.02)
     # return the response
     return res['choices'][0]

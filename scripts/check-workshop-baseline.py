@@ -75,11 +75,14 @@ def main():
         "hashlib.sha256",
         "os.path.commonpath",
         "get_cache_file(cache_folder, query)",
+        "def _record_estimated_cost",
     ]:
         if phrase not in generate:
             failures.append(f"utils/generate.py must include {phrase}")
     if 'os.path.join(cache_folder, f"{query}.json")' in generate:
         failures.append("text embedding cache names must not use raw queries")
+    if 'st_state[\'cost\'] = f"${0:.10f}"' in generate:
+        failures.append("cost tracking must record the first request cost")
 
     crawler = read("utils/crawler.py")
     if "timeout=15" not in crawler or "raise_for_status()" not in crawler:
@@ -109,6 +112,7 @@ def main():
         "test_get_cache_file_does_not_escape_cache_dir",
         "test_get_embeddings_reads_cache_without_api_call",
         "test_distance_dimension_mismatch",
+        "test_record_estimated_cost_adds_first_and_subsequent_values",
     ]:
         if phrase not in tests:
             failures.append(f"test_app.py must include {phrase}")
@@ -116,9 +120,17 @@ def main():
     requirements = read("requirements.txt").replace(" ", "")
     if "openai<1.0" not in requirements:
         failures.append("requirements.txt must pin legacy examples to openai<1.0")
+    if "numpy<2" not in requirements:
+        failures.append("requirements.txt must pin legacy examples to numpy<2")
+    if "pytest" not in requirements:
+        failures.append("requirements.txt must include pytest for make check")
     pipfile = read("Pipfile").replace(" ", "")
     if 'openai="<1.0"' not in pipfile:
         failures.append('Pipfile must pin legacy examples with openai = "<1.0"')
+    if 'numpy="<2"' not in pipfile:
+        failures.append('Pipfile must pin legacy examples with numpy = "<2"')
+    if "pytest" not in pipfile:
+        failures.append("Pipfile must include pytest in dev-packages")
     for package in ["streamlit==", "python-dotenv==", "tiktoken=="]:
         if package not in requirements:
             failures.append(f"requirements.txt must include {package}")

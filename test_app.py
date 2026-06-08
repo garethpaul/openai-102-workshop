@@ -87,3 +87,12 @@ def test_create_augmented_query():
 def test_distance_dimension_mismatch():
     with pytest.raises(ValueError):
         generate.euclidean_distance([1.0, 2.0], [1.0])
+
+
+def test_record_estimated_cost_adds_first_and_subsequent_values():
+    fake_streamlit.session_state.clear()
+
+    generate._record_estimated_cost(10, 0.001)
+    generate._record_estimated_cost(5, 0.001)
+
+    assert fake_streamlit.session_state["cost"] == "$0.0000150000"
