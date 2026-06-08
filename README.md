@@ -1,5 +1,8 @@
 # openai-102-workshop
 
+<!-- README-OVERVIEW-IMAGE -->
+![Project overview](docs/readme-overview.svg)
+
 ## Overview
 
 `garethpaul/openai-102-workshop` is a Python web API or service project. OpenAI 102 Workshop
@@ -79,4 +82,3 @@ Keep changes small and tied to the project that is already present in this repos
 Prior README summary:
 
 > Level 2 - API 101? What’s an embedding? How do you use APIs? <!-- README-OVERVIEW-IMAGE --> Code Sample <https://github.com/garethpaul/gpt-docs-api> Local Install To get started you can run the following commands:
-
