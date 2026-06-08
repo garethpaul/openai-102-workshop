@@ -81,4 +81,4 @@ Keep changes small and tied to the project that is already present in this repos
 
 Prior README summary:
 
-> Level 2 - API 101? What’s an embedding? How do you use APIs? <!-- README-OVERVIEW-IMAGE --> Code Sample <https://github.com/garethpaul/gpt-docs-api> Local Install To get started you can run the following commands:
+> Level 2 - API 101? What’s an embedding? How do you use APIs? Code Sample <https://github.com/garethpaul/gpt-docs-api> Local Install To get started you can run the following commands:
