@@ -113,8 +113,13 @@ def main():
         if phrase not in tests:
             failures.append(f"test_app.py must include {phrase}")
 
-    requirements = read("requirements.txt")
-    for package in ["openai", "streamlit==", "python-dotenv==", "tiktoken=="]:
+    requirements = read("requirements.txt").replace(" ", "")
+    if "openai<1.0" not in requirements:
+        failures.append("requirements.txt must pin legacy examples to openai<1.0")
+    pipfile = read("Pipfile").replace(" ", "")
+    if 'openai="<1.0"' not in pipfile:
+        failures.append('Pipfile must pin legacy examples with openai = "<1.0"')
+    for package in ["streamlit==", "python-dotenv==", "tiktoken=="]:
         if package not in requirements:
             failures.append(f"requirements.txt must include {package}")
 

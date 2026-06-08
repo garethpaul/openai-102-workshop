@@ -20,6 +20,8 @@ embeddings, search, recommendations, clustering, fine-tuning, and LangChain.
   embeddings fixture URL.
 - Generated caches and legacy OpenAI SDK examples were not called out clearly in
   root-level verification docs.
+- The dependency manifests allowed modern OpenAI SDK installs even though the
+  lessons use the pre-1.0 API surface.
 - `embedding_cache.pkl` was a generated local pickle cache tracked in source
   control.
 
@@ -36,6 +38,7 @@ embeddings, search, recommendations, clustering, fine-tuning, and LangChain.
 - Added request timeout/status handling to the crawler.
 - Added generated cache ignores, Docker hardening, changelog, README, security,
   vision, and overview updates.
+- Pinned the OpenAI dependency contract to `openai<1.0`.
 - Removed `embedding_cache.pkl` from source control while keeping it ignored for
   local regeneration.
 

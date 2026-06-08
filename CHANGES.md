@@ -15,3 +15,5 @@
 - Tightened Docker dependency installation and made the embeddings fixture URL
   configurable.
 - Documented generated cache handling and legacy OpenAI SDK assumptions.
+- Pinned the legacy OpenAI SDK contract to `openai<1.0` in both dependency
+  manifests.

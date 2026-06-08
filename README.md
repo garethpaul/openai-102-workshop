@@ -62,8 +62,9 @@ The setup commands above are derived from repository files. Legacy mobile, Pytho
 - Run `make check` before changing workshop logic or generated-cache behavior.
 - Run `make run` or `streamlit run 👋_Hello.py` to start the app.
 - Enter an OpenAI API key only through the local sidebar or `OPENAI_API_KEY`.
-- Treat the checked-in snippets as legacy OpenAI SDK examples. Model or SDK
-  migrations should be deliberate compatibility updates.
+- Treat the checked-in snippets as legacy OpenAI SDK examples pinned to
+  `openai<1.0`. Model or SDK migrations should be deliberate compatibility
+  updates.
 
 ## Testing and Verification
 
