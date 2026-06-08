@@ -4,6 +4,35 @@ import pickle
 from sklearn.neighbors import NearestNeighbors
 import openai
 import os
+import hashlib
+
+EMBEDDINGS_URL = 'https://storage.googleapis.com/artifacts.gjones-webinar.appspot.com/embeddings.pkl'
+EMBEDDINGS_SHA256 = '0331e16d863953ab90d26fa3a2a16fe963990553216fd465d5a0d08f4e002c58'
+
+
+def verify_embeddings_pickle(data):
+    digest = hashlib.sha256(data).hexdigest()
+    if digest != EMBEDDINGS_SHA256:
+        raise RuntimeError(
+            'embeddings.pkl checksum mismatch; refusing to load untrusted pickle'
+        )
+
+
+def download_embeddings_pickle(path):
+    response = requests.get(EMBEDDINGS_URL, timeout=30)
+    response.raise_for_status()
+    verify_embeddings_pickle(response.content)
+
+    with open(path, 'wb') as file:
+        file.write(response.content)
+
+
+def load_embeddings_pickle(path):
+    with open(path, 'rb') as file:
+        data = file.read()
+
+    verify_embeddings_pickle(data)
+    return pickle.loads(data)
 
 # Goal: Provide users with an interface to query our developer docs.
 query = "what are the params for scheduling messages?"
@@ -26,17 +55,9 @@ pickle_file_path = 'embeddings.pkl'
 
 # Check if the file already exists
 if not os.path.exists(pickle_file_path):
-    # Download the pickle file
-    pkl_file_download = requests.get(
-        'https://storage.googleapis.com/artifacts.gjones-webinar.appspot.com/embeddings.pkl')
+    download_embeddings_pickle(pickle_file_path)
 
-    # Save the pickle file
-    with open(pickle_file_path, 'wb') as file:
-        file.write(pkl_file_download.content)
-
-# Load the pickle file
-with open(pickle_file_path, 'rb') as file:
-    saved_embeddings = pickle.load(file)
+saved_embeddings = load_embeddings_pickle(pickle_file_path)
 ids, embeddings, metadata = zip(*saved_embeddings)
 embeddings_array = np.stack(embeddings)
 nn_model = NearestNeighbors(n_neighbors=5, algorithm='ball_tree')
