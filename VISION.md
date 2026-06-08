@@ -36,6 +36,11 @@ Contribution rules:
 
 ## Security And Responsible Use
 
+Canonical security policy and reporting:
+
+- [`SECURITY.md`](SECURITY.md)
+
+
 Workshop users provide their own API credentials. The app should not persist,
 print, or transmit those credentials except to the APIs that the user
 explicitly enables while running the lesson.
