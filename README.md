@@ -76,9 +76,3 @@ When the required SDK or runtime is unavailable, use static checks and source re
 ## Contributing
 
 Keep changes small and tied to the project that is already present in this repository. For code changes, document the toolchain used, avoid committing generated dependency directories or local configuration, and update this README when setup or verification steps change.
-
-## Existing Project Notes
-
-Prior README summary:
-
-> Level 2 - API 101? What’s an embedding? How do you use APIs? Code Sample <https://github.com/garethpaul/gpt-docs-api> Local Install To get started you can run the following commands:
