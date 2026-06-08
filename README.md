@@ -1,58 +1,82 @@
-# Level 2 - API 101? What’s an embedding? How do you use APIs?
+# openai-102-workshop
 
-<!-- README-OVERVIEW-IMAGE -->
-![Project overview](docs/readme-overview.svg)
+## Overview
 
-# Code Sample
-<https://github.com/garethpaul/gpt-docs-api>
+`garethpaul/openai-102-workshop` is a Python web API or service project. OpenAI 102 Workshop
 
-## Local Install
-To get started you can run the following commands:
+This README is based on the checked-in source, manifests, scripts, and repository metadata on the `main` branch. The project language mix found during review was: no dominant source language detected.
 
-```make build run```
+## Repository Contents
 
-You should then be able to access streamlit in your browser with
-http://localhost:8502
+- `README.md` - project overview and local usage notes
+- `requirements.txt` - Python dependency or packaging metadata
+- `cache` - source or example code
+- `components` - source or example code
+- `Dockerfile` - container build instructions
+- `Makefile` - local build or utility targets
+- `pages` - source or example code
+- `Pipfile` - Python dependency or packaging metadata
+- `query_cache` - source or example code
+- `SECURITY.md` - security reporting and disclosure guidance
+- `url_cache` - source or example code
+- `utils` - source or example code
 
-For more information see the `Makefile`
+Additional scan context:
 
-## Docker
-If you'd prefer to use Docker to build and run. 
+- Source directories: cache, components, pages, query_cache, url_cache, utils
+- Dependency and build manifests: Dockerfile, Makefile, Pipfile, requirements.txt
+- Entry points or build surfaces: Dockerfile, Makefile
+- Test-looking files: no obvious test files detected
 
-```docker build -t streamlit-app .```
-```docker run -p 8502:8502 streamlit-app```
+## Getting Started
 
-# App Information
+### Prerequisites
 
-The app.py file provides a Streamlit application for generating responses to 
-user queries using OpenAI's GPT-3 models. The application uses embeddings and
-metadata to create augmented queries for generating detailed and context-aware
-answers.
+- Git
+- Python matching the era of the project
 
-The application offers two modes of operation:
-1. Use Embeddings: The application retrieves embeddings for the query, finds
-   the top-k closest metadata entries, creates an augmented query, and uses
-   OpenAI's ChatCompletion API to generate a response. The URLs for the top-k
-   metadata are also displayed as sources.
-2. Generic Response: If "Use Embeddings" is not selected, the application uses
-   OpenAI's Completion API to generate a generic response to the query.
+### Setup
 
-Functions in this module include:
-- load_embeddings_and_train_model(pickle_file_path): Load embeddings from a
-  pickle file and train a nearest neighbors model.
-- get_embeddings(query): Retrieve embeddings for a query using OpenAI's
-  Embedding API.
-- get_top_k_metadata(embedding, nn_model, metadata): Retrieve the top-k
-  metadata entries corresponding to the nearest neighbors.
-- create_augmented_query(top_k_metadata, query): Construct an augmented query
-  by combining top-k metadata contexts with the query.
-- get_model_response(augmented_query): Generate a response to the augmented
-  query using OpenAI's ChatCompletion API.
-- get_generic_response(query): Generate a generic response to the query using
-  OpenAI's Completion API.
-- main(): The main function for the Streamlit app, responsible for handling
-  user input and generating responses.
+```bash
+git clone https://github.com/garethpaul/openai-102-workshop.git
+cd openai-102-workshop
+python -m pip install -r requirements.txt
+```
 
-## Example usage:
-To run the Streamlit application, execute the following command:
-`streamlit run app.py`
+The setup commands above are derived from repository files. Legacy mobile, Python, or JavaScript samples may require older SDKs or package versions than a modern workstation uses by default.
+
+## Running or Using the Project
+
+- Run `make` or inspect `Makefile` for available targets.
+
+## Testing and Verification
+
+- `make test` if the Makefile defines that target
+
+When the required SDK or runtime is unavailable, use static checks and source review first, then verify on a machine that has the matching platform toolchain.
+
+## Configuration and Secrets
+
+- Detected references to OpenAI. Keep API keys, OAuth credentials, tokens, and account-specific values in local configuration only.
+
+## Security and Privacy Notes
+
+- Review changes touching external API calls or credential-adjacent configuration; examples from the scan include Pipfile.
+- Review changes touching network requests, sockets, or service endpoints; examples from the scan include Dockerfile, Pipfile.
+- Review changes touching file, media, JSON, XML, CSV, OCR, or data parsing; examples from the scan include Dockerfile.
+
+## Maintenance Notes
+
+- See `SECURITY.md` for vulnerability reporting and safe research guidance.
+- See `VISION.md` for project direction and contribution guardrails.
+
+## Contributing
+
+Keep changes small and tied to the project that is already present in this repository. For code changes, document the toolchain used, avoid committing generated dependency directories or local configuration, and update this README when setup or verification steps change.
+
+## Existing Project Notes
+
+Prior README summary:
+
+> Level 2 - API 101? What’s an embedding? How do you use APIs? <!-- README-OVERVIEW-IMAGE --> Code Sample <https://github.com/garethpaul/gpt-docs-api> Local Install To get started you can run the following commands:
+
