@@ -37,6 +37,15 @@ def test_load_embeddings_and_train_model(tmp_path):
     assert indices.shape == (1, 2)
 
 
+def test_load_embeddings_and_train_model_rejects_empty_fixtures(tmp_path):
+    pickle_path = tmp_path / "embeddings.pkl"
+    with pickle_path.open("wb") as file:
+        pickle.dump([], file)
+
+    with pytest.raises(ValueError, match="embedding fixture row"):
+        generate.load_embeddings_and_train_model(pickle_path)
+
+
 def test_get_cache_file_does_not_escape_cache_dir(tmp_path):
     cache_dir = tmp_path / "cache"
     cache_dir.mkdir()

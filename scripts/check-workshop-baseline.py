@@ -22,6 +22,7 @@ REQUIRED = [
     "docs/plans/2026-06-08-openai-102-workshop-baseline.md",
     "docs/plans/2026-06-09-vector-math-validation.md",
     "docs/plans/2026-06-09-small-embedding-fixtures.md",
+    "docs/plans/2026-06-09-empty-embedding-fixtures.md",
     "docs/readme-overview.svg",
     "requirements.txt",
     "scripts/check-workshop-baseline.py",
@@ -81,6 +82,7 @@ def main():
         "def cosine_similarity",
         "n_neighbors = min(5, len(embeddings_array))",
         "Cosine similarity is undefined for zero vectors.",
+        "At least one embedding fixture row is required.",
     ]:
         if phrase not in generate:
             failures.append(f"utils/generate.py must include {phrase}")
@@ -121,6 +123,7 @@ def main():
         "test_cosine_similarity_dimension_mismatch",
         "test_cosine_similarity_zero_vector",
         "test_record_estimated_cost_adds_first_and_subsequent_values",
+        "test_load_embeddings_and_train_model_rejects_empty_fixtures",
     ]:
         if phrase not in tests:
             failures.append(f"test_app.py must include {phrase}")
@@ -151,6 +154,7 @@ def main():
         "legacy OpenAI SDK examples",
         "vector math",
         "small embedding fixtures",
+        "empty embedding fixtures",
     ]:
         if phrase.lower() not in docs.lower():
             failures.append(f"docs must mention {phrase}")
@@ -164,6 +168,9 @@ def main():
     small_fixture_plan = read("docs/plans/2026-06-09-small-embedding-fixtures.md")
     if "status: completed" not in small_fixture_plan or "n_neighbors" not in small_fixture_plan:
         failures.append("small fixture plan must record status and verification")
+    empty_fixture_plan = read("docs/plans/2026-06-09-empty-embedding-fixtures.md")
+    if "status: completed" not in empty_fixture_plan or "embedding fixture row" not in empty_fixture_plan:
+        failures.append("empty fixture plan must record status and verification")
 
     try:
         ET.parse(ROOT / "docs/readme-overview.svg")

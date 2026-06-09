@@ -69,6 +69,8 @@ The setup commands above are derived from repository files. Legacy mobile, Pytho
   inputs before returning workshop results.
 - Small embedding fixtures cap nearest-neighbor lookup to the available row
   count so no-network tests can query them.
+- Empty embedding fixtures fail with a clear validation error before model
+  training.
 
 ## Testing and Verification
 
@@ -96,6 +98,8 @@ When the required SDK or runtime is unavailable, use static checks and source re
   fail clearly on invalid fixture data.
 - Review small embedding fixtures with no-network nearest-neighbor tests before
   refreshing workshop data.
+- Empty embedding fixtures should fail closed instead of producing ambiguous
+  unpacking errors.
 
 ## Maintenance Notes
 

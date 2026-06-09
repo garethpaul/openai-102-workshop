@@ -23,3 +23,5 @@
   zero-vector inputs.
 - Capped nearest-neighbor training at the available row count so small
   embedding fixtures can be queried.
+- Added no-network validation for empty embedding fixtures before nearest-neighbor
+  training.

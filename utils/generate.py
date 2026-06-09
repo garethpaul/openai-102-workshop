@@ -58,6 +58,8 @@ def load_embeddings_and_train_model(pickle_file_path):
     """
     with open(pickle_file_path, 'rb') as file:
         saved_embeddings = pickle.load(file)
+    if not saved_embeddings:
+        raise ValueError("At least one embedding fixture row is required.")
     ids, embeddings, metadata = zip(*saved_embeddings)
     embeddings_array = np.stack(embeddings)
     n_neighbors = min(5, len(embeddings_array))

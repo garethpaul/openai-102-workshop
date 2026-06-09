@@ -49,6 +49,8 @@ Retrieval vector math should fail closed on malformed fixture vectors instead of
 silently truncating dimensions or dividing by zero.
 Small embedding fixtures should cap nearest-neighbor lookup to the available
 row count so local tests do not require large private caches.
+Empty embedding fixtures should fail with a clear validation error before model
+training.
 
 ## Dependency and Supply Chain Security
 

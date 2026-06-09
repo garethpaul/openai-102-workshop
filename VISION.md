@@ -27,6 +27,7 @@ Priority:
 - Keep `make check` fast and free of OpenAI API calls
 - Keep retrieval vector math validation explicit and covered by tests
 - Keep small embedding fixtures queryable without private generated caches
+- Keep empty embedding fixtures rejected with clear no-network tests
 
 Next priorities:
 
