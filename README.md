@@ -73,6 +73,8 @@ The setup commands above are derived from repository files. Legacy mobile, Pytho
   training.
 - Malformed embedding fixtures fail before model training when rows are missing
   metadata or embedding dimensions do not match.
+- Embedding fixture metadata must include non-empty `text` before retrieval
+  examples build augmented queries.
 
 ## Testing and Verification
 
@@ -104,6 +106,8 @@ When the required SDK or runtime is unavailable, use static checks and source re
   unpacking errors.
 - Malformed embedding fixtures should fail closed before nearest-neighbor
   training.
+- Metadata text validation should fail closed before retrieval examples assume
+  `metadata["text"]` exists.
 
 ## Maintenance Notes
 

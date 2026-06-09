@@ -90,6 +90,17 @@ def validate_saved_embeddings(saved_embeddings):
             raise ValueError(
                 f"Embedding fixture row {index} must include at least one dimension."
             )
+
+        metadata = row[2]
+        if (
+            not isinstance(metadata, dict)
+            or not isinstance(metadata.get("text"), str)
+            or not metadata["text"].strip()
+        ):
+            raise ValueError(
+                f"Embedding fixture row {index} metadata must include text."
+            )
+
         if expected_dimensions is None:
             expected_dimensions = dimensions
         elif dimensions != expected_dimensions:

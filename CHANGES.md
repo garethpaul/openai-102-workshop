@@ -27,3 +27,4 @@
   training.
 - Added no-network validation for malformed embedding fixture rows and
   inconsistent embedding dimensions.
+- Added no-network metadata text validation for retrieval embedding fixtures.

@@ -24,6 +24,7 @@ REQUIRED = [
     "docs/plans/2026-06-09-small-embedding-fixtures.md",
     "docs/plans/2026-06-09-empty-embedding-fixtures.md",
     "docs/plans/2026-06-09-malformed-embedding-fixtures.md",
+    "docs/plans/2026-06-09-embedding-metadata-text.md",
     "docs/readme-overview.svg",
     "requirements.txt",
     "scripts/check-workshop-baseline.py",
@@ -86,6 +87,7 @@ def main():
         "Cosine similarity is undefined for zero vectors.",
         "At least one embedding fixture row is required.",
         "Embedding fixture rows must have the same dimensionality.",
+        "metadata must include text",
     ]:
         if phrase not in generate:
             failures.append(f"utils/generate.py must include {phrase}")
@@ -129,6 +131,7 @@ def main():
         "test_load_embeddings_and_train_model_rejects_empty_fixtures",
         "test_load_embeddings_and_train_model_rejects_malformed_rows",
         "test_load_embeddings_and_train_model_rejects_dimension_mismatch",
+        "test_load_embeddings_and_train_model_rejects_metadata_without_text",
     ]:
         if phrase not in tests:
             failures.append(f"test_app.py must include {phrase}")
@@ -161,6 +164,7 @@ def main():
         "small embedding fixtures",
         "empty embedding fixtures",
         "malformed embedding fixtures",
+        "metadata text",
     ]:
         if phrase.lower() not in docs.lower():
             failures.append(f"docs must mention {phrase}")
@@ -180,6 +184,9 @@ def main():
     malformed_fixture_plan = read("docs/plans/2026-06-09-malformed-embedding-fixtures.md")
     if "status: completed" not in malformed_fixture_plan or "same dimensionality" not in malformed_fixture_plan:
         failures.append("malformed fixture plan must record status and verification")
+    metadata_text_plan = read("docs/plans/2026-06-09-embedding-metadata-text.md")
+    if "status: completed" not in metadata_text_plan or "metadata text" not in metadata_text_plan:
+        failures.append("metadata text plan must record status and verification")
 
     try:
         ET.parse(ROOT / "docs/readme-overview.svg")

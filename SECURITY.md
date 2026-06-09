@@ -53,6 +53,8 @@ Empty embedding fixtures should fail with a clear validation error before model
 training.
 Malformed embedding fixtures should fail before nearest-neighbor training when
 rows are missing metadata or embeddings have inconsistent dimensions.
+Metadata text validation should reject retrieval fixtures that cannot provide
+the `text` field used to build augmented queries.
 
 ## Dependency and Supply Chain Security
 
