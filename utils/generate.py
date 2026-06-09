@@ -66,9 +66,15 @@ def load_embeddings_and_train_model(pickle_file_path):
 
 
 def cosine_similarity(vector1, vector2):
+    if len(vector1) != len(vector2):
+        raise ValueError("Vectors must have the same dimensionality.")
+
     dot_product = sum(val1 * val2 for val1, val2 in zip(vector1, vector2))
     norm_vector1 = math.sqrt(sum(val * val for val in vector1))
     norm_vector2 = math.sqrt(sum(val * val for val in vector2))
+    if norm_vector1 == 0 or norm_vector2 == 0:
+        raise ValueError("Cosine similarity is undefined for zero vectors.")
+
     similarity = dot_product / (norm_vector1 * norm_vector2)
     return similarity
 

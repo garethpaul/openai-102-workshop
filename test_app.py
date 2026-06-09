@@ -89,6 +89,16 @@ def test_distance_dimension_mismatch():
         generate.euclidean_distance([1.0, 2.0], [1.0])
 
 
+def test_cosine_similarity_dimension_mismatch():
+    with pytest.raises(ValueError):
+        generate.cosine_similarity([1.0, 2.0], [1.0])
+
+
+def test_cosine_similarity_zero_vector():
+    with pytest.raises(ValueError):
+        generate.cosine_similarity([0.0, 0.0], [1.0, 1.0])
+
+
 def test_record_estimated_cost_adds_first_and_subsequent_values():
     fake_streamlit.session_state.clear()
 

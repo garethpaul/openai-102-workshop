@@ -25,12 +25,14 @@ Priority:
 - Make API-token handling explicit and local to the learner
 - Document model, SDK, and Pinecone assumptions when examples depend on them
 - Keep `make check` fast and free of OpenAI API calls
+- Keep retrieval vector math validation explicit and covered by tests
 
 Next priorities:
 
 - Add a single quickstart that verifies the app boots without paid API calls
 - Mark stale API examples before updating them
 - Add lightweight tests for embedding-cache loading and nearest-neighbor lookup
+- Add more fixture tests for malformed retrieval data
 - Document which files are workshop fixtures versus generated output
 - Add compatibility notes before migrating legacy OpenAI SDK examples
 

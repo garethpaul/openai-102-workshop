@@ -45,6 +45,8 @@ For web services, APIs, sockets, or scraping workflows, prioritize reports invol
 For this workshop, also prioritize reports involving API-token persistence,
 unsafe generated cache filenames, untrusted pickle loading, hidden network calls,
 or lesson code that sends data to APIs outside the visible exercise.
+Retrieval vector math should fail closed on malformed fixture vectors instead of
+silently truncating dimensions or dividing by zero.
 
 ## Dependency and Supply Chain Security
 

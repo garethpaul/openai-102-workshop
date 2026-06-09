@@ -19,3 +19,5 @@
   manifests.
 - Added NumPy and pytest compatibility metadata and fixed first-request cost
   accounting.
+- Added no-network vector math validation for cosine-similarity dimension and
+  zero-vector inputs.

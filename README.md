@@ -65,6 +65,8 @@ The setup commands above are derived from repository files. Legacy mobile, Pytho
 - Treat the checked-in snippets as legacy OpenAI SDK examples pinned to
   `openai<1.0`. Model or SDK migrations should be deliberate compatibility
   updates.
+- Retrieval vector math helpers validate dimensionality and zero-vector cosine
+  inputs before returning workshop results.
 
 ## Testing and Verification
 
@@ -88,6 +90,8 @@ When the required SDK or runtime is unavailable, use static checks and source re
 - Review changes touching network requests, sockets, or service endpoints; examples from the scan include Dockerfile, Pipfile.
 - Review changes touching file, media, JSON, XML, CSV, OCR, or data parsing; examples from the scan include Dockerfile.
 - Review changes touching pickle files carefully; only load trusted workshop fixtures.
+- Review vector math helper changes with no-network tests so retrieval lessons
+  fail clearly on invalid fixture data.
 
 ## Maintenance Notes
 
