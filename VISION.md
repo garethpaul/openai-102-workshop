@@ -33,6 +33,7 @@ Priority:
 - Keep malformed embedding fixtures rejected before nearest-neighbor training
 - Keep metadata text validation in place for retrieval fixtures
 - Keep finite embedding values validated before nearest-neighbor training
+- Keep verification targets from leaving Python bytecode behind
 
 Next priorities:
 
@@ -53,6 +54,7 @@ Contribution rules:
   changes.
 - Preserve metadata text validation when changing retrieval fixture loading.
 - Preserve finite embedding value validation when changing fixture loading.
+- Preserve bytecode-free test execution when changing Makefile gates.
 
 ## Security And Responsible Use
 

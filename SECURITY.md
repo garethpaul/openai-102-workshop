@@ -37,6 +37,8 @@ Helpful reports include:
 - Generated caches under `cache/`, `url_cache/`, `query_cache/`, and pickle fixtures may contain prompts, crawled text, or embeddings. Treat cache refreshes as reviewable data changes.
 - Local generated files such as `embedding_cache.pkl` should remain ignored and
   untracked unless they are converted into deliberate, reproducible fixtures.
+- Python bytecode should not remain after local verification; rerun the gates
+  with bytecode writes disabled before committing.
 
 ## Service and API Notes
 

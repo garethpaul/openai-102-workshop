@@ -27,6 +27,7 @@ REQUIRED = [
     "docs/plans/2026-06-09-embedding-metadata-text.md",
     "docs/plans/2026-06-09-finite-embedding-values.md",
     "docs/plans/2026-06-09-make-gate-aliases.md",
+    "docs/plans/2026-06-09-bytecode-free-tests.md",
     "docs/readme-overview.svg",
     "requirements.txt",
     "scripts/check-workshop-baseline.py",
@@ -109,7 +110,7 @@ def main():
         ".PHONY: all build check lint run static-check test verify",
         "PYTHON ?= python3",
         "PYTHONDONTWRITEBYTECODE=1 $(PYTHON) -c \"import pathlib; [compile(pathlib.Path(path).read_text(), path, 'exec')",
-        "$(PYTHON) -m pytest -q test_app.py",
+        "PYTHONDONTWRITEBYTECODE=1 $(PYTHON) -m pytest -q test_app.py",
         "PYTHONDONTWRITEBYTECODE=1 $(PYTHON) scripts/check-workshop-baseline.py",
         "lint: static-check",
         "verify: lint test",
@@ -130,6 +131,13 @@ def main():
     generated_tracks = tracked(["embedding_cache.pkl", "__pycache__", ".pytest_cache"])
     if generated_tracks:
         failures.append("generated local caches must not be tracked: " + ", ".join(generated_tracks))
+    bytecode_paths = sorted(
+        str(path.relative_to(ROOT))
+        for pattern in ("__pycache__", "*.pyc")
+        for path in ROOT.rglob(pattern)
+    )
+    if bytecode_paths:
+        failures.append("generated Python bytecode must not remain after gates: " + ", ".join(bytecode_paths[:5]))
 
     tests = read("test_app.py")
     for phrase in [
@@ -183,6 +191,7 @@ def main():
         "malformed embedding fixtures",
         "metadata text",
         "finite embedding values",
+        "Python bytecode",
     ]:
         if phrase.lower() not in docs.lower():
             failures.append(f"docs must mention {phrase}")
@@ -216,6 +225,9 @@ def main():
     make_gate_plan = make_gate_plan_path.read_text(encoding="utf-8") if make_gate_plan_path.exists() else ""
     if "status: completed" not in make_gate_plan or "make lint" not in make_gate_plan or "make build" not in make_gate_plan:
         failures.append("make gate alias plan must record status and verification")
+    bytecode_plan = read("docs/plans/2026-06-09-bytecode-free-tests.md")
+    if "status: completed" not in bytecode_plan or "Python bytecode" not in bytecode_plan:
+        failures.append("bytecode-free test plan must record status and verification")
 
     try:
         ET.parse(ROOT / "docs/readme-overview.svg")

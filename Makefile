@@ -12,7 +12,7 @@ run:
 
 # Test the app
 test:
-	$(PYTHON) -m pytest -q test_app.py
+	PYTHONDONTWRITEBYTECODE=1 $(PYTHON) -m pytest -q test_app.py
 
 static-check:
 	PYTHONDONTWRITEBYTECODE=1 $(PYTHON) scripts/check-workshop-baseline.py

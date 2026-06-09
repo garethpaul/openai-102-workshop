@@ -31,3 +31,5 @@
 - Added no-network finite embedding value validation for retrieval fixtures.
 - Added `make lint`, `make test`, and a bytecode-free `make build` compile
   gate around the existing no-network pytest and static workshop checks.
+- Made `make test` bytecode-free and added a baseline guard against leftover
+  Python bytecode.
