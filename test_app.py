@@ -32,7 +32,9 @@ def test_load_embeddings_and_train_model(tmp_path):
         {"text": "sample text 1"},
         {"text": "sample text 2"},
     ]
-    assert hasattr(nn_model, "kneighbors")
+    distances, indices = nn_model.kneighbors([[0.1, 0.2]])
+    assert distances.shape == (1, 2)
+    assert indices.shape == (1, 2)
 
 
 def test_get_cache_file_does_not_escape_cache_dir(tmp_path):

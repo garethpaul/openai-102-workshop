@@ -21,3 +21,5 @@
   accounting.
 - Added no-network vector math validation for cosine-similarity dimension and
   zero-vector inputs.
+- Capped nearest-neighbor training at the available row count so small
+  embedding fixtures can be queried.

@@ -26,6 +26,7 @@ Priority:
 - Document model, SDK, and Pinecone assumptions when examples depend on them
 - Keep `make check` fast and free of OpenAI API calls
 - Keep retrieval vector math validation explicit and covered by tests
+- Keep small embedding fixtures queryable without private generated caches
 
 Next priorities:
 

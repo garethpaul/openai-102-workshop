@@ -67,6 +67,8 @@ The setup commands above are derived from repository files. Legacy mobile, Pytho
   updates.
 - Retrieval vector math helpers validate dimensionality and zero-vector cosine
   inputs before returning workshop results.
+- Small embedding fixtures cap nearest-neighbor lookup to the available row
+  count so no-network tests can query them.
 
 ## Testing and Verification
 
@@ -92,6 +94,8 @@ When the required SDK or runtime is unavailable, use static checks and source re
 - Review changes touching pickle files carefully; only load trusted workshop fixtures.
 - Review vector math helper changes with no-network tests so retrieval lessons
   fail clearly on invalid fixture data.
+- Review small embedding fixtures with no-network nearest-neighbor tests before
+  refreshing workshop data.
 
 ## Maintenance Notes
 

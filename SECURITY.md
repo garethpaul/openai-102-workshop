@@ -47,6 +47,8 @@ unsafe generated cache filenames, untrusted pickle loading, hidden network calls
 or lesson code that sends data to APIs outside the visible exercise.
 Retrieval vector math should fail closed on malformed fixture vectors instead of
 silently truncating dimensions or dividing by zero.
+Small embedding fixtures should cap nearest-neighbor lookup to the available
+row count so local tests do not require large private caches.
 
 ## Dependency and Supply Chain Security
 

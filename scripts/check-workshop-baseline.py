@@ -21,6 +21,7 @@ REQUIRED = [
     "components/common.py",
     "docs/plans/2026-06-08-openai-102-workshop-baseline.md",
     "docs/plans/2026-06-09-vector-math-validation.md",
+    "docs/plans/2026-06-09-small-embedding-fixtures.md",
     "docs/readme-overview.svg",
     "requirements.txt",
     "scripts/check-workshop-baseline.py",
@@ -78,6 +79,7 @@ def main():
         "get_cache_file(cache_folder, query)",
         "def _record_estimated_cost",
         "def cosine_similarity",
+        "n_neighbors = min(5, len(embeddings_array))",
         "Cosine similarity is undefined for zero vectors.",
     ]:
         if phrase not in generate:
@@ -114,6 +116,7 @@ def main():
         "fake_streamlit",
         "test_get_cache_file_does_not_escape_cache_dir",
         "test_get_embeddings_reads_cache_without_api_call",
+        "distances.shape == (1, 2)",
         "test_distance_dimension_mismatch",
         "test_cosine_similarity_dimension_mismatch",
         "test_cosine_similarity_zero_vector",
@@ -141,7 +144,14 @@ def main():
             failures.append(f"requirements.txt must include {package}")
 
     docs = "\n".join(read(path) for path in ["README.md", "SECURITY.md", "VISION.md"])
-    for phrase in ["make check", "OPENAI_API_KEY", "generated caches", "legacy OpenAI SDK examples", "vector math"]:
+    for phrase in [
+        "make check",
+        "OPENAI_API_KEY",
+        "generated caches",
+        "legacy OpenAI SDK examples",
+        "vector math",
+        "small embedding fixtures",
+    ]:
         if phrase.lower() not in docs.lower():
             failures.append(f"docs must mention {phrase}")
 
@@ -151,6 +161,9 @@ def main():
     vector_plan = read("docs/plans/2026-06-09-vector-math-validation.md")
     if "status: completed" not in vector_plan or "cosine_similarity" not in vector_plan:
         failures.append("vector validation plan must record status and verification")
+    small_fixture_plan = read("docs/plans/2026-06-09-small-embedding-fixtures.md")
+    if "status: completed" not in small_fixture_plan or "n_neighbors" not in small_fixture_plan:
+        failures.append("small fixture plan must record status and verification")
 
     try:
         ET.parse(ROOT / "docs/readme-overview.svg")

@@ -60,7 +60,8 @@ def load_embeddings_and_train_model(pickle_file_path):
         saved_embeddings = pickle.load(file)
     ids, embeddings, metadata = zip(*saved_embeddings)
     embeddings_array = np.stack(embeddings)
-    nn_model = NearestNeighbors(n_neighbors=5, algorithm='ball_tree')
+    n_neighbors = min(5, len(embeddings_array))
+    nn_model = NearestNeighbors(n_neighbors=n_neighbors, algorithm='ball_tree')
     nn_model.fit(embeddings_array)
     return nn_model, metadata
 
