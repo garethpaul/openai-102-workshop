@@ -26,6 +26,7 @@ REQUIRED = [
     "docs/plans/2026-06-09-malformed-embedding-fixtures.md",
     "docs/plans/2026-06-09-embedding-metadata-text.md",
     "docs/plans/2026-06-09-finite-embedding-values.md",
+    "docs/plans/2026-06-09-make-gate-aliases.md",
     "docs/readme-overview.svg",
     "requirements.txt",
     "scripts/check-workshop-baseline.py",
@@ -104,7 +105,16 @@ def main():
         failures.append("crawler requests must use timeout and raise_for_status")
 
     makefile = read("Makefile")
-    for phrase in ["python3 -m pytest -q test_app.py", "static-check", "check: static-check test"]:
+    for phrase in [
+        ".PHONY: all build check lint run static-check test verify",
+        "PYTHON ?= python3",
+        "PYTHONDONTWRITEBYTECODE=1 $(PYTHON) -c \"import pathlib; [compile(pathlib.Path(path).read_text(), path, 'exec')",
+        "$(PYTHON) -m pytest -q test_app.py",
+        "PYTHONDONTWRITEBYTECODE=1 $(PYTHON) scripts/check-workshop-baseline.py",
+        "lint: static-check",
+        "verify: lint test",
+        "check: verify",
+    ]:
         if phrase not in makefile:
             failures.append(f"Makefile must include {phrase}")
 
@@ -160,6 +170,9 @@ def main():
 
     docs = "\n".join(read(path) for path in ["README.md", "SECURITY.md", "VISION.md"])
     for phrase in [
+        "make lint",
+        "make test",
+        "make build",
         "make check",
         "OPENAI_API_KEY",
         "generated caches",
@@ -173,6 +186,10 @@ def main():
     ]:
         if phrase.lower() not in docs.lower():
             failures.append(f"docs must mention {phrase}")
+    changes = read("CHANGES.md")
+    for phrase in ["make lint", "make test", "make build", "make check"]:
+        if phrase not in changes:
+            failures.append(f"CHANGES must mention {phrase}")
 
     plan = read("docs/plans/2026-06-08-openai-102-workshop-baseline.md")
     if "status: completed" not in plan or "make check" not in plan:
@@ -195,6 +212,10 @@ def main():
     finite_embedding_plan = read("docs/plans/2026-06-09-finite-embedding-values.md")
     if "status: completed" not in finite_embedding_plan or "finite embedding values" not in finite_embedding_plan:
         failures.append("finite embedding values plan must record status and verification")
+    make_gate_plan_path = ROOT / "docs/plans/2026-06-09-make-gate-aliases.md"
+    make_gate_plan = make_gate_plan_path.read_text(encoding="utf-8") if make_gate_plan_path.exists() else ""
+    if "status: completed" not in make_gate_plan or "make lint" not in make_gate_plan or "make build" not in make_gate_plan:
+        failures.append("make gate alias plan must record status and verification")
 
     try:
         ET.parse(ROOT / "docs/readme-overview.svg")

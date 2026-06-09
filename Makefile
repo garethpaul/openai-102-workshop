@@ -1,8 +1,10 @@
-.PHONY: build run test static-check check all
+.PHONY: all build check lint run static-check test verify
 
-# Build the app (install dependencies)
+PYTHON ?= python3
+
+# Build the app (compile maintained Python modules)
 build:
-	python3 -m pip install -r requirements.txt
+	PYTHONDONTWRITEBYTECODE=1 $(PYTHON) -c "import pathlib; [compile(pathlib.Path(path).read_text(), path, 'exec') for path in ('components/common.py', 'test_app.py', 'utils/crawler.py', 'utils/generate.py')]"
 
 # Run the app locally
 run:
@@ -10,12 +12,16 @@ run:
 
 # Test the app
 test:
-	python3 -m pytest -q test_app.py
+	$(PYTHON) -m pytest -q test_app.py
 
 static-check:
-	python3 scripts/check-workshop-baseline.py
+	PYTHONDONTWRITEBYTECODE=1 $(PYTHON) scripts/check-workshop-baseline.py
 
-check: static-check test
+lint: static-check
+
+verify: lint test
+
+check: verify
 
 # Build test and run the app
 all: build test run

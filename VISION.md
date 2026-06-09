@@ -24,6 +24,8 @@ Priority:
   control
 - Make API-token handling explicit and local to the learner
 - Document model, SDK, and Pinecone assumptions when examples depend on them
+- Keep `make lint`, `make test`, `make build`, and `make check` available for
+  local verification
 - Keep `make check` fast and free of OpenAI API calls
 - Keep retrieval vector math validation explicit and covered by tests
 - Keep small embedding fixtures queryable without private generated caches
@@ -47,7 +49,8 @@ Contribution rules:
 - Do not commit real API keys, customer data, or private workshop material.
 - Keep code examples small enough for learners to trace.
 - Explain model or API migrations in the README.
-- Run `make check` before pushing changes.
+- Run `make lint`, `make test`, `make build`, and `make check` before pushing
+  changes.
 - Preserve metadata text validation when changing retrieval fixture loading.
 - Preserve finite embedding value validation when changing fixture loading.
 

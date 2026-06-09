@@ -42,7 +42,7 @@ Additional scan context:
 ### Prerequisites
 
 - Git
-- Python 3.10+ for the workshop runtime
+- Python 3.10 for the workshop runtime, matching the checked-in Pipfile
 - Python 3 with `pytest`, `numpy`, and `scikit-learn` for local no-network checks
 - An OpenAI API key supplied through local UI input or `OPENAI_API_KEY` when running API lessons
 
@@ -52,6 +52,9 @@ Additional scan context:
 git clone https://github.com/garethpaul/openai-102-workshop.git
 cd openai-102-workshop
 python -m pip install -r requirements.txt
+make lint
+make test
+make build
 make check
 ```
 
@@ -59,7 +62,8 @@ The setup commands above are derived from repository files. Legacy mobile, Pytho
 
 ## Running or Using the Project
 
-- Run `make check` before changing workshop logic or generated-cache behavior.
+- Run `make lint`, `make test`, `make build`, and `make check` before changing
+  workshop logic or generated-cache behavior.
 - Run `make run` or `streamlit run 👋_Hello.py` to start the app.
 - Enter an OpenAI API key only through the local sidebar or `OPENAI_API_KEY`.
 - Treat the checked-in snippets as legacy OpenAI SDK examples pinned to
@@ -80,6 +84,9 @@ The setup commands above are derived from repository files. Legacy mobile, Pytho
 
 ## Testing and Verification
 
+- `make lint`
+- `make test`
+- `make build`
 - `make check`
 - `python3 -m pytest -q test_app.py`
 - `python3 scripts/check-workshop-baseline.py`
@@ -117,6 +124,8 @@ When the required SDK or runtime is unavailable, use static checks and source re
 
 - See `SECURITY.md` for vulnerability reporting and safe research guidance.
 - See `CHANGES.md` and `docs/plans/2026-06-08-openai-102-workshop-baseline.md` for the current verification baseline.
+- See `docs/plans/2026-06-09-make-gate-aliases.md` for the local verification
+  gate aliases.
 - See `VISION.md` for project direction and contribution guardrails.
 
 ## Contributing

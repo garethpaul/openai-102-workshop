@@ -29,3 +29,5 @@
   inconsistent embedding dimensions.
 - Added no-network metadata text validation for retrieval embedding fixtures.
 - Added no-network finite embedding value validation for retrieval fixtures.
+- Added `make lint`, `make test`, and a bytecode-free `make build` compile
+  gate around the existing no-network pytest and static workshop checks.
