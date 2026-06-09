@@ -55,6 +55,8 @@ Malformed embedding fixtures should fail before nearest-neighbor training when
 rows are missing metadata or embeddings have inconsistent dimensions.
 Metadata text validation should reject retrieval fixtures that cannot provide
 the `text` field used to build augmented queries.
+Finite embedding values should be required before nearest-neighbor training so
+NaN, infinite, or non-numeric fixture data fails closed.
 
 ## Dependency and Supply Chain Security
 

@@ -75,6 +75,8 @@ The setup commands above are derived from repository files. Legacy mobile, Pytho
   metadata or embedding dimensions do not match.
 - Embedding fixture metadata must include non-empty `text` before retrieval
   examples build augmented queries.
+- Finite embedding values are required before nearest-neighbor training so
+  invalid fixture vectors fail with clear errors.
 
 ## Testing and Verification
 
@@ -108,6 +110,8 @@ When the required SDK or runtime is unavailable, use static checks and source re
   training.
 - Metadata text validation should fail closed before retrieval examples assume
   `metadata["text"]` exists.
+- Finite embedding values should be checked before retrieval examples train
+  nearest-neighbor models.
 
 ## Maintenance Notes
 

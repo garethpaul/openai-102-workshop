@@ -30,6 +30,7 @@ Priority:
 - Keep empty embedding fixtures rejected with clear no-network tests
 - Keep malformed embedding fixtures rejected before nearest-neighbor training
 - Keep metadata text validation in place for retrieval fixtures
+- Keep finite embedding values validated before nearest-neighbor training
 
 Next priorities:
 
@@ -48,6 +49,7 @@ Contribution rules:
 - Explain model or API migrations in the README.
 - Run `make check` before pushing changes.
 - Preserve metadata text validation when changing retrieval fixture loading.
+- Preserve finite embedding value validation when changing fixture loading.
 
 ## Security And Responsible Use
 
