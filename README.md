@@ -71,6 +71,8 @@ The setup commands above are derived from repository files. Legacy mobile, Pytho
   count so no-network tests can query them.
 - Empty embedding fixtures fail with a clear validation error before model
   training.
+- Malformed embedding fixtures fail before model training when rows are missing
+  metadata or embedding dimensions do not match.
 
 ## Testing and Verification
 
@@ -100,6 +102,8 @@ When the required SDK or runtime is unavailable, use static checks and source re
   refreshing workshop data.
 - Empty embedding fixtures should fail closed instead of producing ambiguous
   unpacking errors.
+- Malformed embedding fixtures should fail closed before nearest-neighbor
+  training.
 
 ## Maintenance Notes
 

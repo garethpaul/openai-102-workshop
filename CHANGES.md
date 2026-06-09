@@ -25,3 +25,5 @@
   embedding fixtures can be queried.
 - Added no-network validation for empty embedding fixtures before nearest-neighbor
   training.
+- Added no-network validation for malformed embedding fixture rows and
+  inconsistent embedding dimensions.

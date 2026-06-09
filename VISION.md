@@ -28,6 +28,7 @@ Priority:
 - Keep retrieval vector math validation explicit and covered by tests
 - Keep small embedding fixtures queryable without private generated caches
 - Keep empty embedding fixtures rejected with clear no-network tests
+- Keep malformed embedding fixtures rejected before nearest-neighbor training
 
 Next priorities:
 

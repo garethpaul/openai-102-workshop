@@ -46,6 +46,27 @@ def test_load_embeddings_and_train_model_rejects_empty_fixtures(tmp_path):
         generate.load_embeddings_and_train_model(pickle_path)
 
 
+def test_load_embeddings_and_train_model_rejects_malformed_rows(tmp_path):
+    pickle_path = tmp_path / "embeddings.pkl"
+    with pickle_path.open("wb") as file:
+        pickle.dump([(1, np.array([0.1, 0.2]))], file)
+
+    with pytest.raises(ValueError, match="id, embedding, and metadata"):
+        generate.load_embeddings_and_train_model(pickle_path)
+
+
+def test_load_embeddings_and_train_model_rejects_dimension_mismatch(tmp_path):
+    pickle_path = tmp_path / "embeddings.pkl"
+    with pickle_path.open("wb") as file:
+        pickle.dump([
+            (1, np.array([0.1, 0.2]), {"text": "sample text 1"}),
+            (2, np.array([0.3]), {"text": "sample text 2"}),
+        ], file)
+
+    with pytest.raises(ValueError, match="same dimensionality"):
+        generate.load_embeddings_and_train_model(pickle_path)
+
+
 def test_get_cache_file_does_not_escape_cache_dir(tmp_path):
     cache_dir = tmp_path / "cache"
     cache_dir.mkdir()

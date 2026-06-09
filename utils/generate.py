@@ -58,14 +58,42 @@ def load_embeddings_and_train_model(pickle_file_path):
     """
     with open(pickle_file_path, 'rb') as file:
         saved_embeddings = pickle.load(file)
-    if not saved_embeddings:
-        raise ValueError("At least one embedding fixture row is required.")
+    validate_saved_embeddings(saved_embeddings)
     ids, embeddings, metadata = zip(*saved_embeddings)
     embeddings_array = np.stack(embeddings)
     n_neighbors = min(5, len(embeddings_array))
     nn_model = NearestNeighbors(n_neighbors=n_neighbors, algorithm='ball_tree')
     nn_model.fit(embeddings_array)
     return nn_model, metadata
+
+
+def validate_saved_embeddings(saved_embeddings):
+    if not saved_embeddings:
+        raise ValueError("At least one embedding fixture row is required.")
+
+    expected_dimensions = None
+    for index, row in enumerate(saved_embeddings):
+        if not isinstance(row, (list, tuple)) or len(row) != 3:
+            raise ValueError(
+                f"Embedding fixture row {index} must contain id, embedding, and metadata."
+            )
+
+        embedding = row[1]
+        try:
+            dimensions = len(embedding)
+        except TypeError:
+            raise ValueError(
+                f"Embedding fixture row {index} must include a sequence embedding."
+            )
+
+        if dimensions == 0:
+            raise ValueError(
+                f"Embedding fixture row {index} must include at least one dimension."
+            )
+        if expected_dimensions is None:
+            expected_dimensions = dimensions
+        elif dimensions != expected_dimensions:
+            raise ValueError("Embedding fixture rows must have the same dimensionality.")
 
 
 def cosine_similarity(vector1, vector2):

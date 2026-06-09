@@ -51,6 +51,8 @@ Small embedding fixtures should cap nearest-neighbor lookup to the available
 row count so local tests do not require large private caches.
 Empty embedding fixtures should fail with a clear validation error before model
 training.
+Malformed embedding fixtures should fail before nearest-neighbor training when
+rows are missing metadata or embeddings have inconsistent dimensions.
 
 ## Dependency and Supply Chain Security
 
