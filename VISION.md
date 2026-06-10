@@ -35,6 +35,8 @@ Priority:
 - Keep finite embedding values validated before nearest-neighbor training
 - Keep numeric embedding values validated as numeric types before training
 - Keep verification targets from leaving Python bytecode behind
+- Keep the no-network baseline running in pinned, read-only hosted Linux CI
+- Keep hosted test dependencies minimal and explicit in `requirements-test.txt`
 
 Next priorities:
 

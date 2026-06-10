@@ -38,3 +38,5 @@
 
 - Required retrieval fixture embedding values to be real numeric types instead
   of stringified numbers before nearest-neighbor training.
+- Added pinned hosted Linux validation with a minimal Python 3.10 test
+  dependency set, `pip check`, and the no-network `make check` gate.

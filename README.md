@@ -94,6 +94,9 @@ The setup commands above are derived from repository files. Legacy mobile, Pytho
 - `make check`
 - `python3 -m pytest -q test_app.py`
 - `python3 scripts/check-workshop-baseline.py`
+- Pinned hosted Linux validation installs `requirements-test.txt`, runs
+  `python -m pip check`, and executes the same no-network `make check` gate on
+  Python 3.10.
 
 When the required SDK or runtime is unavailable, use static checks and source review first, then verify on a machine that has the matching platform toolchain.
 
@@ -138,6 +141,8 @@ When the required SDK or runtime is unavailable, use static checks and source re
   gate aliases.
 - See `docs/plans/2026-06-10-numeric-embedding-values.md` for the embedding
   fixture numeric-type validation contract.
+- See `docs/plans/2026-06-10-hosted-workshop-validation.md` for the hosted
+  Linux test dependency and `make check` contract.
 - See `VISION.md` for project direction and contribution guardrails.
 
 ## Contributing

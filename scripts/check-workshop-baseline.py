@@ -10,7 +10,9 @@ import xml.etree.ElementTree as ET
 
 
 ROOT = Path(__file__).resolve().parents[1]
+CI_PLAN = "docs/plans/2026-06-10-hosted-workshop-validation.md"
 REQUIRED = [
+    ".github/workflows/check.yml",
     ".gitignore",
     "CHANGES.md",
     "Dockerfile",
@@ -27,10 +29,12 @@ REQUIRED = [
     "docs/plans/2026-06-09-embedding-metadata-text.md",
     "docs/plans/2026-06-09-finite-embedding-values.md",
     "docs/plans/2026-06-10-numeric-embedding-values.md",
+    CI_PLAN,
     "docs/plans/2026-06-09-make-gate-aliases.md",
     "docs/plans/2026-06-09-bytecode-free-tests.md",
     "docs/readme-overview.svg",
     "requirements.txt",
+    "requirements-test.txt",
     "scripts/check-workshop-baseline.py",
     "test_app.py",
     "utils/crawler.py",
@@ -122,6 +126,33 @@ def main():
         if phrase not in makefile:
             failures.append(f"Makefile must include {phrase}")
 
+    test_requirements = read("requirements-test.txt")
+    for requirement in [
+        "numpy==1.26.4",
+        "openai==0.28.1",
+        "pytest==7.4.4",
+        "requests==2.31.0",
+        "scikit-learn==1.3.2",
+    ]:
+        if requirement not in test_requirements:
+            failures.append(f"test requirements must pin {requirement}")
+
+    workflow = read(".github/workflows/check.yml")
+    for phrase in [
+        "permissions:\n  contents: read",
+        "cancel-in-progress: true",
+        "runs-on: ubuntu-24.04",
+        "timeout-minutes: 15",
+        "actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10",
+        "actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405",
+        'python-version: "3.10"',
+        "python -m pip install -r requirements-test.txt",
+        "python -m pip check",
+        "make check",
+    ]:
+        if phrase not in workflow:
+            failures.append(f"Check workflow must keep {phrase}")
+
     dockerfile = read("Dockerfile")
     for phrase in ["ARG EMBEDDINGS_URL", "--no-install-recommends", "wget --https-only"]:
         if phrase not in dockerfile:
@@ -197,6 +228,8 @@ def main():
         "finite embedding values",
         "numeric embedding values",
         "Python bytecode",
+        "hosted Linux",
+        "requirements-test.txt",
     ]:
         if phrase.lower() not in docs.lower():
             failures.append(f"docs must mention {phrase}")
@@ -236,6 +269,9 @@ def main():
     bytecode_plan = read("docs/plans/2026-06-09-bytecode-free-tests.md")
     if "status: completed" not in bytecode_plan or "Python bytecode" not in bytecode_plan:
         failures.append("bytecode-free test plan must record status and verification")
+    ci_plan = read(CI_PLAN)
+    if "status: completed" not in ci_plan or "make check" not in ci_plan:
+        failures.append("hosted workshop validation plan must record status and verification")
 
     try:
         ET.parse(ROOT / "docs/readme-overview.svg")

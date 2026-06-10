@@ -39,6 +39,9 @@ Helpful reports include:
   untracked unless they are converted into deliberate, reproducible fixtures.
 - Python bytecode should not remain after local verification; rerun the gates
   with bytecode writes disabled before committing.
+- Hosted Linux validation uses the minimal pinned `requirements-test.txt`
+  dependency set, checks the installed environment with `pip check`, and runs
+  `make check` without API credentials or OpenAI network calls.
 
 ## Service and API Notes
 
