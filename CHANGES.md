@@ -33,3 +33,8 @@
   gate around the existing no-network pytest and static workshop checks.
 - Made `make test` bytecode-free and added a baseline guard against leftover
   Python bytecode.
+
+## 2026-06-10
+
+- Required retrieval fixture embedding values to be real numeric types instead
+  of stringified numbers before nearest-neighbor training.

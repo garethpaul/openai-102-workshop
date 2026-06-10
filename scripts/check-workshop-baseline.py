@@ -26,6 +26,7 @@ REQUIRED = [
     "docs/plans/2026-06-09-malformed-embedding-fixtures.md",
     "docs/plans/2026-06-09-embedding-metadata-text.md",
     "docs/plans/2026-06-09-finite-embedding-values.md",
+    "docs/plans/2026-06-10-numeric-embedding-values.md",
     "docs/plans/2026-06-09-make-gate-aliases.md",
     "docs/plans/2026-06-09-bytecode-free-tests.md",
     "docs/readme-overview.svg",
@@ -91,6 +92,8 @@ def main():
         "At least one embedding fixture row is required.",
         "Embedding fixture rows must have the same dimensionality.",
         "metadata must include text",
+        "np.number",
+        "numeric finite numbers",
         "math.isfinite",
         "finite numbers",
     ]:
@@ -154,6 +157,7 @@ def main():
         "test_load_embeddings_and_train_model_rejects_dimension_mismatch",
         "test_load_embeddings_and_train_model_rejects_metadata_without_text",
         "test_load_embeddings_and_train_model_rejects_non_finite_embedding_values",
+        "numeric finite numbers",
     ]:
         if phrase not in tests:
             failures.append(f"test_app.py must include {phrase}")
@@ -191,6 +195,7 @@ def main():
         "malformed embedding fixtures",
         "metadata text",
         "finite embedding values",
+        "numeric embedding values",
         "Python bytecode",
     ]:
         if phrase.lower() not in docs.lower():
@@ -221,6 +226,9 @@ def main():
     finite_embedding_plan = read("docs/plans/2026-06-09-finite-embedding-values.md")
     if "status: completed" not in finite_embedding_plan or "finite embedding values" not in finite_embedding_plan:
         failures.append("finite embedding values plan must record status and verification")
+    numeric_embedding_plan = read("docs/plans/2026-06-10-numeric-embedding-values.md")
+    if "status: completed" not in numeric_embedding_plan or "numeric embedding values" not in numeric_embedding_plan:
+        failures.append("numeric embedding values plan must record status and verification")
     make_gate_plan_path = ROOT / "docs/plans/2026-06-09-make-gate-aliases.md"
     make_gate_plan = make_gate_plan_path.read_text(encoding="utf-8") if make_gate_plan_path.exists() else ""
     if "status: completed" not in make_gate_plan or "make lint" not in make_gate_plan or "make build" not in make_gate_plan:

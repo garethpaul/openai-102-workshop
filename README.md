@@ -83,6 +83,8 @@ The setup commands above are derived from repository files. Legacy mobile, Pytho
   examples build augmented queries.
 - Finite embedding values are required before nearest-neighbor training so
   invalid fixture vectors fail with clear errors.
+- Numeric embedding values must be real numeric types, not stringified numbers,
+  before model training.
 
 ## Testing and Verification
 
@@ -123,6 +125,8 @@ When the required SDK or runtime is unavailable, use static checks and source re
   `metadata["text"]` exists.
 - Finite embedding values should be checked before retrieval examples train
   nearest-neighbor models.
+- Numeric embedding values should be enforced before retrieval examples accept
+  fixture vectors.
 - Python bytecode should not remain after local `make test` or `make check`
   runs.
 
@@ -132,6 +136,8 @@ When the required SDK or runtime is unavailable, use static checks and source re
 - See `CHANGES.md` and `docs/plans/2026-06-08-openai-102-workshop-baseline.md` for the current verification baseline.
 - See `docs/plans/2026-06-09-make-gate-aliases.md` for the local verification
   gate aliases.
+- See `docs/plans/2026-06-10-numeric-embedding-values.md` for the embedding
+  fixture numeric-type validation contract.
 - See `VISION.md` for project direction and contribution guardrails.
 
 ## Contributing

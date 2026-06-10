@@ -59,6 +59,8 @@ Metadata text validation should reject retrieval fixtures that cannot provide
 the `text` field used to build augmented queries.
 Finite embedding values should be required before nearest-neighbor training so
 NaN, infinite, or non-numeric fixture data fails closed.
+Numeric embedding values should be real numeric types rather than stringified
+numbers before retrieval fixtures train nearest-neighbor models.
 
 ## Dependency and Supply Chain Security
 

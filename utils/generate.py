@@ -91,15 +91,19 @@ def validate_saved_embeddings(saved_embeddings):
                 f"Embedding fixture row {index} must include at least one dimension."
             )
         for value in embedding:
+            if isinstance(value, bool) or not isinstance(value, (int, float, np.number)):
+                raise ValueError(
+                    f"Embedding fixture row {index} embedding values must be numeric finite numbers."
+                )
             try:
                 numeric_value = float(value)
             except (TypeError, ValueError):
                 raise ValueError(
-                    f"Embedding fixture row {index} embedding values must be finite numbers."
+                    f"Embedding fixture row {index} embedding values must be numeric finite numbers."
                 )
             if not math.isfinite(numeric_value):
                 raise ValueError(
-                    f"Embedding fixture row {index} embedding values must be finite numbers."
+                    f"Embedding fixture row {index} embedding values must be numeric finite numbers."
                 )
 
         metadata = row[2]

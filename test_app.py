@@ -78,6 +78,7 @@ def test_load_embeddings_and_train_model_rejects_metadata_without_text(tmp_path)
 
 @pytest.mark.parametrize("bad_embedding", [
     np.array([0.1, "bad"], dtype=object),
+    np.array([0.1, "0.2"], dtype=object),
     np.array([0.1, np.nan]),
     np.array([0.1, np.inf]),
 ])
@@ -86,7 +87,7 @@ def test_load_embeddings_and_train_model_rejects_non_finite_embedding_values(tmp
     with pickle_path.open("wb") as file:
         pickle.dump([(1, bad_embedding, {"text": "sample text"})], file)
 
-    with pytest.raises(ValueError, match="finite numbers"):
+    with pytest.raises(ValueError, match="numeric finite numbers"):
         generate.load_embeddings_and_train_model(pickle_path)
 
 
