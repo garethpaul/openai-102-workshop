@@ -85,6 +85,8 @@ The setup commands above are derived from repository files. Legacy mobile, Pytho
   invalid fixture vectors fail with clear errors.
 - Numeric embedding values must be real numeric types, not stringified numbers,
   before model training.
+- Query embedding validation rejects empty, boolean, non-numeric, non-finite,
+  and dimension-mismatched vectors before nearest-neighbor lookup.
 
 ## Testing and Verification
 
@@ -141,6 +143,8 @@ When the required SDK or runtime is unavailable, use static checks and source re
   gate aliases.
 - See `docs/plans/2026-06-10-numeric-embedding-values.md` for the embedding
   fixture numeric-type validation contract.
+- See `docs/plans/2026-06-10-query-embedding-validation.md` for the retrieval
+  query vector validation contract.
 - See `docs/plans/2026-06-10-hosted-workshop-validation.md` for the hosted
   Linux test dependency and `make check` contract.
 - See `VISION.md` for project direction and contribution guardrails.

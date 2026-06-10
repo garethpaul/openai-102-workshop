@@ -64,6 +64,8 @@ Finite embedding values should be required before nearest-neighbor training so
 NaN, infinite, or non-numeric fixture data fails closed.
 Numeric embedding values should be real numeric types rather than stringified
 numbers before retrieval fixtures train nearest-neighbor models.
+Query embedding validation should reject malformed cache or API vectors before
+they reach nearest-neighbor lookup.
 
 ## Dependency and Supply Chain Security
 

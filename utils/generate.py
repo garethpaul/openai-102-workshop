@@ -216,8 +216,36 @@ def get_top_k_metadata(embedding, nn_model, metadata):
     Returns:
         list: The top-k metadata entries.
     """
+    validate_query_embedding(embedding, nn_model)
     distances, indices = nn_model.kneighbors([embedding])
     return [metadata[i] for i in indices[0]]
+
+
+def validate_query_embedding(embedding, nn_model):
+    try:
+        dimensions = len(embedding)
+    except TypeError:
+        raise ValueError("Query embedding must be a non-empty numeric sequence.")
+
+    if dimensions == 0:
+        raise ValueError("Query embedding must be a non-empty numeric sequence.")
+
+    for value in embedding:
+        if (
+            isinstance(value, (bool, complex, np.complexfloating))
+            or not isinstance(value, (int, float, np.number))
+        ):
+            raise ValueError("Query embedding values must be numeric finite numbers.")
+        try:
+            numeric_value = float(value)
+        except (TypeError, ValueError, OverflowError):
+            raise ValueError("Query embedding values must be numeric finite numbers.")
+        if not math.isfinite(numeric_value):
+            raise ValueError("Query embedding values must be numeric finite numbers.")
+
+    expected_dimensions = getattr(nn_model, "n_features_in_", None)
+    if expected_dimensions is not None and dimensions != expected_dimensions:
+        raise ValueError("Query embedding must match the trained model dimensionality.")
 
 
 def create_augmented_query(top_k_metadata, query):

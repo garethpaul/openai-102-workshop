@@ -29,6 +29,7 @@ REQUIRED = [
     "docs/plans/2026-06-09-embedding-metadata-text.md",
     "docs/plans/2026-06-09-finite-embedding-values.md",
     "docs/plans/2026-06-10-numeric-embedding-values.md",
+    "docs/plans/2026-06-10-query-embedding-validation.md",
     CI_PLAN,
     "docs/plans/2026-06-09-make-gate-aliases.md",
     "docs/plans/2026-06-09-bytecode-free-tests.md",
@@ -86,6 +87,7 @@ def main():
     for phrase in [
         "def get_cache_file",
         "def validate_saved_embeddings",
+        "def validate_query_embedding",
         "hashlib.sha256",
         "os.path.commonpath",
         "get_cache_file(cache_folder, query)",
@@ -100,6 +102,7 @@ def main():
         "numeric finite numbers",
         "math.isfinite",
         "finite numbers",
+        "Query embedding must match the trained model dimensionality.",
     ]:
         if phrase not in generate:
             failures.append(f"utils/generate.py must include {phrase}")
@@ -188,6 +191,8 @@ def main():
         "test_load_embeddings_and_train_model_rejects_dimension_mismatch",
         "test_load_embeddings_and_train_model_rejects_metadata_without_text",
         "test_load_embeddings_and_train_model_rejects_non_finite_embedding_values",
+        "test_get_top_k_metadata_rejects_invalid_query_embeddings",
+        "test_get_top_k_metadata_rejects_dimension_mismatch",
         "numeric finite numbers",
     ]:
         if phrase not in tests:
@@ -227,6 +232,7 @@ def main():
         "metadata text",
         "finite embedding values",
         "numeric embedding values",
+        "query embedding validation",
         "Python bytecode",
         "hosted Linux",
         "requirements-test.txt",
@@ -262,6 +268,9 @@ def main():
     numeric_embedding_plan = read("docs/plans/2026-06-10-numeric-embedding-values.md")
     if "status: completed" not in numeric_embedding_plan or "numeric embedding values" not in numeric_embedding_plan:
         failures.append("numeric embedding values plan must record status and verification")
+    query_embedding_plan = read("docs/plans/2026-06-10-query-embedding-validation.md")
+    if "status: completed" not in query_embedding_plan or "nearest-neighbor lookup" not in query_embedding_plan:
+        failures.append("query embedding validation plan must record status and verification")
     make_gate_plan_path = ROOT / "docs/plans/2026-06-09-make-gate-aliases.md"
     make_gate_plan = make_gate_plan_path.read_text(encoding="utf-8") if make_gate_plan_path.exists() else ""
     if "status: completed" not in make_gate_plan or "make lint" not in make_gate_plan or "make build" not in make_gate_plan:

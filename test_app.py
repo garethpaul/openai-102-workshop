@@ -132,6 +132,46 @@ def test_get_top_k_metadata():
     ) == metadata
 
 
+@pytest.mark.parametrize("bad_embedding", [
+    None,
+    [],
+    [True, 0.2],
+    ["0.1", 0.2],
+    [np.nan, 0.2],
+    [np.inf, 0.2],
+    [np.complex128(1 + 2j), 0.2],
+    [10 ** 400, 0.2],
+])
+def test_get_top_k_metadata_rejects_invalid_query_embeddings(bad_embedding):
+    class FakeNearestNeighbors:
+        n_features_in_ = 2
+
+        def kneighbors(self, values):
+            raise AssertionError("invalid query embedding reached nearest-neighbor lookup")
+
+    with pytest.raises(ValueError):
+        generate.get_top_k_metadata(
+            bad_embedding,
+            FakeNearestNeighbors(),
+            [{"text": "sample text"}],
+        )
+
+
+def test_get_top_k_metadata_rejects_dimension_mismatch():
+    class FakeNearestNeighbors:
+        n_features_in_ = 3
+
+        def kneighbors(self, values):
+            raise AssertionError("dimension mismatch reached nearest-neighbor lookup")
+
+    with pytest.raises(ValueError, match="trained model dimensionality"):
+        generate.get_top_k_metadata(
+            [0.1, 0.2],
+            FakeNearestNeighbors(),
+            [{"text": "sample text"}],
+        )
+
+
 def test_create_augmented_query():
     top_k_metadata = [{"text": "sample text 1"}, {"text": "sample text 2"}]
 
