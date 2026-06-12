@@ -1,6 +1,6 @@
 # Supported Python Dependency Graph
 
-status: planned
+status: completed
 
 ## Context
 
@@ -88,3 +88,35 @@ separate OpenAI lesson/API migration.
 - hostile manifest, runtime, workflow, and plan mutations are rejected
 - `git diff --check`
 - successful exact-head push, pull-request, and CodeQL runs
+
+## Work Completed
+
+- Replaced the exported workstation manifest with 12 reviewed direct
+  application pins and generated exact Python 3.12 application and test locks.
+- Removed unused PyTorch, Transformers, SentencePiece, virtualenv,
+  python-dotenv, and the full LangChain package from the installed graph.
+- Moved recursive chunking to `langchain-text-splitters` and added exact
+  token-limit and overlap regression coverage.
+- Added stable lock regeneration plus an explicit upgrade command, zero-finding
+  audits for both locks, direct runtime import verification, and a bounded
+  localhost-only Streamlit health smoke.
+- Upgraded the Pipfile, Docker image, contributor guidance, and both canonical
+  hosted event paths to Python 3.12 while retaining `openai==0.28.1` for the
+  legacy lesson API boundary.
+
+## Verification Results
+
+- Clean Python 3.12.8 environments installed 73 focused verification packages
+  and 108 application packages; both compatibility checks passed.
+- `pip-audit -r requirements-test.txt` and `pip-audit -r requirements.txt`
+  each reported no known vulnerabilities.
+- `make lint`, `make test`, `make build`, and `make check` passed with 55
+  no-network tests; clean-head `make lock-check` regenerated both locks without
+  a diff.
+- `make runtime-check` imported all 12 reviewed direct packages at their exact
+  versions, and `make smoke` received a healthy response from a real headless
+  Streamlit process without an API credential.
+- Canonical push run `27430175764` and pull-request run `27430176870` passed
+  both the focused baseline and full application smoke at implementation head
+  `9459cbe007b2fe9bac9a6dd95e10745a46497d98`.
+- CodeQL run `27430174890` passed Actions and Python analysis at the same head.

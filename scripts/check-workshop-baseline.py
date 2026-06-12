@@ -210,6 +210,39 @@ def main():
     if "from langchain.text_splitter" in token_helper:
         failures.append("token helper must not restore the full legacy LangChain import")
 
+    runtime_import_check = read("scripts/check-runtime-imports.py")
+    for distribution, module in {
+        "beautifulsoup4": "bs4",
+        "langchain-text-splitters": "langchain_text_splitters",
+        "matplotlib": "matplotlib",
+        "numpy": "numpy",
+        "openai": "openai",
+        "pandas": "pandas",
+        "requests": "requests",
+        "scikit-learn": "sklearn",
+        "seaborn": "seaborn",
+        "spacy": "spacy",
+        "streamlit": "streamlit",
+        "tiktoken": "tiktoken",
+    }.items():
+        if f'"{distribution}": "{module}"' not in runtime_import_check:
+            failures.append(f"runtime import check must cover {distribution}")
+    for phrase in ["sys.version_info[:2] != (3, 12)", "import_module(module)", "metadata.version(distribution)"]:
+        if phrase not in runtime_import_check:
+            failures.append(f"runtime import check must retain {phrase}")
+
+    streamlit_smoke = read("scripts/smoke-streamlit.py")
+    for phrase in [
+        'environment.pop("OPENAI_API_KEY", None)',
+        '"--server.headless=true"',
+        '"--server.address=127.0.0.1"',
+        'f"http://127.0.0.1:{port}/_stcore/health"',
+        "TIMEOUT_SECONDS = 20",
+        "process.terminate()",
+    ]:
+        if phrase not in streamlit_smoke:
+            failures.append(f"Streamlit smoke must retain {phrase}")
+
     workflow = read(".github/workflows/check.yml")
     codeowners = read(".github/CODEOWNERS")
     for phrase in [
@@ -367,6 +400,24 @@ def main():
     ci_plan = read(CI_PLAN)
     if "status: completed" not in ci_plan or "make check" not in ci_plan:
         failures.append("hosted workshop validation plan must record status and verification")
+    dependency_plan = read(DEPENDENCY_PLAN)
+    if dependency_plan.count("status: completed") != 1:
+        failures.append("dependency graph plan must record one completed status")
+    for phrase in [
+        "## Work Completed",
+        "## Verification Results",
+        "no known vulnerabilities",
+        "55",
+        "Streamlit",
+        "9459cbe007b2fe9bac9a6dd95e10745a46497d98",
+        "27430175764",
+        "27430176870",
+        "27430174890",
+    ]:
+        if phrase not in dependency_plan:
+            failures.append(f"dependency graph plan must record {phrase}")
+    if re.search(r"\b(?:planned|pending|todo|tbd)\b", dependency_plan, re.IGNORECASE):
+        failures.append("dependency graph plan must not retain incomplete status markers")
     prepared_ci_plan = read("docs/plans/2026-06-10-ci-baseline.md")
     if "status: completed" not in prepared_ci_plan or "make check" not in prepared_ci_plan:
         failures.append("CI baseline plan must record status and verification")
