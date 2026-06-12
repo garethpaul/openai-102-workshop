@@ -32,16 +32,21 @@ Helpful reports include:
 - Review found database, model, query, or persistence-related code; changes in those areas should receive security-focused review before merge.
 - Review found infrastructure, deployment, proxy, or cloud configuration; changes in those areas should receive security-focused review before merge.
 - Review found secret-like configuration names that require careful review before use; changes in those areas should receive security-focused review before merge.
-- Dependency manifests detected: requirements.txt, Pipfile. Dependency updates should preserve lockfiles when present and avoid introducing packages without a clear maintenance reason.
+- Dependency manifests detected: `requirements.in`, `requirements.txt`,
+  `requirements-test.in`, `requirements-test.txt`, and `Pipfile`. Direct inputs
+  and generated locks must stay synchronized, exactly pinned, and limited to
+  packages with a demonstrated runtime or verification purpose.
 - Workshop users should provide OpenAI credentials through local UI input or `OPENAI_API_KEY`; credentials must not be committed, printed, or placed in generated caches.
 - Generated caches under `cache/`, `url_cache/`, `query_cache/`, and pickle fixtures may contain prompts, crawled text, or embeddings. Treat cache refreshes as reviewable data changes.
 - Local generated files such as `embedding_cache.pkl` should remain ignored and
   untracked unless they are converted into deliberate, reproducible fixtures.
 - Python bytecode should not remain after local verification; rerun the gates
   with bytecode writes disabled before committing.
-- Hosted Linux validation uses the minimal pinned `requirements-test.txt`
-  dependency set, checks the installed environment with `pip check`, and runs
-  `make check` without API credentials or OpenAI network calls.
+- Hosted Linux validation uses Python 3.12 and separate exact test and
+  application locks. It runs `pip check`, audits both locks, regenerates them,
+  executes `make check`, imports every direct runtime package, and launches a
+  bounded localhost-only Streamlit health smoke without API credentials.
+- Keep that hosted path free of private generated caches and customer data.
 
 ## Service and API Notes
 
@@ -72,9 +77,16 @@ distance or similarity.
 
 ## Dependency and Supply Chain Security
 
-Dependency updates should come from trusted package managers and should keep lockfiles in sync when lockfiles exist. Do not commit credentials, private keys, tokens, generated secrets, or machine-local configuration. If a vulnerability depends on a compromised package, typosquatting risk, insecure transitive dependency, or unsafe build step, include the package name, affected version, and the path through which it is used.
+Dependency updates should come from trusted package managers. Regenerate both
+locks with `make lock-check`, audit them with `make audit`, and do not restore
+unused machine-environment packages. Do not commit credentials, private keys,
+tokens, generated secrets, or machine-local configuration. If a vulnerability
+depends on a compromised package, typosquatting risk, insecure transitive
+dependency, or unsafe build step, include the package name, affected version,
+and the path through which it is used.
 
-The app contains legacy OpenAI SDK examples. Model, endpoint, or SDK migrations
+The app contains legacy OpenAI SDK examples pinned to `openai==0.28.1`. Model,
+endpoint, or SDK migrations
 should be reviewed as compatibility work and verified with `make lint`,
 `make test`, `make build`, and `make check`.
 

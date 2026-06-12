@@ -6,6 +6,16 @@
   and Manhattan helpers.
 - Added no-network tests rejecting empty, boolean, string, complex, non-finite,
   and overflowing values while preserving Python and NumPy numeric support.
+- Replaced the exported workstation dependency list with reviewed Python 3.12
+  direct inputs and generated exact application and test locks.
+- Removed unused vulnerable PyTorch, Transformers, SentencePiece, virtualenv,
+  and python-dotenv entries; both resulting locks audit with zero findings.
+- Moved the runtime text splitter to `langchain-text-splitters` and preserved
+  exact token chunk and overlap behavior in no-network tests.
+- Added lock regeneration, vulnerability audit, direct-import, and real
+  headless Streamlit health gates for both push and pull-request validation.
+- Upgraded the Pipfile and container baseline to Python 3.12 while preserving
+  the legacy OpenAI lesson API at `openai==0.28.1`.
 
 ## 2026-06-08
 
@@ -45,6 +55,8 @@
 
 - Required retrieval fixture embedding values to be real numeric types instead
   of stringified numbers before nearest-neighbor training.
+- Added a GitHub Actions workflow that installs the minimal Python 3.10
+  no-network test dependencies and runs `make check`.
 - Added pinned hosted Linux validation with a minimal Python 3.10 test
   dependency set, `pip check`, and the no-network `make check` gate.
 - Added query embedding validation before nearest-neighbor lookup for empty,

@@ -4,6 +4,7 @@
 from pathlib import Path
 import ast
 import json
+import re
 import subprocess
 import sys
 import xml.etree.ElementTree as ET
@@ -11,7 +12,9 @@ import xml.etree.ElementTree as ET
 
 ROOT = Path(__file__).resolve().parents[1]
 CI_PLAN = "docs/plans/2026-06-10-hosted-workshop-validation.md"
+DEPENDENCY_PLAN = "docs/plans/2026-06-12-supported-python-dependency-graph.md"
 REQUIRED = [
+    ".github/CODEOWNERS",
     ".github/workflows/check.yml",
     ".gitignore",
     "CHANGES.md",
@@ -31,16 +34,22 @@ REQUIRED = [
     "docs/plans/2026-06-10-numeric-embedding-values.md",
     "docs/plans/2026-06-10-query-embedding-validation.md",
     "docs/plans/2026-06-12-vector-value-validation.md",
+    DEPENDENCY_PLAN,
     CI_PLAN,
     "docs/plans/2026-06-09-make-gate-aliases.md",
     "docs/plans/2026-06-09-bytecode-free-tests.md",
     "docs/readme-overview.svg",
+    "requirements.in",
     "requirements.txt",
+    "requirements-test.in",
     "requirements-test.txt",
+    "scripts/check-runtime-imports.py",
+    "scripts/smoke-streamlit.py",
     "scripts/check-workshop-baseline.py",
     "test_app.py",
     "utils/crawler.py",
     "utils/generate.py",
+    "utils/token.py",
 ]
 
 
@@ -120,11 +129,19 @@ def main():
 
     makefile = read("Makefile")
     for phrase in [
-        ".PHONY: all build check lint run static-check test verify",
+        ".PHONY: all audit build check lint lock lock-check lock-upgrade run runtime-check smoke static-check test verify",
         "PYTHON ?= python3",
+        "UV ?= uv",
         "PYTHONDONTWRITEBYTECODE=1 $(PYTHON) -c \"import pathlib; [compile(pathlib.Path(path).read_text(), path, 'exec')",
         "PYTHONDONTWRITEBYTECODE=1 $(PYTHON) -m pytest -q test_app.py",
         "PYTHONDONTWRITEBYTECODE=1 $(PYTHON) scripts/check-workshop-baseline.py",
+        "$(UV) pip compile requirements.in --python-version 3.12 --universal --quiet --output-file requirements.txt",
+        "$(UV) pip compile requirements.in --python-version 3.12 --universal --upgrade --quiet --output-file requirements.txt",
+        "git diff --exit-code -- requirements.txt requirements-test.txt",
+        "pip-audit -r requirements-test.txt",
+        "pip-audit -r requirements.txt",
+        "scripts/check-runtime-imports.py",
+        "scripts/smoke-streamlit.py",
         "lint: static-check",
         "verify: lint test",
         "check: verify",
@@ -132,35 +149,130 @@ def main():
         if phrase not in makefile:
             failures.append(f"Makefile must include {phrase}")
 
-    test_requirements = read("requirements-test.txt")
-    for requirement in [
-        "numpy==1.26.4",
+    direct_requirements = {
+        line for line in read("requirements.in").splitlines()
+        if line and not line.startswith("#")
+    }
+    expected_direct_requirements = {
+        "beautifulsoup4==4.14.3",
+        "langchain-text-splitters==1.1.2",
+        "matplotlib==3.10.9",
+        "numpy==2.4.6",
         "openai==0.28.1",
-        "pytest==7.4.4",
-        "requests==2.31.0",
-        "scikit-learn==1.3.2",
+        "pandas==3.0.3",
+        "requests==2.34.2",
+        "scikit-learn==1.9.0",
+        "seaborn==0.13.2",
+        "spacy==3.8.14",
+        "streamlit==1.58.0",
+        "tiktoken==0.11.0",
+    }
+    if direct_requirements != expected_direct_requirements:
+        failures.append("requirements.in must keep the reviewed direct application graph")
+
+    direct_test_requirements = {
+        line for line in read("requirements-test.in").splitlines()
+        if line and not line.startswith("#")
+    }
+    expected_direct_test_requirements = {
+        "langchain-text-splitters==1.1.2",
+        "numpy==2.4.6",
+        "openai==0.28.1",
+        "pip-audit==2.10.0",
+        "pytest==9.0.3",
+        "requests==2.34.2",
+        "scikit-learn==1.9.0",
+        "tiktoken==0.11.0",
+        "uv==0.11.19",
+    }
+    if direct_test_requirements != expected_direct_test_requirements:
+        failures.append("requirements-test.in must keep the reviewed verification graph")
+
+    application_lock = read("requirements.txt")
+    test_lock = read("requirements-test.txt")
+    for lock_name, lock in [("requirements.txt", application_lock), ("requirements-test.txt", test_lock)]:
+        for line in lock.splitlines():
+            if line and not line.startswith(("#", " ")) and not re.match(r"^[A-Za-z0-9_.-]+==[^; ]+(?:\s*;.*)?$", line):
+                failures.append(f"{lock_name} must contain only exact generated pins: {line}")
+        if "--python-version 3.12 --universal" not in lock:
+            failures.append(f"{lock_name} must record the Python 3.12 universal compile contract")
+
+    for removed_package in ["torch", "transformers", "sentencepiece", "virtualenv", "python-dotenv"]:
+        if re.search(rf"^{re.escape(removed_package)}==", application_lock, re.MULTILINE | re.IGNORECASE):
+            failures.append(f"requirements.txt must not restore unused {removed_package}")
+    for safe_pin in ["jinja2==3.1.6", "pyarrow==24.0.0", "pygments==2.20.0", "requests==2.34.2", "streamlit==1.58.0"]:
+        if safe_pin not in application_lock:
+            failures.append(f"requirements.txt must retain reviewed pin {safe_pin}")
+
+    token_helper = read("utils/token.py")
+    if "from langchain_text_splitters import RecursiveCharacterTextSplitter" not in token_helper:
+        failures.append("token helper must use the supported splitter package")
+    if "from langchain.text_splitter" in token_helper:
+        failures.append("token helper must not restore the full legacy LangChain import")
+
+    runtime_import_check = read("scripts/check-runtime-imports.py")
+    for distribution, module in {
+        "beautifulsoup4": "bs4",
+        "langchain-text-splitters": "langchain_text_splitters",
+        "matplotlib": "matplotlib",
+        "numpy": "numpy",
+        "openai": "openai",
+        "pandas": "pandas",
+        "requests": "requests",
+        "scikit-learn": "sklearn",
+        "seaborn": "seaborn",
+        "spacy": "spacy",
+        "streamlit": "streamlit",
+        "tiktoken": "tiktoken",
+    }.items():
+        if f'"{distribution}": "{module}"' not in runtime_import_check:
+            failures.append(f"runtime import check must cover {distribution}")
+    for phrase in ["sys.version_info[:2] != (3, 12)", "import_module(module)", "metadata.version(distribution)"]:
+        if phrase not in runtime_import_check:
+            failures.append(f"runtime import check must retain {phrase}")
+
+    streamlit_smoke = read("scripts/smoke-streamlit.py")
+    for phrase in [
+        'environment.pop("OPENAI_API_KEY", None)',
+        '"--server.headless=true"',
+        '"--server.address=127.0.0.1"',
+        'f"http://127.0.0.1:{port}/_stcore/health"',
+        "TIMEOUT_SECONDS = 20",
+        "process.terminate()",
     ]:
-        if requirement not in test_requirements:
-            failures.append(f"test requirements must pin {requirement}")
+        if phrase not in streamlit_smoke:
+            failures.append(f"Streamlit smoke must retain {phrase}")
 
     workflow = read(".github/workflows/check.yml")
+    codeowners = read(".github/CODEOWNERS")
     for phrase in [
         "permissions:\n  contents: read",
         "cancel-in-progress: true",
         "runs-on: ubuntu-24.04",
         "timeout-minutes: 15",
         "actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10",
+        "persist-credentials: false",
         "actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405",
-        'python-version: "3.10"',
+        'python-version: "3.12"',
         "python -m pip install -r requirements-test.txt",
         "python -m pip check",
         "make check",
+        "make lock-check",
+        "make audit",
+        "python -m pip install -r requirements.txt",
+        "make runtime-check",
+        "make smoke",
     ]:
         if phrase not in workflow:
             failures.append(f"Check workflow must keep {phrase}")
+    workflow_files = sorted(str(path.relative_to(ROOT)) for path in (ROOT / ".github/workflows").rglob("*") if path.is_file())
+    if workflow_files != [".github/workflows/check.yml"]:
+        failures.append("check.yml must be the repository's only hosted workflow")
+    if codeowners.strip() != "* @garethpaul":
+        failures.append("CODEOWNERS must assign the repository to @garethpaul")
 
     dockerfile = read("Dockerfile")
-    for phrase in ["ARG EMBEDDINGS_URL", "--no-install-recommends", "wget --https-only"]:
+    for phrase in ["FROM python:3.12-slim", "ARG EMBEDDINGS_URL", "--no-install-recommends", "wget --https-only"]:
         if phrase not in dockerfile:
             failures.append(f"Dockerfile must include {phrase}")
 
@@ -197,27 +309,23 @@ def main():
         "test_get_top_k_metadata_rejects_invalid_query_embeddings",
         "test_get_top_k_metadata_rejects_dimension_mismatch",
         "numeric finite numbers",
+        "test_recursive_text_splitter_preserves_token_overlap",
+        "word240",
+        "word480",
     ]:
         if phrase not in tests:
             failures.append(f"test_app.py must include {phrase}")
 
-    requirements = read("requirements.txt").replace(" ", "")
-    if "openai<1.0" not in requirements:
-        failures.append("requirements.txt must pin legacy examples to openai<1.0")
-    if "numpy<2" not in requirements:
-        failures.append("requirements.txt must pin legacy examples to numpy<2")
-    if "pytest" not in requirements:
-        failures.append("requirements.txt must include pytest for make check")
     pipfile = read("Pipfile").replace(" ", "")
-    if 'openai="<1.0"' not in pipfile:
-        failures.append('Pipfile must pin legacy examples with openai = "<1.0"')
-    if 'numpy="<2"' not in pipfile:
-        failures.append('Pipfile must pin legacy examples with numpy = "<2"')
-    if "pytest" not in pipfile:
-        failures.append("Pipfile must include pytest in dev-packages")
-    for package in ["streamlit==", "python-dotenv==", "tiktoken=="]:
-        if package not in requirements:
-            failures.append(f"requirements.txt must include {package}")
+    for package in [
+        'openai="==0.28.1"',
+        'numpy="==2.4.6"',
+        'streamlit="==1.58.0"',
+        'tiktoken="==0.11.0"',
+        'python_version="3.12"',
+    ]:
+        if package not in pipfile:
+            failures.append(f"Pipfile must retain {package}")
 
     docs = "\n".join(read(path) for path in ["README.md", "SECURITY.md", "VISION.md"])
     for phrase in [
@@ -240,6 +348,10 @@ def main():
         "Python bytecode",
         "hosted Linux",
         "requirements-test.txt",
+        "Python 3.12",
+        "requirements.in",
+        "make audit",
+        "Streamlit health",
     ]:
         if phrase.lower() not in docs.lower():
             failures.append(f"docs must mention {phrase}")
@@ -288,6 +400,27 @@ def main():
     ci_plan = read(CI_PLAN)
     if "status: completed" not in ci_plan or "make check" not in ci_plan:
         failures.append("hosted workshop validation plan must record status and verification")
+    dependency_plan = read(DEPENDENCY_PLAN)
+    if dependency_plan.count("status: completed") != 1:
+        failures.append("dependency graph plan must record one completed status")
+    for phrase in [
+        "## Work Completed",
+        "## Verification Results",
+        "no known vulnerabilities",
+        "55",
+        "Streamlit",
+        "9459cbe007b2fe9bac9a6dd95e10745a46497d98",
+        "27430175764",
+        "27430176870",
+        "27430174890",
+    ]:
+        if phrase not in dependency_plan:
+            failures.append(f"dependency graph plan must record {phrase}")
+    if re.search(r"\b(?:planned|pending|todo|tbd)\b", dependency_plan, re.IGNORECASE):
+        failures.append("dependency graph plan must not retain incomplete status markers")
+    prepared_ci_plan = read("docs/plans/2026-06-10-ci-baseline.md")
+    if "status: completed" not in prepared_ci_plan or "make check" not in prepared_ci_plan:
+        failures.append("CI baseline plan must record status and verification")
 
     try:
         ET.parse(ROOT / "docs/readme-overview.svg")

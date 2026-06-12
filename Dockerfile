@@ -1,12 +1,12 @@
 # Use the official Python base image
-FROM python:3.10
+FROM python:3.12-slim
 
 # Set the working directory
 WORKDIR /app
 
 # Copy only the requirements file and install dependencies
 COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+RUN python -m pip install --no-cache-dir -r requirements.txt
 
 # Get the workshop embeddings fixture. Override this URL for private mirrors.
 ARG EMBEDDINGS_URL=https://storage.googleapis.com/artifacts.gjones-webinar.appspot.com/embeddings.pkl

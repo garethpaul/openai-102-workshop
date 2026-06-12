@@ -15,7 +15,7 @@ fake_streamlit = types.SimpleNamespace(
 )
 sys.modules.setdefault("streamlit", fake_streamlit)
 
-from utils import generate  # noqa: E402
+from utils import generate, token  # noqa: E402
 
 
 def test_load_embeddings_and_train_model(tmp_path):
@@ -242,3 +242,16 @@ def test_record_estimated_cost_adds_first_and_subsequent_values():
     generate._record_estimated_cost(5, 0.001)
 
     assert fake_streamlit.session_state["cost"] == "$0.0000150000"
+
+
+def test_recursive_text_splitter_preserves_token_overlap():
+    text = " ".join(f"word{index}" for index in range(650))
+
+    chunks = token.text_splitter.split_text(text)
+
+    assert [token.tiktoken_len(chunk) for chunk in chunks] == [500, 500, 367]
+    assert chunks[0].endswith("word249")
+    assert chunks[1].startswith("word240")
+    assert chunks[1].endswith("word489")
+    assert chunks[2].startswith("word480")
+    assert chunks[2].endswith("word649")
