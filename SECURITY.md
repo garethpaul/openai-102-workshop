@@ -66,6 +66,9 @@ Numeric embedding values should be real numeric types rather than stringified
 numbers before retrieval fixtures train nearest-neighbor models.
 Query embedding validation should reject malformed cache or API vectors before
 they reach nearest-neighbor lookup.
+Vector value validation should reject empty, boolean, string, complex,
+non-finite, and overflowing values before workshop math helpers calculate a
+distance or similarity.
 
 ## Dependency and Supply Chain Security
 

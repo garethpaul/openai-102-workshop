@@ -1,5 +1,12 @@
 # Changes
 
+## 2026-06-12
+
+- Added one shared vector-pair validation boundary across cosine, Euclidean,
+  and Manhattan helpers.
+- Added no-network tests rejecting empty, boolean, string, complex, non-finite,
+  and overflowing values while preserving Python and NumPy numeric support.
+
 ## 2026-06-08
 
 - Added `make check` with static workshop checks and no-network pytest coverage.

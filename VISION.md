@@ -28,6 +28,8 @@ Priority:
   local verification
 - Keep `make check` fast and free of OpenAI API calls
 - Keep retrieval vector math validation explicit and covered by tests
+- Keep vector value validation consistent across cosine, Euclidean, and
+  Manhattan helpers
 - Keep small embedding fixtures queryable without private generated caches
 - Keep empty embedding fixtures rejected with clear no-network tests
 - Keep malformed embedding fixtures rejected before nearest-neighbor training

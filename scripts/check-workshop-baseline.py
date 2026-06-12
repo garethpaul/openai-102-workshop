@@ -30,6 +30,7 @@ REQUIRED = [
     "docs/plans/2026-06-09-finite-embedding-values.md",
     "docs/plans/2026-06-10-numeric-embedding-values.md",
     "docs/plans/2026-06-10-query-embedding-validation.md",
+    "docs/plans/2026-06-12-vector-value-validation.md",
     CI_PLAN,
     "docs/plans/2026-06-09-make-gate-aliases.md",
     "docs/plans/2026-06-09-bytecode-free-tests.md",
@@ -93,6 +94,7 @@ def main():
         "get_cache_file(cache_folder, query)",
         "def _record_estimated_cost",
         "def cosine_similarity",
+        "def _validate_vector_pair",
         "n_neighbors = min(5, len(embeddings_array))",
         "Cosine similarity is undefined for zero vectors.",
         "At least one embedding fixture row is required.",
@@ -103,6 +105,7 @@ def main():
         "math.isfinite",
         "finite numbers",
         "Query embedding must match the trained model dimensionality.",
+        "Vectors must be non-empty numeric finite sequences.",
     ]:
         if phrase not in generate:
             failures.append(f"utils/generate.py must include {phrase}")
@@ -233,6 +236,7 @@ def main():
         "finite embedding values",
         "numeric embedding values",
         "query embedding validation",
+        "vector value validation",
         "Python bytecode",
         "hosted Linux",
         "requirements-test.txt",
@@ -271,6 +275,9 @@ def main():
     query_embedding_plan = read("docs/plans/2026-06-10-query-embedding-validation.md")
     if "status: completed" not in query_embedding_plan or "nearest-neighbor lookup" not in query_embedding_plan:
         failures.append("query embedding validation plan must record status and verification")
+    vector_value_plan = read("docs/plans/2026-06-12-vector-value-validation.md")
+    if "status: completed" not in vector_value_plan or "numeric finite vector-pair validator" not in vector_value_plan:
+        failures.append("vector value validation plan must record status and verification")
     make_gate_plan_path = ROOT / "docs/plans/2026-06-09-make-gate-aliases.md"
     make_gate_plan = make_gate_plan_path.read_text(encoding="utf-8") if make_gate_plan_path.exists() else ""
     if "status: completed" not in make_gate_plan or "make lint" not in make_gate_plan or "make build" not in make_gate_plan:
