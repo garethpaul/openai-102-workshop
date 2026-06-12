@@ -1,4 +1,4 @@
-.PHONY: all audit build check lint lock lock-check run runtime-check smoke static-check test verify
+.PHONY: all audit build check lint lock lock-check lock-upgrade run runtime-check smoke static-check test verify
 
 PYTHON ?= python3
 UV ?= uv
@@ -19,6 +19,10 @@ static-check:
 	PYTHONDONTWRITEBYTECODE=1 $(PYTHON) scripts/check-workshop-baseline.py
 
 lock:
+	$(UV) pip compile requirements.in --python-version 3.12 --universal --quiet --output-file requirements.txt
+	$(UV) pip compile requirements-test.in --python-version 3.12 --universal --quiet --output-file requirements-test.txt
+
+lock-upgrade:
 	$(UV) pip compile requirements.in --python-version 3.12 --universal --upgrade --quiet --output-file requirements.txt
 	$(UV) pip compile requirements-test.in --python-version 3.12 --universal --upgrade --quiet --output-file requirements-test.txt
 

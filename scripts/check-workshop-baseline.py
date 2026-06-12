@@ -129,12 +129,13 @@ def main():
 
     makefile = read("Makefile")
     for phrase in [
-        ".PHONY: all audit build check lint lock lock-check run runtime-check smoke static-check test verify",
+        ".PHONY: all audit build check lint lock lock-check lock-upgrade run runtime-check smoke static-check test verify",
         "PYTHON ?= python3",
         "UV ?= uv",
         "PYTHONDONTWRITEBYTECODE=1 $(PYTHON) -c \"import pathlib; [compile(pathlib.Path(path).read_text(), path, 'exec')",
         "PYTHONDONTWRITEBYTECODE=1 $(PYTHON) -m pytest -q test_app.py",
         "PYTHONDONTWRITEBYTECODE=1 $(PYTHON) scripts/check-workshop-baseline.py",
+        "$(UV) pip compile requirements.in --python-version 3.12 --universal --quiet --output-file requirements.txt",
         "$(UV) pip compile requirements.in --python-version 3.12 --universal --upgrade --quiet --output-file requirements.txt",
         "git diff --exit-code -- requirements.txt requirements-test.txt",
         "pip-audit -r requirements-test.txt",
@@ -275,6 +276,9 @@ def main():
         "test_get_top_k_metadata_rejects_invalid_query_embeddings",
         "test_get_top_k_metadata_rejects_dimension_mismatch",
         "numeric finite numbers",
+        "test_recursive_text_splitter_preserves_token_overlap",
+        "word240",
+        "word480",
     ]:
         if phrase not in tests:
             failures.append(f"test_app.py must include {phrase}")
@@ -311,6 +315,10 @@ def main():
         "Python bytecode",
         "hosted Linux",
         "requirements-test.txt",
+        "Python 3.12",
+        "requirements.in",
+        "make audit",
+        "Streamlit health",
     ]:
         if phrase.lower() not in docs.lower():
             failures.append(f"docs must mention {phrase}")
