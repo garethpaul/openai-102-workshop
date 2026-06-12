@@ -1,9 +1,9 @@
-import requests
 import numpy as np
 import pickle
 from sklearn.neighbors import NearestNeighbors
 import openai
-import os
+
+from utils.artifacts import ensure_verified_embeddings
 
 # Goal: Provide users with an interface to query our developer docs.
 query = "what are the params for scheduling messages?"
@@ -24,18 +24,10 @@ query_embedding = res['data'][0]['embedding']
 # save the pickle file
 pickle_file_path = 'embeddings.pkl'
 
-# Check if the file already exists
-if not os.path.exists(pickle_file_path):
-    # Download the pickle file
-    pkl_file_download = requests.get(
-        'https://storage.googleapis.com/artifacts.gjones-webinar.appspot.com/embeddings.pkl')
+verified_pickle_path = ensure_verified_embeddings(pickle_file_path)
 
-    # Save the pickle file
-    with open(pickle_file_path, 'wb') as file:
-        file.write(pkl_file_download.content)
-
-# Load the pickle file
-with open(pickle_file_path, 'rb') as file:
+# Load only the pinned and verified pickle file.
+with verified_pickle_path.open('rb') as file:
     saved_embeddings = pickle.load(file)
 ids, embeddings, metadata = zip(*saved_embeddings)
 embeddings_array = np.stack(embeddings)

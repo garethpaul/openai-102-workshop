@@ -1,3 +1,4 @@
+import hashlib
 import json
 import math
 import os
@@ -15,7 +16,98 @@ fake_streamlit = types.SimpleNamespace(
 )
 sys.modules.setdefault("streamlit", fake_streamlit)
 
-from utils import generate  # noqa: E402
+from utils import artifacts, generate  # noqa: E402
+
+
+class FakeArtifactResponse:
+    def __init__(self, chunks, url="https://fixtures.example/embeddings.pkl"):
+        self.chunks = chunks
+        self.url = url
+        self.closed = False
+        self.status_checked = False
+
+    def raise_for_status(self):
+        self.status_checked = True
+
+    def iter_content(self, chunk_size):
+        assert chunk_size == artifacts.DOWNLOAD_CHUNK_SIZE
+        return iter(self.chunks)
+
+    def close(self):
+        self.closed = True
+
+
+def test_download_verified_artifact_replaces_destination_atomically(tmp_path):
+    payload = b"verified workshop fixture"
+    destination = tmp_path / "embeddings.pkl"
+    destination.write_bytes(b"previous verified fixture")
+    response = FakeArtifactResponse([payload[:8], b"", payload[8:]])
+    request_arguments = {}
+
+    def fake_get(url, **kwargs):
+        request_arguments.update(url=url, **kwargs)
+        return response
+
+    result = artifacts.download_verified_artifact(
+        response.url,
+        destination,
+        hashlib.sha256(payload).hexdigest(),
+        len(payload),
+        request_get=fake_get,
+    )
+
+    assert result == destination
+    assert destination.read_bytes() == payload
+    assert request_arguments == {
+        "url": response.url,
+        "stream": True,
+        "timeout": artifacts.DOWNLOAD_TIMEOUT,
+    }
+    assert response.status_checked
+    assert response.closed
+    assert not list(tmp_path.glob(".embeddings.pkl.*.tmp"))
+
+
+@pytest.mark.parametrize("expected_sha256, expected_size", [
+    ("0" * 64, len(b"untrusted fixture")),
+    (hashlib.sha256(b"untrusted fixture").hexdigest(), 1),
+    (hashlib.sha256(b"untrusted fixture").hexdigest(), len(b"untrusted fixture") + 1),
+])
+def test_download_verified_artifact_rejects_mismatch_and_preserves_destination(
+    tmp_path, expected_sha256, expected_size
+):
+    payload = b"untrusted fixture"
+    destination = tmp_path / "embeddings.pkl"
+    destination.write_bytes(b"previous verified fixture")
+    response = FakeArtifactResponse([payload])
+
+    with pytest.raises(artifacts.ArtifactVerificationError):
+        artifacts.download_verified_artifact(
+            response.url,
+            destination,
+            expected_sha256,
+            expected_size,
+            request_get=lambda *args, **kwargs: response,
+        )
+
+    assert destination.read_bytes() == b"previous verified fixture"
+    assert response.closed
+    assert not list(tmp_path.glob(".embeddings.pkl.*.tmp"))
+
+
+def test_verify_artifact_rejects_existing_checksum_mismatch(tmp_path):
+    artifact_path = tmp_path / "embeddings.pkl"
+    artifact_path.write_bytes(b"unexpected fixture")
+
+    with pytest.raises(
+        artifacts.ArtifactVerificationError,
+        match="checksum mismatch",
+    ):
+        artifacts.verify_artifact(
+            artifact_path,
+            "0" * 64,
+            artifact_path.stat().st_size,
+        )
 
 
 def test_load_embeddings_and_train_model(tmp_path):

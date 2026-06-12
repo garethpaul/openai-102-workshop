@@ -1,0 +1,11 @@
+.git
+.env
+.env.*
+.pytest_cache/
+__pycache__/
+*.py[cod]
+cache/
+url_cache/
+query_cache/
+embedding_cache.pkl
+embeddings.pkl

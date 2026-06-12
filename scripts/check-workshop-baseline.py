@@ -4,6 +4,7 @@
 from pathlib import Path
 import ast
 import json
+import re
 import subprocess
 import sys
 import xml.etree.ElementTree as ET
@@ -11,8 +12,10 @@ import xml.etree.ElementTree as ET
 
 ROOT = Path(__file__).resolve().parents[1]
 CI_PLAN = "docs/plans/2026-06-10-hosted-workshop-validation.md"
+VERIFIED_ARTIFACT_PLAN = "docs/plans/2026-06-12-verified-embeddings-artifact.md"
 REQUIRED = [
     ".github/workflows/check.yml",
+    ".dockerignore",
     ".gitignore",
     "CHANGES.md",
     "Dockerfile",
@@ -21,6 +24,7 @@ REQUIRED = [
     "SECURITY.md",
     "VISION.md",
     "components/common.py",
+    "embeddings_demo_step4.py",
     "docs/plans/2026-06-08-openai-102-workshop-baseline.md",
     "docs/plans/2026-06-09-vector-math-validation.md",
     "docs/plans/2026-06-09-small-embedding-fixtures.md",
@@ -31,6 +35,7 @@ REQUIRED = [
     "docs/plans/2026-06-10-numeric-embedding-values.md",
     "docs/plans/2026-06-10-query-embedding-validation.md",
     "docs/plans/2026-06-12-vector-value-validation.md",
+    VERIFIED_ARTIFACT_PLAN,
     CI_PLAN,
     "docs/plans/2026-06-09-make-gate-aliases.md",
     "docs/plans/2026-06-09-bytecode-free-tests.md",
@@ -40,8 +45,17 @@ REQUIRED = [
     "scripts/check-workshop-baseline.py",
     "test_app.py",
     "utils/crawler.py",
+    "utils/artifacts.py",
     "utils/generate.py",
 ]
+
+
+def markdown_section(text, heading):
+    match = re.search(
+        rf"(?ms)^## {re.escape(heading)}\s*$\n(.*?)(?=^## |\Z)",
+        text,
+    )
+    return match.group(1).strip() if match else ""
 
 
 def read(path):
@@ -67,8 +81,10 @@ def main():
 
     for path in [
         "components/common.py",
+        "embeddings_demo_step4.py",
         "test_app.py",
         "utils/crawler.py",
+        "utils/artifacts.py",
         "utils/generate.py",
     ]:
         try:
@@ -118,6 +134,33 @@ def main():
     if "timeout=15" not in crawler or "raise_for_status()" not in crawler:
         failures.append("crawler requests must use timeout and raise_for_status")
 
+    artifacts = read("utils/artifacts.py")
+    for phrase in [
+        "EMBEDDINGS_SHA256",
+        "0331e16d863953ab90d26fa3a2a16fe963990553216fd465d5a0d08f4e002c58",
+        "EMBEDDINGS_SIZE = 625199795",
+        "stream=True",
+        "timeout=DOWNLOAD_TIMEOUT",
+        "response.raise_for_status()",
+        'response.url.startswith("https://")',
+        "response.iter_content",
+        "actual_size > expected_size",
+        "digest.hexdigest() != expected_sha256",
+        "os.replace(temporary_path, destination_path)",
+        "temporary_path.unlink(missing_ok=True)",
+        "def ensure_verified_embeddings",
+    ]:
+        if phrase not in artifacts:
+            failures.append(f"utils/artifacts.py must include {phrase}")
+
+    demo = read("embeddings_demo_step4.py")
+    ensure_position = demo.find("ensure_verified_embeddings(pickle_file_path)")
+    pickle_position = demo.find("pickle.load(file)")
+    if ensure_position == -1 or pickle_position == -1 or ensure_position > pickle_position:
+        failures.append("embeddings demo must verify the pinned artifact before pickle.load")
+    if "requests.get(" in demo:
+        failures.append("embeddings demo must use the shared verified artifact downloader")
+
     makefile = read("Makefile")
     for phrase in [
         ".PHONY: all build check lint run static-check test verify",
@@ -160,9 +203,34 @@ def main():
             failures.append(f"Check workflow must keep {phrase}")
 
     dockerfile = read("Dockerfile")
-    for phrase in ["ARG EMBEDDINGS_URL", "--no-install-recommends", "wget --https-only"]:
+    for phrase in [
+        "ARG EMBEDDINGS_URL",
+        "ARG EMBEDDINGS_SHA256=0331e16d863953ab90d26fa3a2a16fe963990553216fd465d5a0d08f4e002c58",
+        "ARG EMBEDDINGS_SIZE=625199795",
+        "--no-install-recommends",
+        "wget --https-only --timeout=30 --tries=3",
+        'test "$(wc -c < embeddings.pkl)" -eq "$EMBEDDINGS_SIZE"',
+        'echo "$EMBEDDINGS_SHA256  embeddings.pkl" | sha256sum -c -',
+    ]:
         if phrase not in dockerfile:
             failures.append(f"Dockerfile must include {phrase}")
+
+    dockerignore = read(".dockerignore")
+    for expected in [
+        ".git",
+        ".env",
+        ".env.*",
+        ".pytest_cache/",
+        "__pycache__/",
+        "*.py[cod]",
+        "cache/",
+        "url_cache/",
+        "query_cache/",
+        "embedding_cache.pkl",
+        "embeddings.pkl",
+    ]:
+        if expected not in dockerignore:
+            failures.append(f".dockerignore must include {expected}")
 
     gitignore = read(".gitignore")
     for expected in [".env", ".env.*", "cache/", "url_cache/", "query_cache/", "embedding_cache.pkl", "embeddings.pkl"]:
@@ -196,6 +264,9 @@ def main():
         "test_load_embeddings_and_train_model_rejects_non_finite_embedding_values",
         "test_get_top_k_metadata_rejects_invalid_query_embeddings",
         "test_get_top_k_metadata_rejects_dimension_mismatch",
+        "test_download_verified_artifact_replaces_destination_atomically",
+        "test_download_verified_artifact_rejects_mismatch_and_preserves_destination",
+        "test_verify_artifact_rejects_existing_checksum_mismatch",
         "numeric finite numbers",
     ]:
         if phrase not in tests:
@@ -237,6 +308,7 @@ def main():
         "numeric embedding values",
         "query embedding validation",
         "vector value validation",
+        "verified embeddings artifact",
         "Python bytecode",
         "hosted Linux",
         "requirements-test.txt",
@@ -278,6 +350,36 @@ def main():
     vector_value_plan = read("docs/plans/2026-06-12-vector-value-validation.md")
     if "status: completed" not in vector_value_plan or "numeric finite vector-pair validator" not in vector_value_plan:
         failures.append("vector value validation plan must record status and verification")
+    verified_artifact_plan = read(VERIFIED_ARTIFACT_PLAN)
+    artifact_status = re.findall(r"(?mi)^status:\s*(.+?)\s*$", verified_artifact_plan)
+    artifact_work = markdown_section(verified_artifact_plan, "Work Completed")
+    artifact_verification = markdown_section(verified_artifact_plan, "Verification Completed")
+    if artifact_status != ["completed"] or not artifact_work:
+        failures.append("verified embeddings artifact plan must record one completed status and completed work")
+    if not artifact_verification or re.search(
+        r"(?i)\b(?:pending|todo|tbd|not run)\b", artifact_verification
+    ):
+        failures.append("verified embeddings artifact plan must record completed verification")
+    for evidence in [
+        "PYTHONDONTWRITEBYTECODE=1 python3 -m pytest -q test_app.py",
+        "make lint",
+        "make test",
+        "make build",
+        "make check",
+        "git diff --check",
+        "python3 -m py_compile scripts/check-workshop-baseline.py",
+        "27398195798",
+        "27398200976",
+        "b8148b4ee4c40022b1f91de0b066e2b01cacfe32",
+        "0331e16d863953ab90d26fa3a2a16fe963990553216fd465d5a0d08f4e002c58",
+        "625199795",
+        "download_verified_artifact",
+        "verify_artifact",
+        "os.replace",
+        "pickle.load",
+    ]:
+        if evidence not in artifact_verification:
+            failures.append(f"verified embeddings artifact verification must record {evidence}")
     make_gate_plan_path = ROOT / "docs/plans/2026-06-09-make-gate-aliases.md"
     make_gate_plan = make_gate_plan_path.read_text(encoding="utf-8") if make_gate_plan_path.exists() else ""
     if "status: completed" not in make_gate_plan or "make lint" not in make_gate_plan or "make build" not in make_gate_plan:

@@ -6,6 +6,9 @@
   and Manhattan helpers.
 - Added no-network tests rejecting empty, boolean, string, complex, non-finite,
   and overflowing values while preserving Python and NumPy numeric support.
+- Added streamed, atomic SHA-256 and size verification for the remote embeddings
+  pickle before Docker use or demo deserialization, with no-network tests and
+  Docker context exclusions that prevent local fixture replacement.
 
 ## 2026-06-08
 
