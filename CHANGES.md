@@ -38,3 +38,5 @@
 
 - Required retrieval fixture embedding values to be real numeric types instead
   of stringified numbers before nearest-neighbor training.
+- Added a GitHub Actions workflow that installs the minimal Python 3.10
+  no-network test dependencies and runs `make check`.

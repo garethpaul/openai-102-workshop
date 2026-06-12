@@ -12,6 +12,7 @@ import xml.etree.ElementTree as ET
 ROOT = Path(__file__).resolve().parents[1]
 REQUIRED = [
     ".gitignore",
+    ".github/workflows/check.yml",
     "CHANGES.md",
     "Dockerfile",
     "Makefile",
@@ -29,6 +30,7 @@ REQUIRED = [
     "docs/plans/2026-06-10-numeric-embedding-values.md",
     "docs/plans/2026-06-09-make-gate-aliases.md",
     "docs/plans/2026-06-09-bytecode-free-tests.md",
+    "docs/plans/2026-06-10-ci-baseline.md",
     "docs/readme-overview.svg",
     "requirements.txt",
     "scripts/check-workshop-baseline.py",
@@ -122,6 +124,18 @@ def main():
         if phrase not in makefile:
             failures.append(f"Makefile must include {phrase}")
 
+    workflow = read(".github/workflows/check.yml")
+    for phrase in [
+        "actions/setup-python@v5",
+        'python-version: "3.10"',
+        "python -m pip install",
+        "pytest",
+        "scikit-learn",
+        "make check",
+    ]:
+        if phrase not in workflow:
+            failures.append(f"GitHub Actions workflow must include {phrase}")
+
     dockerfile = read("Dockerfile")
     for phrase in ["ARG EMBEDDINGS_URL", "--no-install-recommends", "wget --https-only"]:
         if phrase not in dockerfile:
@@ -197,6 +211,7 @@ def main():
         "finite embedding values",
         "numeric embedding values",
         "Python bytecode",
+        "GitHub Actions",
     ]:
         if phrase.lower() not in docs.lower():
             failures.append(f"docs must mention {phrase}")
@@ -204,6 +219,8 @@ def main():
     for phrase in ["make lint", "make test", "make build", "make check"]:
         if phrase not in changes:
             failures.append(f"CHANGES must mention {phrase}")
+    if "GitHub Actions" not in changes:
+        failures.append("CHANGES must mention GitHub Actions")
 
     plan = read("docs/plans/2026-06-08-openai-102-workshop-baseline.md")
     if "status: completed" not in plan or "make check" not in plan:
@@ -236,6 +253,9 @@ def main():
     bytecode_plan = read("docs/plans/2026-06-09-bytecode-free-tests.md")
     if "status: completed" not in bytecode_plan or "Python bytecode" not in bytecode_plan:
         failures.append("bytecode-free test plan must record status and verification")
+    ci_plan = read("docs/plans/2026-06-10-ci-baseline.md")
+    if "status: completed" not in ci_plan or "make check" not in ci_plan:
+        failures.append("CI baseline plan must record status and make check verification")
 
     try:
         ET.parse(ROOT / "docs/readme-overview.svg")

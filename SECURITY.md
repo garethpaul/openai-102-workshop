@@ -39,6 +39,9 @@ Helpful reports include:
   untracked unless they are converted into deliberate, reproducible fixtures.
 - Python bytecode should not remain after local verification; rerun the gates
   with bytecode writes disabled before committing.
+- GitHub Actions runs the no-network `make check` baseline with Python 3.10 and
+  a minimal dependency set; keep that hosted path free of API calls and private
+  generated caches.
 
 ## Service and API Notes
 

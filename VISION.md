@@ -35,6 +35,7 @@ Priority:
 - Keep finite embedding values validated before nearest-neighbor training
 - Keep numeric embedding values validated as numeric types before training
 - Keep verification targets from leaving Python bytecode behind
+- Keep GitHub Actions running the no-network `make check` baseline
 
 Next priorities:
 
