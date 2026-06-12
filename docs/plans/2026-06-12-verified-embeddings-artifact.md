@@ -1,6 +1,6 @@
 # Verified Embeddings Artifact
 
-status: planned
+status: completed
 
 ## Context
 
@@ -24,6 +24,8 @@ The reviewed artifact identity is:
   fixture.
 - Verify an existing fixture before the demo calls `pickle.load`.
 - Make the Docker build enforce the same reviewed checksum.
+- Exclude local pickle, cache, secret, VCS, and Python-generated files from the
+  Docker context so `COPY . .` cannot overwrite the verified artifact.
 - Add no-network tests using small fake response chunks for success, checksum
   mismatch, size mismatch, cleanup, and existing-file verification.
 - Keep local generated pickle fixtures ignored and avoid downloading or
@@ -38,11 +40,18 @@ The reviewed artifact identity is:
 
 ## Verification
 
-- `PYTHONDONTWRITEBYTECODE=1 python3 -m pytest -q test_app.py`
-- `make lint`
-- `make test`
-- `make build`
-- `make check`
-- Mutations removing the checksum, size, or pre-deserialization verification
-  are rejected.
-- `git diff --check`
+- `PYTHONDONTWRITEBYTECODE=1 python3 -m pytest -q test_app.py` passed with 59
+  tests on 2026-06-12.
+- `make lint` passed on 2026-06-12.
+- `make test` passed with 59 tests on 2026-06-12.
+- `make build` passed on 2026-06-12.
+- `make check` passed on 2026-06-12.
+- The focused tests rejected mutations bypassing checksum verification and
+  accepting a truncated response on 2026-06-12.
+- `make lint` rejected removal of pre-deserialization verification from the
+  demo on 2026-06-12.
+- `make lint` passed with a Docker context guard that excludes local
+  `embeddings.pkl` after the verified download step on 2026-06-12.
+- `make lint` rejected a mutation that restored local `embeddings.pkl` to the
+  Docker build context on 2026-06-12.
+- `git diff --check` passed on 2026-06-12.

@@ -35,6 +35,10 @@ Helpful reports include:
 - Dependency manifests detected: requirements.txt, Pipfile. Dependency updates should preserve lockfiles when present and avoid introducing packages without a clear maintenance reason.
 - Workshop users should provide OpenAI credentials through local UI input or `OPENAI_API_KEY`; credentials must not be committed, printed, or placed in generated caches.
 - Generated caches under `cache/`, `url_cache/`, `query_cache/`, and pickle fixtures may contain prompts, crawled text, or embeddings. Treat cache refreshes as reviewable data changes.
+- Treat remote pickle fixtures as executable content. The verified embeddings
+  artifact must match its reviewed SHA-256 and exact size before replacement
+  or deserialization; failed downloads must not overwrite the prior fixture,
+  and local pickle files must remain outside the Docker build context.
 - Local generated files such as `embedding_cache.pkl` should remain ignored and
   untracked unless they are converted into deliberate, reproducible fixtures.
 - Python bytecode should not remain after local verification; rerun the gates

@@ -121,6 +121,11 @@ When the required SDK or runtime is unavailable, use static checks and source re
 - Review changes touching network requests, sockets, or service endpoints; examples from the scan include Dockerfile, Pipfile.
 - Review changes touching file, media, JSON, XML, CSV, OCR, or data parsing; examples from the scan include Dockerfile.
 - Review changes touching pickle files carefully; only load trusted workshop fixtures.
+- The remote 625,199,795-byte `embeddings.pkl` workshop fixture is a verified
+  embeddings artifact: downloads are streamed to a temporary file and checked
+  against the reviewed SHA-256 and exact size before replacement or pickle
+  deserialization. Docker context exclusions prevent a local ignored pickle
+  from overwriting the verified image artifact.
 - Review vector math helper changes with no-network tests so retrieval lessons
   fail clearly on invalid fixture data.
 - Review small embedding fixtures with no-network nearest-neighbor tests before
