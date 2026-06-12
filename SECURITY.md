@@ -39,9 +39,10 @@ Helpful reports include:
   untracked unless they are converted into deliberate, reproducible fixtures.
 - Python bytecode should not remain after local verification; rerun the gates
   with bytecode writes disabled before committing.
-- GitHub Actions runs the no-network `make check` baseline with Python 3.10 and
-  a minimal dependency set; keep that hosted path free of API calls and private
-  generated caches.
+- Hosted Linux validation uses the minimal pinned `requirements-test.txt`
+  dependency set, checks the installed environment with `pip check`, and runs
+  `make check` without API credentials or OpenAI network calls.
+- Keep that hosted path free of private generated caches and customer data.
 
 ## Service and API Notes
 
@@ -64,6 +65,11 @@ Finite embedding values should be required before nearest-neighbor training so
 NaN, infinite, or non-numeric fixture data fails closed.
 Numeric embedding values should be real numeric types rather than stringified
 numbers before retrieval fixtures train nearest-neighbor models.
+Query embedding validation should reject malformed cache or API vectors before
+they reach nearest-neighbor lookup.
+Vector value validation should reject empty, boolean, string, complex,
+non-finite, and overflowing values before workshop math helpers calculate a
+distance or similarity.
 
 ## Dependency and Supply Chain Security
 

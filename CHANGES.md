@@ -1,5 +1,12 @@
 # Changes
 
+## 2026-06-12
+
+- Added one shared vector-pair validation boundary across cosine, Euclidean,
+  and Manhattan helpers.
+- Added no-network tests rejecting empty, boolean, string, complex, non-finite,
+  and overflowing values while preserving Python and NumPy numeric support.
+
 ## 2026-06-08
 
 - Added `make check` with static workshop checks and no-network pytest coverage.
@@ -40,3 +47,7 @@
   of stringified numbers before nearest-neighbor training.
 - Added a GitHub Actions workflow that installs the minimal Python 3.10
   no-network test dependencies and runs `make check`.
+- Added pinned hosted Linux validation with a minimal Python 3.10 test
+  dependency set, `pip check`, and the no-network `make check` gate.
+- Added query embedding validation before nearest-neighbor lookup for empty,
+  non-numeric, non-finite, boolean, and dimension-mismatched vectors.

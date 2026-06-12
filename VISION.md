@@ -28,14 +28,19 @@ Priority:
   local verification
 - Keep `make check` fast and free of OpenAI API calls
 - Keep retrieval vector math validation explicit and covered by tests
+- Keep vector value validation consistent across cosine, Euclidean, and
+  Manhattan helpers
 - Keep small embedding fixtures queryable without private generated caches
 - Keep empty embedding fixtures rejected with clear no-network tests
 - Keep malformed embedding fixtures rejected before nearest-neighbor training
 - Keep metadata text validation in place for retrieval fixtures
 - Keep finite embedding values validated before nearest-neighbor training
 - Keep numeric embedding values validated as numeric types before training
+- Keep query embedding validation ahead of nearest-neighbor lookup
 - Keep verification targets from leaving Python bytecode behind
-- Keep GitHub Actions running the no-network `make check` baseline
+- Keep the no-network baseline running in pinned, read-only hosted Linux CI
+- Keep hosted test dependencies minimal and explicit in `requirements-test.txt`
+- Keep GitHub Actions aligned with the canonical `make check` baseline
 
 Next priorities:
 
@@ -57,6 +62,7 @@ Contribution rules:
 - Preserve metadata text validation when changing retrieval fixture loading.
 - Preserve finite embedding value validation when changing fixture loading.
 - Preserve numeric embedding values validation when changing fixture loading.
+- Preserve query embedding validation when changing retrieval lookup.
 - Preserve bytecode-free test execution when changing Makefile gates.
 
 ## Security And Responsible Use

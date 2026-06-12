@@ -122,9 +122,34 @@ def validate_saved_embeddings(saved_embeddings):
             raise ValueError("Embedding fixture rows must have the same dimensionality.")
 
 
-def cosine_similarity(vector1, vector2):
-    if len(vector1) != len(vector2):
+def _validate_vector_pair(vector1, vector2):
+    try:
+        vector_lengths = (len(vector1), len(vector2))
+    except TypeError:
+        raise ValueError("Vectors must be non-empty numeric finite sequences.")
+
+    if 0 in vector_lengths:
+        raise ValueError("Vectors must be non-empty numeric finite sequences.")
+    if vector_lengths[0] != vector_lengths[1]:
         raise ValueError("Vectors must have the same dimensionality.")
+
+    for vector in (vector1, vector2):
+        for value in vector:
+            if (
+                isinstance(value, (bool, complex, np.complexfloating))
+                or not isinstance(value, (int, float, np.number))
+            ):
+                raise ValueError("Vectors must be non-empty numeric finite sequences.")
+            try:
+                numeric_value = float(value)
+            except (TypeError, ValueError, OverflowError):
+                raise ValueError("Vectors must be non-empty numeric finite sequences.")
+            if not math.isfinite(numeric_value):
+                raise ValueError("Vectors must be non-empty numeric finite sequences.")
+
+
+def cosine_similarity(vector1, vector2):
+    _validate_vector_pair(vector1, vector2)
 
     dot_product = sum(val1 * val2 for val1, val2 in zip(vector1, vector2))
     norm_vector1 = math.sqrt(sum(val * val for val in vector1))
@@ -137,8 +162,7 @@ def cosine_similarity(vector1, vector2):
 
 
 def euclidean_distance(vector1, vector2):
-    if len(vector1) != len(vector2):
-        raise ValueError("Vectors must have the same dimensionality.")
+    _validate_vector_pair(vector1, vector2)
 
     squared_diffs = [(val1 - val2) ** 2 for val1,
                      val2 in zip(vector1, vector2)]
@@ -148,8 +172,7 @@ def euclidean_distance(vector1, vector2):
 
 
 def manhattan_distance(vector1, vector2):
-    if len(vector1) != len(vector2):
-        raise ValueError("Vectors must have the same dimensionality.")
+    _validate_vector_pair(vector1, vector2)
 
     distance = sum(abs(val1 - val2) for val1, val2 in zip(vector1, vector2))
     return distance
@@ -216,8 +239,36 @@ def get_top_k_metadata(embedding, nn_model, metadata):
     Returns:
         list: The top-k metadata entries.
     """
+    validate_query_embedding(embedding, nn_model)
     distances, indices = nn_model.kneighbors([embedding])
     return [metadata[i] for i in indices[0]]
+
+
+def validate_query_embedding(embedding, nn_model):
+    try:
+        dimensions = len(embedding)
+    except TypeError:
+        raise ValueError("Query embedding must be a non-empty numeric sequence.")
+
+    if dimensions == 0:
+        raise ValueError("Query embedding must be a non-empty numeric sequence.")
+
+    for value in embedding:
+        if (
+            isinstance(value, (bool, complex, np.complexfloating))
+            or not isinstance(value, (int, float, np.number))
+        ):
+            raise ValueError("Query embedding values must be numeric finite numbers.")
+        try:
+            numeric_value = float(value)
+        except (TypeError, ValueError, OverflowError):
+            raise ValueError("Query embedding values must be numeric finite numbers.")
+        if not math.isfinite(numeric_value):
+            raise ValueError("Query embedding values must be numeric finite numbers.")
+
+    expected_dimensions = getattr(nn_model, "n_features_in_", None)
+    if expected_dimensions is not None and dimensions != expected_dimensions:
+        raise ValueError("Query embedding must match the trained model dimensionality.")
 
 
 def create_augmented_query(top_k_metadata, query):

@@ -73,6 +73,9 @@ The setup commands above are derived from repository files. Legacy mobile, Pytho
   updates.
 - Retrieval vector math helpers validate dimensionality and zero-vector cosine
   inputs before returning workshop results.
+- Shared vector value validation rejects empty, boolean, string, complex,
+  non-finite, and overflowing inputs across cosine, Euclidean, and Manhattan
+  helpers.
 - Small embedding fixtures cap nearest-neighbor lookup to the available row
   count so no-network tests can query them.
 - Empty embedding fixtures fail with a clear validation error before model
@@ -85,6 +88,8 @@ The setup commands above are derived from repository files. Legacy mobile, Pytho
   invalid fixture vectors fail with clear errors.
 - Numeric embedding values must be real numeric types, not stringified numbers,
   before model training.
+- Query embedding validation rejects empty, boolean, non-numeric, non-finite,
+  and dimension-mismatched vectors before nearest-neighbor lookup.
 
 ## Testing and Verification
 
@@ -94,8 +99,10 @@ The setup commands above are derived from repository files. Legacy mobile, Pytho
 - `make check`
 - `python3 -m pytest -q test_app.py`
 - `python3 scripts/check-workshop-baseline.py`
-- GitHub Actions runs the same no-network `make check` baseline with Python
-  3.10 and the minimal test dependency set for pushes and pull requests.
+- Pinned hosted Linux validation installs `requirements-test.txt`, runs
+  `python -m pip check`, and executes the same no-network `make check` gate on
+  Python 3.10.
+- GitHub Actions runs that no-network baseline for pushes and pull requests.
 
 When the required SDK or runtime is unavailable, use static checks and source review first, then verify on a machine that has the matching platform toolchain.
 
@@ -140,8 +147,14 @@ When the required SDK or runtime is unavailable, use static checks and source re
   gate aliases.
 - See `docs/plans/2026-06-10-numeric-embedding-values.md` for the embedding
   fixture numeric-type validation contract.
-- See `docs/plans/2026-06-10-ci-baseline.md` for the GitHub Actions `make
-  check` baseline.
+- See `docs/plans/2026-06-12-vector-value-validation.md` for the shared vector
+  math input boundary.
+- See `docs/plans/2026-06-10-query-embedding-validation.md` for the retrieval
+  query vector validation contract.
+- See `docs/plans/2026-06-10-hosted-workshop-validation.md` for the hosted
+  Linux test dependency and `make check` contract.
+- See `docs/plans/2026-06-10-ci-baseline.md` for the original GitHub Actions
+  baseline scope.
 - See `VISION.md` for project direction and contribution guardrails.
 
 ## Contributing

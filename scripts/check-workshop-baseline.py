@@ -10,9 +10,11 @@ import xml.etree.ElementTree as ET
 
 
 ROOT = Path(__file__).resolve().parents[1]
+CI_PLAN = "docs/plans/2026-06-10-hosted-workshop-validation.md"
 REQUIRED = [
-    ".gitignore",
+    ".github/CODEOWNERS",
     ".github/workflows/check.yml",
+    ".gitignore",
     "CHANGES.md",
     "Dockerfile",
     "Makefile",
@@ -28,11 +30,14 @@ REQUIRED = [
     "docs/plans/2026-06-09-embedding-metadata-text.md",
     "docs/plans/2026-06-09-finite-embedding-values.md",
     "docs/plans/2026-06-10-numeric-embedding-values.md",
+    "docs/plans/2026-06-10-query-embedding-validation.md",
+    "docs/plans/2026-06-12-vector-value-validation.md",
+    CI_PLAN,
     "docs/plans/2026-06-09-make-gate-aliases.md",
     "docs/plans/2026-06-09-bytecode-free-tests.md",
-    "docs/plans/2026-06-10-ci-baseline.md",
     "docs/readme-overview.svg",
     "requirements.txt",
+    "requirements-test.txt",
     "scripts/check-workshop-baseline.py",
     "test_app.py",
     "utils/crawler.py",
@@ -84,11 +89,13 @@ def main():
     for phrase in [
         "def get_cache_file",
         "def validate_saved_embeddings",
+        "def validate_query_embedding",
         "hashlib.sha256",
         "os.path.commonpath",
         "get_cache_file(cache_folder, query)",
         "def _record_estimated_cost",
         "def cosine_similarity",
+        "def _validate_vector_pair",
         "n_neighbors = min(5, len(embeddings_array))",
         "Cosine similarity is undefined for zero vectors.",
         "At least one embedding fixture row is required.",
@@ -98,6 +105,8 @@ def main():
         "numeric finite numbers",
         "math.isfinite",
         "finite numbers",
+        "Query embedding must match the trained model dimensionality.",
+        "Vectors must be non-empty numeric finite sequences.",
     ]:
         if phrase not in generate:
             failures.append(f"utils/generate.py must include {phrase}")
@@ -124,17 +133,39 @@ def main():
         if phrase not in makefile:
             failures.append(f"Makefile must include {phrase}")
 
+    test_requirements = read("requirements-test.txt")
+    for requirement in [
+        "numpy==1.26.4",
+        "openai==0.28.1",
+        "pytest==7.4.4",
+        "requests==2.31.0",
+        "scikit-learn==1.3.2",
+    ]:
+        if requirement not in test_requirements:
+            failures.append(f"test requirements must pin {requirement}")
+
     workflow = read(".github/workflows/check.yml")
+    codeowners = read(".github/CODEOWNERS")
     for phrase in [
-        "actions/setup-python@v5",
+        "permissions:\n  contents: read",
+        "cancel-in-progress: true",
+        "runs-on: ubuntu-24.04",
+        "timeout-minutes: 15",
+        "actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10",
+        "persist-credentials: false",
+        "actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405",
         'python-version: "3.10"',
-        "python -m pip install",
-        "pytest",
-        "scikit-learn",
+        "python -m pip install -r requirements-test.txt",
+        "python -m pip check",
         "make check",
     ]:
         if phrase not in workflow:
-            failures.append(f"GitHub Actions workflow must include {phrase}")
+            failures.append(f"Check workflow must keep {phrase}")
+    workflow_files = sorted(str(path.relative_to(ROOT)) for path in (ROOT / ".github/workflows").rglob("*") if path.is_file())
+    if workflow_files != [".github/workflows/check.yml"]:
+        failures.append("check.yml must be the repository's only hosted workflow")
+    if codeowners.strip() != "* @garethpaul":
+        failures.append("CODEOWNERS must assign the repository to @garethpaul")
 
     dockerfile = read("Dockerfile")
     for phrase in ["ARG EMBEDDINGS_URL", "--no-install-recommends", "wget --https-only"]:
@@ -171,6 +202,8 @@ def main():
         "test_load_embeddings_and_train_model_rejects_dimension_mismatch",
         "test_load_embeddings_and_train_model_rejects_metadata_without_text",
         "test_load_embeddings_and_train_model_rejects_non_finite_embedding_values",
+        "test_get_top_k_metadata_rejects_invalid_query_embeddings",
+        "test_get_top_k_metadata_rejects_dimension_mismatch",
         "numeric finite numbers",
     ]:
         if phrase not in tests:
@@ -210,8 +243,11 @@ def main():
         "metadata text",
         "finite embedding values",
         "numeric embedding values",
+        "query embedding validation",
+        "vector value validation",
         "Python bytecode",
-        "GitHub Actions",
+        "hosted Linux",
+        "requirements-test.txt",
     ]:
         if phrase.lower() not in docs.lower():
             failures.append(f"docs must mention {phrase}")
@@ -219,8 +255,6 @@ def main():
     for phrase in ["make lint", "make test", "make build", "make check"]:
         if phrase not in changes:
             failures.append(f"CHANGES must mention {phrase}")
-    if "GitHub Actions" not in changes:
-        failures.append("CHANGES must mention GitHub Actions")
 
     plan = read("docs/plans/2026-06-08-openai-102-workshop-baseline.md")
     if "status: completed" not in plan or "make check" not in plan:
@@ -246,6 +280,12 @@ def main():
     numeric_embedding_plan = read("docs/plans/2026-06-10-numeric-embedding-values.md")
     if "status: completed" not in numeric_embedding_plan or "numeric embedding values" not in numeric_embedding_plan:
         failures.append("numeric embedding values plan must record status and verification")
+    query_embedding_plan = read("docs/plans/2026-06-10-query-embedding-validation.md")
+    if "status: completed" not in query_embedding_plan or "nearest-neighbor lookup" not in query_embedding_plan:
+        failures.append("query embedding validation plan must record status and verification")
+    vector_value_plan = read("docs/plans/2026-06-12-vector-value-validation.md")
+    if "status: completed" not in vector_value_plan or "numeric finite vector-pair validator" not in vector_value_plan:
+        failures.append("vector value validation plan must record status and verification")
     make_gate_plan_path = ROOT / "docs/plans/2026-06-09-make-gate-aliases.md"
     make_gate_plan = make_gate_plan_path.read_text(encoding="utf-8") if make_gate_plan_path.exists() else ""
     if "status: completed" not in make_gate_plan or "make lint" not in make_gate_plan or "make build" not in make_gate_plan:
@@ -253,9 +293,12 @@ def main():
     bytecode_plan = read("docs/plans/2026-06-09-bytecode-free-tests.md")
     if "status: completed" not in bytecode_plan or "Python bytecode" not in bytecode_plan:
         failures.append("bytecode-free test plan must record status and verification")
-    ci_plan = read("docs/plans/2026-06-10-ci-baseline.md")
+    ci_plan = read(CI_PLAN)
     if "status: completed" not in ci_plan or "make check" not in ci_plan:
-        failures.append("CI baseline plan must record status and make check verification")
+        failures.append("hosted workshop validation plan must record status and verification")
+    prepared_ci_plan = read("docs/plans/2026-06-10-ci-baseline.md")
+    if "status: completed" not in prepared_ci_plan or "make check" not in prepared_ci_plan:
+        failures.append("CI baseline plan must record status and verification")
 
     try:
         ET.parse(ROOT / "docs/readme-overview.svg")
