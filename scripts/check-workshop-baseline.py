@@ -4,6 +4,7 @@
 from pathlib import Path
 import ast
 import json
+import re
 import subprocess
 import sys
 import xml.etree.ElementTree as ET
@@ -47,6 +48,14 @@ REQUIRED = [
     "utils/artifacts.py",
     "utils/generate.py",
 ]
+
+
+def markdown_section(text, heading):
+    match = re.search(
+        rf"(?ms)^## {re.escape(heading)}\s*$\n(.*?)(?=^## |\Z)",
+        text,
+    )
+    return match.group(1).strip() if match else ""
 
 
 def read(path):
@@ -342,8 +351,35 @@ def main():
     if "status: completed" not in vector_value_plan or "numeric finite vector-pair validator" not in vector_value_plan:
         failures.append("vector value validation plan must record status and verification")
     verified_artifact_plan = read(VERIFIED_ARTIFACT_PLAN)
-    if "status: completed" not in verified_artifact_plan or "pre-deserialization verification" not in verified_artifact_plan:
-        failures.append("verified embeddings artifact plan must record status and verification")
+    artifact_status = re.findall(r"(?mi)^status:\s*(.+?)\s*$", verified_artifact_plan)
+    artifact_work = markdown_section(verified_artifact_plan, "Work Completed")
+    artifact_verification = markdown_section(verified_artifact_plan, "Verification Completed")
+    if artifact_status != ["completed"] or not artifact_work:
+        failures.append("verified embeddings artifact plan must record one completed status and completed work")
+    if not artifact_verification or re.search(
+        r"(?i)\b(?:pending|todo|tbd|not run)\b", artifact_verification
+    ):
+        failures.append("verified embeddings artifact plan must record completed verification")
+    for evidence in [
+        "PYTHONDONTWRITEBYTECODE=1 python3 -m pytest -q test_app.py",
+        "make lint",
+        "make test",
+        "make build",
+        "make check",
+        "git diff --check",
+        "python3 -m py_compile scripts/check-workshop-baseline.py",
+        "27398195798",
+        "27398200976",
+        "b8148b4ee4c40022b1f91de0b066e2b01cacfe32",
+        "0331e16d863953ab90d26fa3a2a16fe963990553216fd465d5a0d08f4e002c58",
+        "625199795",
+        "download_verified_artifact",
+        "verify_artifact",
+        "os.replace",
+        "pickle.load",
+    ]:
+        if evidence not in artifact_verification:
+            failures.append(f"verified embeddings artifact verification must record {evidence}")
     make_gate_plan_path = ROOT / "docs/plans/2026-06-09-make-gate-aliases.md"
     make_gate_plan = make_gate_plan_path.read_text(encoding="utf-8") if make_gate_plan_path.exists() else ""
     if "status: completed" not in make_gate_plan or "make lint" not in make_gate_plan or "make build" not in make_gate_plan:

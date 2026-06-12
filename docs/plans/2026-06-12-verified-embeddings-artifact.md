@@ -38,7 +38,16 @@ The reviewed artifact identity is:
 - Do not close or modify existing pull requests.
 - Do not add a runtime dependency for integrity verification.
 
-## Verification
+## Work Completed
+
+- Added streamed HTTPS download to a temporary file with bounded timeouts.
+- Verified exact size and SHA-256 before atomic replacement.
+- Verified cached artifacts before `pickle.load`.
+- Pinned the same artifact identity in Docker and excluded local pickle files
+  from the build context.
+- Added no-network success, mismatch, cleanup, and existing-file tests.
+
+## Verification Completed
 
 - `PYTHONDONTWRITEBYTECODE=1 python3 -m pytest -q test_app.py` passed with 59
   tests on 2026-06-12.
@@ -55,3 +64,12 @@ The reviewed artifact identity is:
 - `make lint` rejected a mutation that restored local `embeddings.pkl` to the
   Docker build context on 2026-06-12.
 - `git diff --check` passed on 2026-06-12.
+- `python3 -m py_compile scripts/check-workshop-baseline.py` passed.
+- Canonical push run `27398195798` and pull-request run `27398200976`
+  completed successfully at exact head
+  `b8148b4ee4c40022b1f91de0b066e2b01cacfe32`.
+- The verified identity remains SHA-256
+  `0331e16d863953ab90d26fa3a2a16fe963990553216fd465d5a0d08f4e002c58`
+  with exact size `625199795` bytes.
+- `download_verified_artifact`, `verify_artifact`, `os.replace`, and
+  `pickle.load` remain ordered so verification precedes deserialization.
