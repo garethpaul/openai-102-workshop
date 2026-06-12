@@ -75,6 +75,8 @@ print, or transmit those credentials except to the APIs that the user
 explicitly enables while running the lesson.
 Generated caches and pickle fixtures should remain reproducible workshop data,
 not private learner output.
+The remote pickle must remain a verified embeddings artifact before
+deserialization.
 Retrieval fixtures should reject stringified numeric embedding values before
 nearest-neighbor training.
 
