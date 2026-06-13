@@ -37,9 +37,12 @@ Helpful reports include:
   and generated locks must stay synchronized, exactly pinned, and limited to
   packages with a demonstrated runtime or verification purpose.
 - Workshop users should provide OpenAI credentials through local UI input or `OPENAI_API_KEY`; credentials must not be committed, printed, or placed in generated caches.
-- Generated caches under `cache/`, `url_cache/`, `query_cache/`, and pickle fixtures may contain prompts, crawled text, or embeddings. Treat cache refreshes as reviewable data changes.
-- Local generated files such as `embedding_cache.pkl` should remain ignored and
-  untracked unless they are converted into deliberate, reproducible fixtures.
+- Generated caches under `cache/`, `url_cache/`, and `query_cache/`, plus
+  pickle fixtures, may contain prompts, crawled text, or embeddings. Treat
+  cache refreshes as reviewable data changes.
+- The writable clustering JSON embedding cache accepts only a UTF-8 object with
+  string keys and values. `embedding_cache.json` and its temporary file remain
+  ignored; generated cache data must never be loaded with `pickle`.
 - Python bytecode should not remain after local verification; rerun the gates
   with bytecode writes disabled before committing.
 - Hosted Linux validation uses Python 3.12 and separate exact test and

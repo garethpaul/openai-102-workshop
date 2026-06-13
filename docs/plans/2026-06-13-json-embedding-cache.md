@@ -1,6 +1,6 @@
 # JSON Embedding Cache
 
-status: planned
+status: completed
 
 ## Context
 
@@ -25,5 +25,16 @@ page starts, even though the cache only stores string keys and string values.
 
 ## Verification
 
-- Run all Make gates, focused tests, Python compilation, hostile mutations,
-  diff checks, artifact scans, and secret scans.
+- `PYTHONDONTWRITEBYTECODE=1 python3 -m pytest -q test_embedding_cache.py`
+  passed all 6 focused tests.
+- An isolated Python 3.12 environment created from `requirements-test.txt`
+  passed `python -m pip check`, all 61 tests in `test_app.py` and
+  `test_embedding_cache.py`, and `make build` with the host `PYTHONPATH`
+  removed.
+- `make lint`, `make test`, `make build`, and `make check` passed in that
+  isolated environment.
+- The static contract rejected six hostile mutations covering restored pickle
+  loading, bypassed cache helpers, a non-JSON filename, weakened string-value
+  validation, non-atomic direct writes, and removed regression coverage.
+- `git diff --check`, generated-artifact checks, secret scans, and the exact
+  intended-path diff audit passed before commit.
