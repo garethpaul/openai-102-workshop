@@ -20,8 +20,8 @@ Priority:
 
 - Preserve the Streamlit lesson flow and local Docker path
 - Keep generated caches and prepared data clearly separated from source logic
-- Keep local generated cache files such as `embedding_cache.pkl` out of source
-  control
+- Keep local generated cache files such as `embedding_cache.json` out of source
+  control and use strict non-executable formats for writable caches
 - Make API-token handling explicit and local to the learner
 - Document model, SDK, and Pinecone assumptions when examples depend on them
 - Keep `make lint`, `make test`, `make build`, and `make check` available for
@@ -46,11 +46,11 @@ Priority:
   `requirements-test.in`
 - Keep a separate hosted full-lock import and headless Streamlit health smoke
 - Keep GitHub Actions aligned with the canonical `make check` baseline
+- Keep historical OpenAI SDK and model examples visibly marked until migrated
 
 Next priorities:
 
-- Mark stale API examples before updating them
-- Add lightweight tests for embedding-cache loading and nearest-neighbor lookup
+- Add lightweight tests for nearest-neighbor lookup changes
 - Add more fixture tests for malformed retrieval data
 - Document which files are workshop fixtures versus generated output
 - Add compatibility notes before migrating legacy OpenAI SDK examples
@@ -81,7 +81,8 @@ Workshop users provide their own API credentials. The app should not persist,
 print, or transmit those credentials except to the APIs that the user
 explicitly enables while running the lesson.
 Generated caches and pickle fixtures should remain reproducible workshop data,
-not private learner output.
+not private learner output. The writable clustering JSON embedding cache must
+reject malformed data and never deserialize generated data with `pickle`.
 Retrieval fixtures should reject stringified numeric embedding values before
 nearest-neighbor training.
 

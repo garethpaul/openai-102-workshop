@@ -14,6 +14,7 @@ def page():
         page_icon="👋",
     )
     common.sidebar()
+    st.warning("Historical OpenAI API example: this workshop preserves openai==0.28.1 and legacy model identifiers. Review docs/openai-api-compatibility.md before building a new integration.")
     st.write("# 🔍 Text Search")
     st.write("## Text Search using Embeddings")
     st.markdown(

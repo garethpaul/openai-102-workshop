@@ -1,6 +1,8 @@
 from components import common
 import streamlit as st
 
+st.warning("Historical OpenAI API example: this workshop preserves openai==0.28.1 and legacy model identifiers. Review docs/openai-api-compatibility.md before building a new integration.")
+
 st.markdown("""
 # ⚡️ API
 
