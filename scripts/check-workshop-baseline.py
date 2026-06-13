@@ -11,10 +11,63 @@ import xml.etree.ElementTree as ET
 
 
 ROOT = Path(__file__).resolve().parents[1]
+EXPECTED_MAKEFILE = """ROOT := $(abspath $(dir $(lastword $(MAKEFILE_LIST))))
+
+.PHONY: all audit build check lint lock lock-check lock-upgrade run runtime-check smoke static-check test verify
+
+PYTHON ?= python3
+UV ?= uv
+
+# Build the app (compile maintained Python modules)
+build:
+\tcd "$(ROOT)" && PYTHONDONTWRITEBYTECODE=1 $(PYTHON) -c "import pathlib; [compile(pathlib.Path(path).read_text(), path, 'exec') for path in ('components/common.py', 'customer_cluster.py', 'scripts/check-runtime-imports.py', 'scripts/smoke-streamlit.py', 'test_app.py', 'test_embedding_cache.py', 'utils/crawler.py', 'utils/embedding_cache.py', 'utils/generate.py', 'utils/token.py')]"
+
+# Run the app locally
+run:
+\tcd "$(ROOT)" && streamlit run 👋_Hello.py
+
+# Test the app
+test:
+\tcd "$(ROOT)" && PYTHONDONTWRITEBYTECODE=1 $(PYTHON) -m pytest -q test_app.py test_embedding_cache.py
+
+static-check:
+\tPYTHONDONTWRITEBYTECODE=1 $(PYTHON) "$(ROOT)/scripts/check-workshop-baseline.py"
+
+lock:
+\tcd "$(ROOT)" && $(UV) pip compile requirements.in --python-version 3.12 --universal --quiet --output-file requirements.txt
+\tcd "$(ROOT)" && $(UV) pip compile requirements-test.in --python-version 3.12 --universal --quiet --output-file requirements-test.txt
+
+lock-upgrade:
+\tcd "$(ROOT)" && $(UV) pip compile requirements.in --python-version 3.12 --universal --upgrade --quiet --output-file requirements.txt
+\tcd "$(ROOT)" && $(UV) pip compile requirements-test.in --python-version 3.12 --universal --upgrade --quiet --output-file requirements-test.txt
+
+lock-check: lock
+\tgit -C "$(ROOT)" diff --exit-code -- requirements.txt requirements-test.txt
+
+audit:
+\tcd "$(ROOT)" && pip-audit -r requirements-test.txt
+\tcd "$(ROOT)" && pip-audit -r requirements.txt
+
+runtime-check:
+\tPYTHONDONTWRITEBYTECODE=1 $(PYTHON) "$(ROOT)/scripts/check-runtime-imports.py"
+
+smoke:
+\tPYTHONDONTWRITEBYTECODE=1 $(PYTHON) "$(ROOT)/scripts/smoke-streamlit.py"
+
+lint: static-check
+
+verify: lint test
+
+check: verify
+
+# Build test and run the app
+all: build test run
+"""
 CI_PLAN = "docs/plans/2026-06-10-hosted-workshop-validation.md"
 DEPENDENCY_PLAN = "docs/plans/2026-06-12-supported-python-dependency-graph.md"
 EMBEDDING_CACHE_PLAN = "docs/plans/2026-06-13-json-embedding-cache.md"
 API_COMPATIBILITY_PLAN = "docs/plans/2026-06-13-openai-api-compatibility-notes.md"
+LOCATION_INDEPENDENT_MAKE_PLAN = "docs/plans/2026-06-13-location-independent-make.md"
 REQUIRED = [
     ".github/CODEOWNERS",
     ".github/workflows/check.yml",
@@ -40,6 +93,7 @@ REQUIRED = [
     DEPENDENCY_PLAN,
     EMBEDDING_CACHE_PLAN,
     API_COMPATIBILITY_PLAN,
+    LOCATION_INDEPENDENT_MAKE_PLAN,
     "docs/openai-api-compatibility.md",
     CI_PLAN,
     "docs/plans/2026-06-09-make-gate-aliases.md",
@@ -174,29 +228,26 @@ def main():
             failures.append(f"embedding cache helper must retain {phrase}")
 
     makefile = read("Makefile")
-    for phrase in [
-        ".PHONY: all audit build check lint lock lock-check lock-upgrade run runtime-check smoke static-check test verify",
-        "PYTHON ?= python3",
-        "UV ?= uv",
-        "PYTHONDONTWRITEBYTECODE=1 $(PYTHON) -c \"import pathlib; [compile(pathlib.Path(path).read_text(), path, 'exec')",
-        "PYTHONDONTWRITEBYTECODE=1 $(PYTHON) -m pytest -q test_app.py test_embedding_cache.py",
-        "'customer_cluster.py'",
-        "'test_embedding_cache.py'",
-        "'utils/embedding_cache.py'",
-        "PYTHONDONTWRITEBYTECODE=1 $(PYTHON) scripts/check-workshop-baseline.py",
-        "$(UV) pip compile requirements.in --python-version 3.12 --universal --quiet --output-file requirements.txt",
-        "$(UV) pip compile requirements.in --python-version 3.12 --universal --upgrade --quiet --output-file requirements.txt",
-        "git diff --exit-code -- requirements.txt requirements-test.txt",
-        "pip-audit -r requirements-test.txt",
-        "pip-audit -r requirements.txt",
-        "scripts/check-runtime-imports.py",
-        "scripts/smoke-streamlit.py",
-        "lint: static-check",
-        "verify: lint test",
-        "check: verify",
-    ]:
-        if phrase not in makefile:
-            failures.append(f"Makefile must include {phrase}")
+    if makefile != EXPECTED_MAKEFILE:
+        failures.append(
+            "Makefile must exactly preserve rooted workshop tooling and command overrides"
+        )
+
+    readme = read("README.md")
+    location_independent_make_plan = read(LOCATION_INDEPENDENT_MAKE_PLAN)
+    if "make -f /path/to/openai-102-workshop/Makefile check" not in readme:
+        failures.append("README must document location-independent Makefile invocation")
+    if not all(
+        evidence in location_independent_make_plan.lower()
+        for evidence in [
+            "status: completed",
+            "root and external-directory",
+            "ten isolated hostile mutations",
+        ]
+    ):
+        failures.append(
+            "location-independent Make plan must record completed root, external, and mutation verification"
+        )
 
     direct_requirements = {
         line for line in read("requirements.in").splitlines()

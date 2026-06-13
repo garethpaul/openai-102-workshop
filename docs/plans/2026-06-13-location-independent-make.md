@@ -1,6 +1,6 @@
 # Location-Independent Workshop Tooling
 
-status: in progress
+status: completed
 
 ## Context
 
@@ -44,3 +44,27 @@ containment, and hostile-mutation verification after it completes.
 - Do not use credentials, make live or paid OpenAI calls, or run interactive
   Streamlit in validation.
 - Preserve the existing stacked PR chain and exact-head evidence.
+
+## Work Completed
+
+- Rooted build, test, static, runtime, smoke, lock, audit, and run commands at
+  the checkout containing the loaded Makefile while preserving the target graph
+  and `PYTHON` and `UV` overrides.
+- Added an exact Makefile contract plus README and completed-plan evidence to
+  `scripts/check-workshop-baseline.py`.
+- Documented absolute Makefile invocation without changing lesson or dependency
+  behavior.
+
+## Verification Completed
+
+- Root and external-directory `lint`, `test`, `build`, `verify`, and `check`
+  gates passed with 61 no-network tests per test invocation in the existing
+  isolated Python 3.12 environment.
+- Root and external-directory `runtime-check` and `smoke` passed without OpenAI
+  credentials or paid API calls.
+- Ten isolated hostile mutations covering root derivation, build, test, static,
+  lock, lock-check, runtime, smoke, completed plan evidence, and README guidance
+  were rejected by the intended contracts.
+- Python compilation, `git diff --check`, intended-path, secret-pattern,
+  generated-artifact, lesson, API, model, dependency-input, lock, Docker,
+  Pipenv, fixture, test, and workflow audits passed.
