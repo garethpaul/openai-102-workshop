@@ -46,10 +46,10 @@ Priority:
   `requirements-test.in`
 - Keep a separate hosted full-lock import and headless Streamlit health smoke
 - Keep GitHub Actions aligned with the canonical `make check` baseline
+- Keep historical OpenAI SDK and model examples visibly marked until migrated
 
 Next priorities:
 
-- Mark stale API examples before updating them
 - Add lightweight tests for nearest-neighbor lookup changes
 - Add more fixture tests for malformed retrieval data
 - Document which files are workshop fixtures versus generated output

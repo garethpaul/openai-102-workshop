@@ -68,6 +68,9 @@ The setup commands above are derived from repository files. Legacy mobile, Pytho
 
 ## Running or Using the Project
 
+- The OpenAI lessons preserve historical `openai==0.28.1` calls and model
+  identifiers. Read [`docs/openai-api-compatibility.md`](docs/openai-api-compatibility.md)
+  before using an example as the basis for a new integration.
 - Run `make lint`, `make test`, `make build`, and `make check` before changing
   workshop logic or generated-cache behavior.
 - `make test` runs pytest with Python bytecode writes disabled so verification

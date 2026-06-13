@@ -50,6 +50,9 @@ Helpful reports include:
   executes `make check`, imports every direct runtime package, and launches a
   bounded localhost-only Streamlit health smoke without API credentials.
 - Keep that hosted path free of private generated caches and customer data.
+- Historical OpenAI API examples are inventoried in
+  `docs/openai-api-compatibility.md`; do not remove their learner warnings or
+  present them as current integration guidance before a credentialed migration.
 
 ## Service and API Notes
 

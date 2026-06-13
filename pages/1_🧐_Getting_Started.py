@@ -2,6 +2,7 @@ import streamlit as st
 
 
 st.markdown("# Getting Started with OpenAI APIs")
+st.warning("Historical OpenAI API example: this workshop preserves openai==0.28.1 and legacy model identifiers. Review docs/openai-api-compatibility.md before building a new integration.")
 st.markdown("""
 [OpenAI](https://openai.com) is an AI research and deployment company who are building safe and beneficial (AGI). Read more on [OpenAI API Docs](https://platform.openai.com/docs/api-reference).
 """)

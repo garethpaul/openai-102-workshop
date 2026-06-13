@@ -14,6 +14,7 @@ ROOT = Path(__file__).resolve().parents[1]
 CI_PLAN = "docs/plans/2026-06-10-hosted-workshop-validation.md"
 DEPENDENCY_PLAN = "docs/plans/2026-06-12-supported-python-dependency-graph.md"
 EMBEDDING_CACHE_PLAN = "docs/plans/2026-06-13-json-embedding-cache.md"
+API_COMPATIBILITY_PLAN = "docs/plans/2026-06-13-openai-api-compatibility-notes.md"
 REQUIRED = [
     ".github/CODEOWNERS",
     ".github/workflows/check.yml",
@@ -38,6 +39,8 @@ REQUIRED = [
     "docs/plans/2026-06-12-vector-value-validation.md",
     DEPENDENCY_PLAN,
     EMBEDDING_CACHE_PLAN,
+    API_COMPATIBILITY_PLAN,
+    "docs/openai-api-compatibility.md",
     CI_PLAN,
     "docs/plans/2026-06-09-make-gate-aliases.md",
     "docs/plans/2026-06-09-bytecode-free-tests.md",
@@ -60,6 +63,14 @@ REQUIRED = [
 
 def read(path):
     return (ROOT / path).read_text(encoding="utf-8", errors="replace")
+
+
+def markdown_section(text, heading):
+    match = re.search(
+        rf"(?ms)^## {re.escape(heading)}\s*$\n(.*?)(?=^## |\Z)",
+        text,
+    )
+    return match.group(1).strip() if match else ""
 
 
 def tracked(paths):
@@ -479,6 +490,87 @@ def main():
     ]:
         if phrase not in embedding_cache_plan:
             failures.append(f"JSON embedding cache plan must record {phrase}")
+
+    compatibility = " ".join(read("docs/openai-api-compatibility.md").split())
+    for phrase in [
+        "Review date: 2026-06-13",
+        "Compatibility status: historical workshop examples; not current integration guidance",
+        "openai.Completion.create",
+        "openai.ChatCompletion.create",
+        "openai.Embedding.create",
+        "openai api fine_tunes.create",
+        "text-embedding-ada-002",
+        "text-davinci-003",
+        "gpt-3.5-turbo",
+        "https://developers.openai.com/api/docs/models",
+        "https://developers.openai.com/api/docs/models/all",
+        "https://developers.openai.com/api/docs/models/text-embedding-3-small",
+        "https://developers.openai.com/api/docs/models/davinci-002",
+        "They do not select a replacement model",
+        "preserve the default no-network `make check` gate",
+    ]:
+        if phrase not in compatibility:
+            failures.append(f"OpenAI API compatibility note must include {phrase}")
+
+    warning = (
+        "Historical OpenAI API example: this workshop preserves openai==0.28.1 "
+        "and legacy model identifiers. Review docs/openai-api-compatibility.md "
+        "before building a new integration."
+    )
+    warning_pages = [
+        "pages/1_🧐_Getting_Started.py",
+        "pages/2_⚡️_API.py",
+        "pages/2_📝_Embeddings.py",
+        "pages/3_🔍_Text_Search.py",
+        "pages/8_🦾_FineTuning.py",
+    ]
+    for page in warning_pages:
+        if read(page).count(warning) != 1:
+            failures.append(f"{page} must show one OpenAI API compatibility warning")
+    if "[`docs/openai-api-compatibility.md`](docs/openai-api-compatibility.md)" not in read("README.md"):
+        failures.append("README must link the OpenAI API compatibility inventory")
+
+    for path, phrases in {
+        "requirements.in": ["openai==0.28.1"],
+        "requirements-test.in": ["openai==0.28.1"],
+        "Pipfile": ['openai = "==0.28.1"'],
+        "utils/generate.py": [
+            "openai.Embedding.create",
+            "openai.ChatCompletion.create",
+            "openai.Completion.create",
+            'engine="text-embedding-ada-002"',
+            'model="gpt-3.5-turbo"',
+            'model="text-davinci-003"',
+        ],
+    }.items():
+        text = read(path)
+        for phrase in phrases:
+            if phrase not in text:
+                failures.append(f"{path} must retain inventoried legacy API surface {phrase}")
+
+    compatibility_plan = read(API_COMPATIBILITY_PLAN)
+    compatibility_status = re.findall(r"(?mi)^status:\s*(.+?)\s*$", compatibility_plan)
+    compatibility_work = markdown_section(compatibility_plan, "Work Completed")
+    compatibility_verification = markdown_section(compatibility_plan, "Verification Completed")
+    if compatibility_status != ["completed"] or not compatibility_work:
+        failures.append("OpenAI API compatibility plan must record completed status and work")
+    if not compatibility_verification or re.search(
+        r"(?i)\b(?:pending|todo|tbd|not run)\b", compatibility_verification
+    ):
+        failures.append("OpenAI API compatibility plan must record completed verification")
+    for evidence in [
+        "python3 -m py_compile scripts/check-workshop-baseline.py",
+        "make lint",
+        "make test",
+        "make build",
+        "make check",
+        "external working directory",
+        "hostile mutations rejected",
+        "legacy API behavior paths had no diff",
+        "git diff --check",
+    ]:
+        if evidence not in compatibility_verification:
+            failures.append(f"OpenAI API compatibility verification must record {evidence}")
 
     try:
         ET.parse(ROOT / "docs/readme-overview.svg")

@@ -1,6 +1,6 @@
 # OpenAI API Compatibility Notes
 
-status: planned
+status: completed
 
 ## Context
 
@@ -77,3 +77,24 @@ pin, completed status, and verification evidence.
   API verification.
 - Do not choose a replacement model before a dedicated compatibility migration.
 - Do not make validation perform OpenAI API calls.
+
+## Work Completed
+
+Added a dated compatibility inventory, learner-visible warnings, current
+official documentation links, and a static contract while preserving the
+historical SDK, model identifiers, prompts, and dependency graph.
+
+## Verification Completed
+
+- `python3 -m py_compile scripts/check-workshop-baseline.py` and the changed
+  learner pages passed.
+- `make lint`, `make test`, `make build`, and `make check` passed using the
+  locked test graph in an isolated `uv` environment where dependencies were
+  required.
+- The checker passed from an external working directory.
+- Ten focused `hostile mutations rejected` altered warnings, inventory facts,
+  preserved dependency/API surfaces, and incomplete plan evidence.
+- `legacy API behavior paths had no diff`, and each changed learner page
+  differed only by its compatibility warning.
+- `git diff --check`, workflow parsing, dependency-manifest checks, and the
+  intended-diff secret/artifact scan passed.
