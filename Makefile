@@ -5,7 +5,7 @@ UV ?= uv
 
 # Build the app (compile maintained Python modules)
 build:
-	PYTHONDONTWRITEBYTECODE=1 $(PYTHON) -c "import pathlib; [compile(pathlib.Path(path).read_text(), path, 'exec') for path in ('components/common.py', 'scripts/check-runtime-imports.py', 'scripts/smoke-streamlit.py', 'test_app.py', 'utils/crawler.py', 'utils/generate.py', 'utils/token.py')]"
+	PYTHONDONTWRITEBYTECODE=1 $(PYTHON) -c "import pathlib; [compile(pathlib.Path(path).read_text(), path, 'exec') for path in ('components/common.py', 'customer_cluster.py', 'scripts/check-runtime-imports.py', 'scripts/smoke-streamlit.py', 'test_app.py', 'test_embedding_cache.py', 'utils/crawler.py', 'utils/embedding_cache.py', 'utils/generate.py', 'utils/token.py')]"
 
 # Run the app locally
 run:
@@ -13,7 +13,7 @@ run:
 
 # Test the app
 test:
-	PYTHONDONTWRITEBYTECODE=1 $(PYTHON) -m pytest -q test_app.py
+	PYTHONDONTWRITEBYTECODE=1 $(PYTHON) -m pytest -q test_app.py test_embedding_cache.py
 
 static-check:
 	PYTHONDONTWRITEBYTECODE=1 $(PYTHON) scripts/check-workshop-baseline.py

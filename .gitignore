@@ -78,6 +78,8 @@ cache/
 url_cache/
 query_cache/
 embedding_cache.pkl
+embedding_cache.json
+embedding_cache.json.tmp
 embeddings.pkl
 
 lib/Pipfile.lock
