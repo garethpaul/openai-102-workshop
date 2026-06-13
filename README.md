@@ -113,6 +113,9 @@ The setup commands above are derived from repository files. Legacy mobile, Pytho
 - `make test`
 - `make build`
 - `make check`
+- The Make gates are location-independent. From another directory, pass the
+  checkout's Makefile by absolute path, such as
+  `make -f /path/to/openai-102-workshop/Makefile check`.
 - `make lock-check`
 - `make audit`
 - `make runtime-check`
@@ -168,6 +171,8 @@ When the required SDK or runtime is unavailable, use static checks and source re
 
 ## Maintenance Notes
 
+- Use an absolute Makefile path when running workshop tooling outside the
+  checkout.
 - See `SECURITY.md` for vulnerability reporting and safe research guidance.
 - See `CHANGES.md` and `docs/plans/2026-06-08-openai-102-workshop-baseline.md` for the current verification baseline.
 - See `docs/plans/2026-06-09-make-gate-aliases.md` for the local verification
