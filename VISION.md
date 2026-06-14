@@ -37,6 +37,8 @@ Priority:
 - Keep finite embedding values validated before nearest-neighbor training
 - Keep numeric embedding values validated as numeric types before training
 - Keep query embedding validation ahead of nearest-neighbor lookup
+- Validate generated per-query embedding cache and API payloads before they
+  reach retrieval code or are persisted
 - Keep verification targets from leaving Python bytecode behind
 - Keep the no-network baseline running in pinned, read-only hosted Linux CI
 - Keep Python 3.12 direct dependency inputs and generated exact locks small,

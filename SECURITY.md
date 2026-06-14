@@ -77,6 +77,10 @@ Numeric embedding values should be real numeric types rather than stringified
 numbers before retrieval fixtures train nearest-neighbor models.
 Query embedding validation should reject malformed cache or API vectors before
 they reach nearest-neighbor lookup.
+Embedding API and per-query JSON cache payloads must contain non-empty,
+equally sized real numeric finite vectors. Invalid cache data must fail locally
+without triggering a replacement API request, and invalid API data must be
+rejected before it is written to disk.
 Vector value validation should reject empty, boolean, string, complex,
 non-finite, and overflowing values before workshop math helpers calculate a
 distance or similarity.
