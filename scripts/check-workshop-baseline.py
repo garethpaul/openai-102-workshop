@@ -68,6 +68,7 @@ DEPENDENCY_PLAN = "docs/plans/2026-06-12-supported-python-dependency-graph.md"
 EMBEDDING_CACHE_PLAN = "docs/plans/2026-06-13-json-embedding-cache.md"
 API_COMPATIBILITY_PLAN = "docs/plans/2026-06-13-openai-api-compatibility-notes.md"
 LOCATION_INDEPENDENT_MAKE_PLAN = "docs/plans/2026-06-13-location-independent-make.md"
+EMBEDDING_PAYLOAD_PLAN = "docs/plans/2026-06-14-embedding-payload-validation.md"
 REQUIRED = [
     ".github/CODEOWNERS",
     ".github/workflows/check.yml",
@@ -171,6 +172,7 @@ def main():
         "def get_cache_file",
         "def validate_saved_embeddings",
         "def validate_query_embedding",
+        "def validate_embedding_response",
         "hashlib.sha256",
         "os.path.commonpath",
         "get_cache_file(cache_folder, query)",
@@ -188,6 +190,8 @@ def main():
         "finite numbers",
         "Query embedding must match the trained model dimensionality.",
         "Vectors must be non-empty numeric finite sequences.",
+        "Embedding response items must have the same dimensionality.",
+        "Embedding cache must be valid UTF-8 JSON.",
     ]:
         if phrase not in generate:
             failures.append(f"utils/generate.py must include {phrase}")
@@ -195,6 +199,24 @@ def main():
         failures.append("text embedding cache names must not use raw queries")
     if 'st_state[\'cost\'] = f"${0:.10f}"' in generate:
         failures.append("cost tracking must record the first request cost")
+    embedding_validator = generate.split("def validate_embedding_response", 1)[-1].split(
+        "def get_embeddings", 1
+    )[0]
+    for phrase in [
+        "if not isinstance(data, list) or not data:",
+        "isinstance(value, (bool, complex, np.complexfloating))",
+        "math.isfinite(numeric_value)",
+    ]:
+        if phrase not in embedding_validator:
+            failures.append(f"embedding response validator must retain {phrase}")
+    cache_validation = generate.find("validate_embedding_response(cached_response)")
+    cache_return = generate.find("return cached_response")
+    response_validation = generate.find("validate_embedding_response(response_data)")
+    response_write = generate.find("json.dump(response_data, f)")
+    if cache_validation == -1 or cache_return == -1 or cache_validation > cache_return:
+        failures.append("cached embeddings must be validated before return")
+    if response_validation == -1 or response_write == -1 or response_validation > response_write:
+        failures.append("API embeddings must be validated before cache write")
 
     crawler = read("utils/crawler.py")
     if "timeout=15" not in crawler or "raise_for_status()" not in crawler:
@@ -396,6 +418,9 @@ def main():
         "fake_streamlit",
         "test_get_cache_file_does_not_escape_cache_dir",
         "test_get_embeddings_reads_cache_without_api_call",
+        "test_get_embeddings_rejects_invalid_cache_without_api_call",
+        "test_get_embeddings_rejects_malformed_json_without_api_call",
+        "test_get_embeddings_rejects_invalid_api_data_before_cache_write",
         "distances.shape == (1, 2)",
         "test_distance_dimension_mismatch",
         "test_cosine_similarity_dimension_mismatch",
@@ -541,6 +566,16 @@ def main():
     ]:
         if phrase not in embedding_cache_plan:
             failures.append(f"JSON embedding cache plan must record {phrase}")
+    embedding_payload_plan = read(EMBEDDING_PAYLOAD_PLAN)
+    for phrase in [
+        "status: completed",
+        "make check",
+        "invalid cache",
+        "invalid API data",
+        "hostile mutations",
+    ]:
+        if phrase not in embedding_payload_plan:
+            failures.append(f"embedding payload validation plan must record {phrase}")
 
     compatibility = " ".join(read("docs/openai-api-compatibility.md").split())
     for phrase in [

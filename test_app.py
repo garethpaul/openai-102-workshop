@@ -120,6 +120,69 @@ def test_get_embeddings_reads_cache_without_api_call(tmp_path, monkeypatch):
     assert generate.get_embeddings("sample query") == cached_payload
 
 
+@pytest.mark.parametrize("cached_payload", [
+    {},
+    [],
+    ["not an object"],
+    [{}],
+    [{"embedding": []}],
+    [{"embedding": [True, 0.2]}],
+    [{"embedding": ["0.1", 0.2]}],
+    [{"embedding": [math.nan, 0.2]}],
+    [{"embedding": [math.inf, 0.2]}],
+    [{"embedding": [10 ** 400, 0.2]}],
+    [{"embedding": [0.1, 0.2]}, {"embedding": [0.3]}],
+])
+def test_get_embeddings_rejects_invalid_cache_without_api_call(
+    tmp_path, monkeypatch, cached_payload
+):
+    monkeypatch.chdir(tmp_path)
+    cache_dir = tmp_path / "cache"
+    cache_dir.mkdir()
+    cache_file = generate.get_cache_file(str(cache_dir), "sample query")
+    with open(cache_file, "w", encoding="utf-8") as file:
+        json.dump(cached_payload, file)
+
+    def fail_if_called(*args, **kwargs):
+        raise AssertionError("Invalid cache data must not trigger an OpenAI API call")
+
+    monkeypatch.setattr(generate.openai.Embedding, "create", fail_if_called)
+
+    with pytest.raises(ValueError, match="Embedding (response|cache)"):
+        generate.get_embeddings("sample query")
+
+
+def test_get_embeddings_rejects_malformed_json_without_api_call(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    cache_dir = tmp_path / "cache"
+    cache_dir.mkdir()
+    cache_file = generate.get_cache_file(str(cache_dir), "sample query")
+    with open(cache_file, "w", encoding="utf-8") as file:
+        file.write("{not json")
+
+    def fail_if_called(*args, **kwargs):
+        raise AssertionError("Malformed cache data must not trigger an OpenAI API call")
+
+    monkeypatch.setattr(generate.openai.Embedding, "create", fail_if_called)
+
+    with pytest.raises(ValueError, match="valid UTF-8 JSON"):
+        generate.get_embeddings("sample query")
+
+
+def test_get_embeddings_rejects_invalid_api_data_before_cache_write(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.setattr(
+        generate.openai.Embedding,
+        "create",
+        lambda **kwargs: {"data": [{"embedding": [math.nan]}]},
+    )
+
+    with pytest.raises(ValueError, match="numeric finite numbers"):
+        generate.get_embeddings("sample query")
+
+    assert not (tmp_path / "cache").exists()
+
+
 def test_get_top_k_metadata():
     class FakeNearestNeighbors:
         def kneighbors(self, values):
