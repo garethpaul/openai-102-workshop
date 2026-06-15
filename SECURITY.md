@@ -89,6 +89,8 @@ similarity, ignore malformed customer-list members and malformed or empty
 product mappings, and select only from a product-backed industry with at least
 one nonempty string product name. A matched record must provide a nonempty string customer industry
 before dictionary lookup.
+Recommendation container validation should reject malformed top-level customer,
+embedding, and product collections before iteration or mapping lookup.
 
 ## Dependency and Supply Chain Security
 

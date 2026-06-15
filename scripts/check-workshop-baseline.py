@@ -74,6 +74,7 @@ PRODUCT_BACKED_RECOMMENDATION_PLAN = "docs/plans/2026-06-15-product-backed-recom
 PRODUCT_NAME_VALIDATION_PLAN = "docs/plans/2026-06-15-product-name-validation.md"
 MALFORMED_CUSTOMER_PLAN = "docs/plans/2026-06-15-malformed-customer-entry-guard.md"
 CUSTOMER_INDUSTRY_NAME_PLAN = "docs/plans/2026-06-15-customer-industry-name-validation.md"
+RECOMMENDATION_CONTAINER_PLAN = "docs/plans/2026-06-15-recommendation-container-validation.md"
 REQUIRED = [
     ".github/CODEOWNERS",
     ".github/workflows/check.yml",
@@ -107,6 +108,7 @@ REQUIRED = [
     PRODUCT_NAME_VALIDATION_PLAN,
     MALFORMED_CUSTOMER_PLAN,
     CUSTOMER_INDUSTRY_NAME_PLAN,
+    RECOMMENDATION_CONTAINER_PLAN,
     "docs/openai-api-compatibility.md",
     CI_PLAN,
     "docs/plans/2026-06-09-make-gate-aliases.md",
@@ -183,7 +185,7 @@ def main():
 
     recommendations = read("components/recommendations.py")
     for phrase in [
-        "from collections.abc import Mapping",
+        "from collections.abc import Iterable, Mapping",
         "from utils.generate import cosine_similarity",
         "if isinstance(item, Mapping)",
         "customer_industry = customer.get(\"industry\")",
@@ -197,6 +199,10 @@ def main():
         "top_industry = max(product_scores, key=product_scores.get)",
         "choose_product(validated_products[top_industry])",
         "return None, similarity_scores",
+        "if not isinstance(industry_embeddings, Mapping):",
+        "not isinstance(customer_data, Iterable)",
+        "isinstance(customer_data, (str, bytes, Mapping))",
+        "not isinstance(industry_products, Mapping)",
     ]:
         if phrase not in recommendations:
             failures.append(f"customer recommendation logic must retain {phrase}")
@@ -230,6 +236,17 @@ def main():
     for path in ["README.md", "SECURITY.md", "VISION.md", "CHANGES.md"]:
         if "nonempty string customer industry" not in read(path).lower():
             failures.append(f"{path} must document nonempty string customer industry validation")
+        if "recommendation container validation" not in read(path).lower():
+            failures.append(f"{path} must document recommendation container validation")
+    for phrase in [
+        "def test_recommend_product_rejects_invalid_top_level_containers",
+        "expected_score_keys",
+        "(None, {\"Healthcare\"",
+        "([], None, {}, set())",
+        "([], {\"Healthcare\": [{\"embedding\": [1.0, 0.0]}]}, None",
+    ]:
+        if phrase not in tests:
+            failures.append(f"recommendation container coverage must retain {phrase}")
 
     recommendation_page = read("pages/4_🤞_Recommendations.py")
     for phrase in [
@@ -791,6 +808,23 @@ def main():
             re.search(r"(?i)\b(?:pending|todo|tbd|not run|to be recorded)\b",
                       customer_industry_verification)):
         failures.append("customer industry name plan must record completed verification")
+
+    recommendation_container_plan = read(RECOMMENDATION_CONTAINER_PLAN)
+    recommendation_container_status = re.findall(
+        r"(?mi)^status:\s*(.+?)\s*$", recommendation_container_plan
+    )
+    recommendation_container_verification = markdown_section(
+        recommendation_container_plan, "Verification Completed"
+    )
+    if (recommendation_container_status != ["completed"] or
+            "focused recommendation cases" not in recommendation_container_verification or
+            "complete no-network suite" not in recommendation_container_verification or
+            "All four Make gates passed" not in recommendation_container_verification or
+            "external directory" not in recommendation_container_verification or
+            "Seven isolated hostile mutations were rejected" not in recommendation_container_verification or
+            re.search(r"(?i)\b(?:pending|todo|tbd|not run|to be recorded)\b",
+                      recommendation_container_verification)):
+        failures.append("recommendation container validation plan must record completed verification")
 
     compatibility = " ".join(read("docs/openai-api-compatibility.md").split())
     for phrase in [

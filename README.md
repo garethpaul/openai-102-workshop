@@ -112,6 +112,8 @@ The setup commands above are derived from repository files. Legacy mobile, Pytho
   Malformed customer-list members are ignored so later valid records remain
   eligible for recommendation, and each match must provide a nonempty string customer industry
   before embedding lookup.
+- Recommendation container validation rejects malformed top-level customer,
+  embedding, and product collections before iteration or mapping lookup.
 
 ## Testing and Verification
 

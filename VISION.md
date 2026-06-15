@@ -53,6 +53,7 @@ Priority:
 - Keep each product-backed recommendation limited to a nonempty string product name
 - Keep malformed customer-list members from blocking later valid records
 - Keep each matched record limited to a nonempty string customer industry
+- Keep recommendation container validation ahead of iteration and mapping lookup
 
 Next priorities:
 
