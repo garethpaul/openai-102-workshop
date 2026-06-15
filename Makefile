@@ -7,7 +7,7 @@ UV ?= uv
 
 # Build the app (compile maintained Python modules)
 build:
-	cd "$(ROOT)" && PYTHONDONTWRITEBYTECODE=1 $(PYTHON) -c "import pathlib; [compile(pathlib.Path(path).read_text(), path, 'exec') for path in ('components/common.py', 'customer_cluster.py', 'scripts/check-runtime-imports.py', 'scripts/smoke-streamlit.py', 'test_app.py', 'test_embedding_cache.py', 'utils/crawler.py', 'utils/embedding_cache.py', 'utils/generate.py', 'utils/token.py')]"
+	cd "$(ROOT)" && PYTHONDONTWRITEBYTECODE=1 $(PYTHON) -c "import pathlib; [compile(pathlib.Path(path).read_text(), path, 'exec') for path in ('components/common.py', 'components/recommendations.py', 'customer_cluster.py', 'pages/4_🤞_Recommendations.py', 'scripts/check-runtime-imports.py', 'scripts/smoke-streamlit.py', 'test_app.py', 'test_embedding_cache.py', 'utils/crawler.py', 'utils/embedding_cache.py', 'utils/generate.py', 'utils/token.py')]"
 
 # Run the app locally
 run:

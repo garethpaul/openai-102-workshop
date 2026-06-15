@@ -4,6 +4,8 @@ import json
 import matplotlib.pyplot as plt
 import seaborn as sns
 
+from components.recommendations import recommend_product
+
 # Load customer data from JSON file
 with open("customer_profiles.json", "r") as file:
     customer_data = json.load(file)
@@ -13,62 +15,14 @@ with open("industry_embeddings.json", "r") as file:
     industry_embeddings = json.load(file)
 
 
-def calculate_similarity(embedding1, embedding2):
-    # Use cosine similarity to compare the embeddings
-    similarity = np.dot(embedding1, embedding2) / (
-        np.linalg.norm(embedding1) * np.linalg.norm(embedding2)
-    )
-    return similarity
-
-
-def recommend_product(customer_id):
-    customer = next(
-        (c for c in customer_data if c["customer_id"] == customer_id), None
-    )
-    if customer:
-        customer_industry = customer.get("industry")
-        customer_embedding = np.array(
-            industry_embeddings[customer_industry][0].get("embedding")
-        )
-
-        # Calculate similarity scores between customer embedding and industry embeddings
-        similarity_scores = {}
-        for industry1, embeddings1 in industry_embeddings.items():
-            similarity_scores[industry1] = {}
-            for industry2, embeddings2 in industry_embeddings.items():
-                embedding1 = np.array(embeddings1[0].get("embedding"))
-                embedding2 = np.array(embeddings2[0].get("embedding"))
-                similarity = calculate_similarity(embedding1, embedding2)
-                similarity_scores[industry1][industry2] = similarity
-
-        # Sort industries by similarity score in descending order
-        sorted_scores = {
-            industry: {
-                k: v for k, v in sorted(scores.items(), key=lambda x: x[1], reverse=True)
-            }
-            for industry, scores in similarity_scores.items()
-        }
-
-        # Retrieve top matching industry
-        top_industry = list(sorted_scores.keys())[0]
-
-        # Retrieve products associated with the top industry
-        products = get_products_by_industry(top_industry)
-
-        # Return a random product from the list
-        return np.random.choice(products), sorted_scores
-
-    return None, None
-
-
-def get_products_by_industry(industry):
-    # Define product mappings for each industry
-    industry_products = {
-        "E-commerce": ["Twilio Engage", "Marketing Campaigns"],
-        "Telecommunications": ["Programmable Messaging", "Programmable Voice", "Programmable Video"],
-        # Add more industry-product mappings here
-    }
-    return industry_products.get(industry, [])
+INDUSTRY_PRODUCTS = {
+    "E-commerce": ["Twilio Engage", "Marketing Campaigns"],
+    "Telecommunications": [
+        "Programmable Messaging",
+        "Programmable Voice",
+        "Programmable Video",
+    ],
+}
 
 
 def main():
@@ -91,7 +45,11 @@ def main():
 
     # Generate product recommendation
     recommended_product, similarity_scores = recommend_product(
-        selected_customer_id)
+        selected_customer_id,
+        customer_data,
+        industry_embeddings,
+        INDUSTRY_PRODUCTS,
+    )
 
     # Display recommendation
     if recommended_product:

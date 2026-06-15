@@ -106,6 +106,9 @@ The setup commands above are derived from repository files. Legacy mobile, Pytho
   before model training.
 - Query embedding validation rejects empty, boolean, non-numeric, non-finite,
   and dimension-mismatched vectors before nearest-neighbor lookup.
+- Recommendations compare the selected customer's industry embedding against
+  every available industry and safely return no product when the nearest
+  industry has no configured mapping.
 
 ## Testing and Verification
 

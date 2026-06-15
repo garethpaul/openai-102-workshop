@@ -20,7 +20,7 @@ UV ?= uv
 
 # Build the app (compile maintained Python modules)
 build:
-\tcd "$(ROOT)" && PYTHONDONTWRITEBYTECODE=1 $(PYTHON) -c "import pathlib; [compile(pathlib.Path(path).read_text(), path, 'exec') for path in ('components/common.py', 'customer_cluster.py', 'scripts/check-runtime-imports.py', 'scripts/smoke-streamlit.py', 'test_app.py', 'test_embedding_cache.py', 'utils/crawler.py', 'utils/embedding_cache.py', 'utils/generate.py', 'utils/token.py')]"
+\tcd "$(ROOT)" && PYTHONDONTWRITEBYTECODE=1 $(PYTHON) -c "import pathlib; [compile(pathlib.Path(path).read_text(), path, 'exec') for path in ('components/common.py', 'components/recommendations.py', 'customer_cluster.py', 'pages/4_🤞_Recommendations.py', 'scripts/check-runtime-imports.py', 'scripts/smoke-streamlit.py', 'test_app.py', 'test_embedding_cache.py', 'utils/crawler.py', 'utils/embedding_cache.py', 'utils/generate.py', 'utils/token.py')]"
 
 # Run the app locally
 run:
@@ -69,6 +69,7 @@ EMBEDDING_CACHE_PLAN = "docs/plans/2026-06-13-json-embedding-cache.md"
 API_COMPATIBILITY_PLAN = "docs/plans/2026-06-13-openai-api-compatibility-notes.md"
 LOCATION_INDEPENDENT_MAKE_PLAN = "docs/plans/2026-06-13-location-independent-make.md"
 EMBEDDING_PAYLOAD_PLAN = "docs/plans/2026-06-14-embedding-payload-validation.md"
+CUSTOMER_RECOMMENDATION_PLAN = "docs/plans/2026-06-15-customer-industry-recommendation.md"
 REQUIRED = [
     ".github/CODEOWNERS",
     ".github/workflows/check.yml",
@@ -80,7 +81,9 @@ REQUIRED = [
     "SECURITY.md",
     "VISION.md",
     "components/common.py",
+    "components/recommendations.py",
     "customer_cluster.py",
+    "pages/4_🤞_Recommendations.py",
     "docs/plans/2026-06-08-openai-102-workshop-baseline.md",
     "docs/plans/2026-06-09-vector-math-validation.md",
     "docs/plans/2026-06-09-small-embedding-fixtures.md",
@@ -95,6 +98,7 @@ REQUIRED = [
     EMBEDDING_CACHE_PLAN,
     API_COMPATIBILITY_PLAN,
     LOCATION_INDEPENDENT_MAKE_PLAN,
+    CUSTOMER_RECOMMENDATION_PLAN,
     "docs/openai-api-compatibility.md",
     CI_PLAN,
     "docs/plans/2026-06-09-make-gate-aliases.md",
@@ -147,7 +151,9 @@ def main():
 
     for path in [
         "components/common.py",
+        "components/recommendations.py",
         "customer_cluster.py",
+        "pages/4_🤞_Recommendations.py",
         "test_app.py",
         "test_embedding_cache.py",
         "utils/crawler.py",
@@ -166,6 +172,31 @@ def main():
         failures.append("sidebar token input must be password typed")
     if 'os.environ["OPENAI_API_KEY"] = api_token_input' not in common:
         failures.append("sidebar token input must update OPENAI_API_KEY locally")
+
+    recommendations = read("components/recommendations.py")
+    for phrase in [
+        "from utils.generate import cosine_similarity",
+        "customer_industry = customer.get(\"industry\")",
+        "customer_scores = similarity_scores.get(customer_industry, {})",
+        "top_industry = max(customer_scores, key=customer_scores.get)",
+        "if not products:",
+        "return None, similarity_scores",
+    ]:
+        if phrase not in recommendations:
+            failures.append(f"customer recommendation logic must retain {phrase}")
+    if "list(sorted_scores.keys())[0]" in recommendations:
+        failures.append("customer recommendations must not select the first mapping key")
+
+    recommendation_page = read("pages/4_🤞_Recommendations.py")
+    for phrase in [
+        "from components.recommendations import recommend_product",
+        "INDUSTRY_PRODUCTS = {",
+        "customer_data,",
+        "industry_embeddings,",
+        "INDUSTRY_PRODUCTS,",
+    ]:
+        if phrase not in recommendation_page:
+            failures.append(f"Recommendations page must retain {phrase}")
 
     generate = read("utils/generate.py")
     for phrase in [
@@ -431,6 +462,8 @@ def main():
         "test_load_embeddings_and_train_model_rejects_dimension_mismatch",
         "test_load_embeddings_and_train_model_rejects_metadata_without_text",
         "test_load_embeddings_and_train_model_rejects_non_finite_embedding_values",
+        "test_recommend_product_uses_customer_relative_nearest_industry",
+        "test_recommend_product_returns_none_for_unavailable_inputs",
         "test_get_top_k_metadata_rejects_invalid_query_embeddings",
         "test_get_top_k_metadata_rejects_dimension_mismatch",
         "numeric finite numbers",
@@ -576,6 +609,28 @@ def main():
     ]:
         if phrase not in embedding_payload_plan:
             failures.append(f"embedding payload validation plan must record {phrase}")
+    customer_recommendation_plan = read(CUSTOMER_RECOMMENDATION_PLAN)
+    customer_recommendation_verification = markdown_section(
+        customer_recommendation_plan, "Verification Completed"
+    )
+    if (
+        "status: completed" not in customer_recommendation_plan
+        or not customer_recommendation_verification
+        or re.search(
+            r"(?i)\b(?:pending|todo|tbd|not run|to be recorded)\b",
+            customer_recommendation_verification,
+        )
+    ):
+        failures.append("customer recommendation plan must record completed verification")
+    for phrase in [
+        "four focused recommendation tests",
+        "make check",
+        "external working directory",
+        "Six isolated hostile mutations",
+        "git diff --check",
+    ]:
+        if phrase not in customer_recommendation_verification:
+            failures.append(f"customer recommendation verification must record {phrase}")
 
     compatibility = " ".join(read("docs/openai-api-compatibility.md").split())
     for phrase in [
