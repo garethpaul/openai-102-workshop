@@ -158,6 +158,35 @@ def test_recommend_product_rejects_invalid_top_level_containers(
 
 
 @pytest.mark.parametrize(
+    ("embeddings", "expected_healthcare_scores"),
+    [
+        ({"Healthcare": [{"embedding": [0.0, 0.0]}]}, {}),
+        (
+            {
+                "Healthcare": [{"embedding": [1.0, 0.0]}],
+                "Retail": [{"embedding": [1.0]}],
+            },
+            {"Healthcare": 1.0},
+        ),
+        ({"Healthcare": [{"embedding": ["invalid", 1.0]}]}, {}),
+    ],
+)
+def test_recommend_product_skips_invalid_embedding_pairs(
+    embeddings, expected_healthcare_scores
+):
+    product, scores = recommendations.recommend_product(
+        1,
+        [{"customer_id": 1, "industry": "Healthcare"}],
+        embeddings,
+        {"Retail": ["Retail Product"]},
+    )
+
+    assert product is None
+    assert isinstance(scores, dict)
+    assert scores.get("Healthcare", {}) == expected_healthcare_scores
+
+
+@pytest.mark.parametrize(
     ("customer_id", "customers", "embeddings", "products"),
     [
         (99, [], {"E-commerce": [{"embedding": [1.0, 0.0]}]}, {}),

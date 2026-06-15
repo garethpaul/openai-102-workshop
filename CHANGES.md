@@ -13,6 +13,7 @@
   lookup.
 - Added recommendation container validation for malformed top-level customer,
   embedding, and product collections.
+- Skipped invalid recommendation embedding pairs while preserving valid scores.
 
 ## 2026-06-14
 

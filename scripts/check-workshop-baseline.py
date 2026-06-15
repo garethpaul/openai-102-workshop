@@ -75,6 +75,7 @@ PRODUCT_NAME_VALIDATION_PLAN = "docs/plans/2026-06-15-product-name-validation.md
 MALFORMED_CUSTOMER_PLAN = "docs/plans/2026-06-15-malformed-customer-entry-guard.md"
 CUSTOMER_INDUSTRY_NAME_PLAN = "docs/plans/2026-06-15-customer-industry-name-validation.md"
 RECOMMENDATION_CONTAINER_PLAN = "docs/plans/2026-06-15-recommendation-container-validation.md"
+RECOMMENDATION_EMBEDDING_PLAN = "docs/plans/2026-06-15-recommendation-embedding-validation.md"
 REQUIRED = [
     ".github/CODEOWNERS",
     ".github/workflows/check.yml",
@@ -109,6 +110,7 @@ REQUIRED = [
     MALFORMED_CUSTOMER_PLAN,
     CUSTOMER_INDUSTRY_NAME_PLAN,
     RECOMMENDATION_CONTAINER_PLAN,
+    RECOMMENDATION_EMBEDDING_PLAN,
     "docs/openai-api-compatibility.md",
     CI_PLAN,
     "docs/plans/2026-06-09-make-gate-aliases.md",
@@ -203,6 +205,7 @@ def main():
         "not isinstance(customer_data, Iterable)",
         "isinstance(customer_data, (str, bytes, Mapping))",
         "not isinstance(industry_products, Mapping)",
+        "except (TypeError, ValueError, OverflowError):",
     ]:
         if phrase not in recommendations:
             failures.append(f"customer recommendation logic must retain {phrase}")
@@ -247,6 +250,16 @@ def main():
     ]:
         if phrase not in tests:
             failures.append(f"recommendation container coverage must retain {phrase}")
+    for phrase in [
+        "def test_recommend_product_skips_invalid_embedding_pairs",
+        '{"Healthcare": [{"embedding": [0.0, 0.0]}]}',
+        '"Retail": [{"embedding": [1.0]}]',
+        '{"Healthcare": [{"embedding": ["invalid", 1.0]}]}',
+        '{"Healthcare": 1.0}',
+        'scores.get("Healthcare", {}) == expected_healthcare_scores',
+    ]:
+        if phrase not in tests:
+            failures.append(f"recommendation embedding coverage must retain {phrase}")
 
     recommendation_page = read("pages/4_🤞_Recommendations.py")
     for phrase in [
@@ -825,6 +838,27 @@ def main():
             re.search(r"(?i)\b(?:pending|todo|tbd|not run|to be recorded)\b",
                       recommendation_container_verification)):
         failures.append("recommendation container validation plan must record completed verification")
+
+    recommendation_embedding_plan = read(RECOMMENDATION_EMBEDDING_PLAN)
+    recommendation_embedding_status = re.findall(
+        r"(?mi)^status:\s*(.+?)\s*$", recommendation_embedding_plan
+    )
+    recommendation_embedding_verification = markdown_section(
+        recommendation_embedding_plan, "Verification Completed"
+    )
+    if (recommendation_embedding_status != ["completed"] or
+            "focused recommendation cases" not in recommendation_embedding_verification or
+            "complete no-network suite" not in recommendation_embedding_verification or
+            "All four Make gates passed" not in recommendation_embedding_verification or
+            "external directory" not in recommendation_embedding_verification or
+            "Six isolated hostile mutations were rejected" not in recommendation_embedding_verification or
+            re.search(r"(?i)\b(?:pending|todo|tbd|not run|to be recorded)\b",
+                      recommendation_embedding_verification)):
+        failures.append("recommendation embedding validation plan must record completed verification")
+
+    for path in ["README.md", "SECURITY.md", "VISION.md", "CHANGES.md"]:
+        if "invalid recommendation embedding pairs" not in read(path).lower():
+            failures.append(f"{path} must document invalid recommendation embedding pairs")
 
     compatibility = " ".join(read("docs/openai-api-compatibility.md").split())
     for phrase in [

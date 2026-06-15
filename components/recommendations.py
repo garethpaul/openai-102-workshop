@@ -25,9 +25,11 @@ def build_similarity_scores(industry_embeddings):
             embedding2 = _embedding_for(industry_embeddings, industry2)
             if embedding2 is None:
                 continue
-            scores[industry1][industry2] = cosine_similarity(
-                embedding1, embedding2
-            )
+            try:
+                score = cosine_similarity(embedding1, embedding2)
+            except (TypeError, ValueError, OverflowError):
+                continue
+            scores[industry1][industry2] = score
     return scores
 
 
