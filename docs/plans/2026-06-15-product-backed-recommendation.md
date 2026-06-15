@@ -1,6 +1,6 @@
 # Product-Backed Recommendation Selection
 
-status: planned
+status: completed
 
 ## Summary
 
@@ -50,3 +50,32 @@ Telecommunications products are available and have valid similarity scores.
 - No paid OpenAI request or live Streamlit interaction is required.
 - The change must remain stacked on PR #14 and must not be merged or closed
   without explicit owner authorization.
+
+## Work Completed
+
+- Filtered customer-relative similarity scores to industries with nonempty,
+  list-valued product mappings before ranking.
+- Preserved same-industry selection when supported and the complete pairwise
+  matrix used by the page visualizations.
+- Added a checked-in Technology-customer fallback regression, malformed mapping
+  coverage, static contracts, and maintenance guidance.
+
+## Verification Completed
+
+- Six focused recommendation cases and the complete 80-test no-network suite
+  passed in isolated Python 3.12 environments from the exact test lock.
+- `make lint`, `make test`, `make build`, and `make check` passed, and
+  `make check` passed from an external working directory.
+- Runtime imports and the headless Streamlit health smoke passed against both
+  exact locks.
+- Exact production and test lock audits using
+  `pip-audit --no-deps --disable-pip` reported no known vulnerabilities. The
+  standard production `make audit` path could not build a temporary `pyarrow`
+  dependency because a Rust compiler is unavailable on this host; it reported
+  no vulnerability finding before that environment failure.
+- Six isolated hostile mutations restoring rank-before-product selection,
+  accepting malformed mappings, removing the fixture regression or empty
+  candidate guard, deleting guidance, or reverting plan status were rejected.
+- `git diff --check`, exact-diff, generated-artifact, conflict-marker,
+  intended-path, protected lock/build-path, and changed-line credential audits
+  passed.

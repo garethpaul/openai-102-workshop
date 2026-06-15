@@ -49,6 +49,7 @@ Priority:
 - Keep a separate hosted full-lock import and headless Streamlit health smoke
 - Keep GitHub Actions aligned with the canonical `make check` baseline
 - Keep historical OpenAI SDK and model examples visibly marked until migrated
+- Keep recommendations constrained to validated, product-backed industries
 
 Next priorities:
 

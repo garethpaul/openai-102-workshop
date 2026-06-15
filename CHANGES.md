@@ -5,6 +5,8 @@
 - Fixed Recommendations to select the nearest industry from the selected
   customer's embedding instead of the first JSON key, with a safe no-product
   fallback.
+- Made Recommendations fall back to the nearest product-backed industry when
+  the customer's own industry has no configured catalog entry.
 
 ## 2026-06-14
 

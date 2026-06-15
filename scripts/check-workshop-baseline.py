@@ -70,6 +70,7 @@ API_COMPATIBILITY_PLAN = "docs/plans/2026-06-13-openai-api-compatibility-notes.m
 LOCATION_INDEPENDENT_MAKE_PLAN = "docs/plans/2026-06-13-location-independent-make.md"
 EMBEDDING_PAYLOAD_PLAN = "docs/plans/2026-06-14-embedding-payload-validation.md"
 CUSTOMER_RECOMMENDATION_PLAN = "docs/plans/2026-06-15-customer-industry-recommendation.md"
+PRODUCT_BACKED_RECOMMENDATION_PLAN = "docs/plans/2026-06-15-product-backed-recommendation.md"
 REQUIRED = [
     ".github/CODEOWNERS",
     ".github/workflows/check.yml",
@@ -99,6 +100,7 @@ REQUIRED = [
     API_COMPATIBILITY_PLAN,
     LOCATION_INDEPENDENT_MAKE_PLAN,
     CUSTOMER_RECOMMENDATION_PLAN,
+    PRODUCT_BACKED_RECOMMENDATION_PLAN,
     "docs/openai-api-compatibility.md",
     CI_PLAN,
     "docs/plans/2026-06-09-make-gate-aliases.md",
@@ -178,8 +180,10 @@ def main():
         "from utils.generate import cosine_similarity",
         "customer_industry = customer.get(\"industry\")",
         "customer_scores = similarity_scores.get(customer_industry, {})",
-        "top_industry = max(customer_scores, key=customer_scores.get)",
-        "if not products:",
+        "for industry, score in customer_scores.items()",
+        "isinstance(products, list) and products",
+        "if not product_scores:",
+        "top_industry = max(product_scores, key=product_scores.get)",
         "return None, similarity_scores",
     ]:
         if phrase not in recommendations:
@@ -463,6 +467,7 @@ def main():
         "test_load_embeddings_and_train_model_rejects_metadata_without_text",
         "test_load_embeddings_and_train_model_rejects_non_finite_embedding_values",
         "test_recommend_product_uses_customer_relative_nearest_industry",
+        "test_recommend_product_falls_back_to_product_backed_industry",
         "test_recommend_product_returns_none_for_unavailable_inputs",
         "test_get_top_k_metadata_rejects_invalid_query_embeddings",
         "test_get_top_k_metadata_rejects_dimension_mismatch",
@@ -521,9 +526,15 @@ def main():
         "make audit",
         "Streamlit health",
         "JSON embedding cache",
+        "product-backed",
     ]:
         if phrase.lower() not in docs.lower():
             failures.append(f"docs must mention {phrase}")
+    guidance_documents = [
+        read(path).lower() for path in ["README.md", "SECURITY.md", "VISION.md"]
+    ]
+    if not all("product-backed" in document for document in guidance_documents):
+        failures.append("all guidance must document product-backed recommendations")
     changes = read("CHANGES.md")
     for phrase in ["make lint", "make test", "make build", "make check"]:
         if phrase not in changes:
@@ -631,6 +642,38 @@ def main():
     ]:
         if phrase not in customer_recommendation_verification:
             failures.append(f"customer recommendation verification must record {phrase}")
+    product_backed_plan = read(PRODUCT_BACKED_RECOMMENDATION_PLAN)
+    product_backed_status = re.findall(
+        r"(?mi)^status:\s*(.+?)\s*$", product_backed_plan
+    )
+    product_backed_work = markdown_section(product_backed_plan, "Work Completed")
+    product_backed_verification = markdown_section(
+        product_backed_plan, "Verification Completed"
+    )
+    if (product_backed_status != ["completed"] or not product_backed_work or
+            not product_backed_verification or re.search(
+                r"(?i)\b(?:pending|todo|tbd|not run|to be recorded)\b",
+                product_backed_verification,
+            )):
+        failures.append(
+            "product-backed recommendation plan must record completed verification"
+        )
+    for phrase in [
+        "Six focused recommendation cases",
+        "80-test no-network suite",
+        "make lint",
+        "make test",
+        "make build",
+        "make check",
+        "external working directory",
+        "Runtime imports",
+        "Streamlit health smoke",
+        "no known vulnerabilities",
+        "Six isolated hostile mutations",
+        "git diff --check",
+    ]:
+        if phrase not in product_backed_verification:
+            failures.append(f"product-backed recommendation verification must record {phrase}")
 
     compatibility = " ".join(read("docs/openai-api-compatibility.md").split())
     for phrase in [
