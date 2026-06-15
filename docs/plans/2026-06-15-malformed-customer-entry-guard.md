@@ -1,6 +1,6 @@
 # Malformed Customer Entry Guard
 
-status: planned
+status: completed
 
 ## Context
 
@@ -54,3 +54,22 @@ workshop data.
 - Do not change recommendation ranking, product selection, embeddings, OpenAI
   API usage, dependency locks, generated data, or Streamlit presentation.
 - Do not normalize or mutate valid customer mappings.
+
+## Work Completed
+
+- Skipped non-mapping customer-list members before reading `customer_id` while
+  preserving the first matching valid customer.
+- Added coverage for malformed entries preceding a valid match and for an
+  all-malformed customer list.
+- Added mutation-sensitive static contracts and synchronized project guidance.
+
+## Verification Completed
+
+- Ten focused recommendation cases and the 84-test no-network suite passed in
+  an isolated Python 3.12 environment installed from `requirements-test.txt`.
+- `make lint`, `make test`, `make build`, and `make check` passed from the
+  repository, and `make check` passed from an external working directory.
+- Five isolated hostile mutations covering the mapping guard, focused tests,
+  guidance, and completed plan evidence were rejected.
+- `git diff --check` plus generated-artifact, dependency-file, credential,
+  binary, mode, and intended-path audits passed.

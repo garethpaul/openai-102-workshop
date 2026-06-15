@@ -8,6 +8,7 @@
 - Made Recommendations fall back to the nearest product-backed industry when
   the customer's own industry has no configured catalog entry.
 - Filtered malformed and blank catalog members before product recommendation.
+- Ignored malformed customer-list members during recommendation lookup.
 
 ## 2026-06-14
 

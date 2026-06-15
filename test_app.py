@@ -103,6 +103,21 @@ def test_recommend_product_filters_malformed_product_names():
     assert product == "Valid Product"
 
 
+def test_recommend_product_skips_malformed_customer_entries():
+    customers = [None, "invalid", {"customer_id": 1, "industry": "Healthcare"}]
+    embeddings = {"Healthcare": [{"embedding": [1.0, 0.0]}]}
+    products = {"Healthcare": ["Valid Product"]}
+
+    product, _ = recommendations.recommend_product(
+        1,
+        customers,
+        embeddings,
+        products,
+    )
+
+    assert product == "Valid Product"
+
+
 @pytest.mark.parametrize(
     ("customer_id", "customers", "embeddings", "products"),
     [
@@ -125,6 +140,12 @@ def test_recommend_product_filters_malformed_product_names():
             [{"customer_id": 1, "industry": "Healthcare"}],
             {"Healthcare": [{"embedding": [1.0, 0.0]}]},
             {"Healthcare": [None, "", "   ", {}]},
+        ),
+        (
+            1,
+            [None, "invalid", []],
+            {"Healthcare": [{"embedding": [1.0, 0.0]}]},
+            {"Healthcare": ["Valid Product"]},
         ),
     ],
 )

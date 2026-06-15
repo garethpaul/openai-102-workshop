@@ -72,6 +72,7 @@ EMBEDDING_PAYLOAD_PLAN = "docs/plans/2026-06-14-embedding-payload-validation.md"
 CUSTOMER_RECOMMENDATION_PLAN = "docs/plans/2026-06-15-customer-industry-recommendation.md"
 PRODUCT_BACKED_RECOMMENDATION_PLAN = "docs/plans/2026-06-15-product-backed-recommendation.md"
 PRODUCT_NAME_VALIDATION_PLAN = "docs/plans/2026-06-15-product-name-validation.md"
+MALFORMED_CUSTOMER_PLAN = "docs/plans/2026-06-15-malformed-customer-entry-guard.md"
 REQUIRED = [
     ".github/CODEOWNERS",
     ".github/workflows/check.yml",
@@ -103,6 +104,7 @@ REQUIRED = [
     CUSTOMER_RECOMMENDATION_PLAN,
     PRODUCT_BACKED_RECOMMENDATION_PLAN,
     PRODUCT_NAME_VALIDATION_PLAN,
+    MALFORMED_CUSTOMER_PLAN,
     "docs/openai-api-compatibility.md",
     CI_PLAN,
     "docs/plans/2026-06-09-make-gate-aliases.md",
@@ -179,7 +181,9 @@ def main():
 
     recommendations = read("components/recommendations.py")
     for phrase in [
+        "from collections.abc import Mapping",
         "from utils.generate import cosine_similarity",
+        "if isinstance(item, Mapping)",
         "customer_industry = customer.get(\"industry\")",
         "customer_scores = similarity_scores.get(customer_industry, {})",
         "for industry, score in customer_scores.items()",
@@ -195,6 +199,24 @@ def main():
             failures.append(f"customer recommendation logic must retain {phrase}")
     if "list(sorted_scores.keys())[0]" in recommendations:
         failures.append("customer recommendations must not select the first mapping key")
+
+    tests = read("test_app.py")
+    for phrase in [
+        "def test_recommend_product_skips_malformed_customer_entries",
+        '[None, "invalid", []]',
+    ]:
+        if phrase not in tests:
+            failures.append(f"malformed customer coverage must retain {phrase}")
+
+    malformed_customer_guidance = {
+        "README.md": "Malformed customer-list members are ignored",
+        "SECURITY.md": "ignore malformed customer-list members",
+        "VISION.md": "Keep malformed customer-list members",
+        "CHANGES.md": "Ignored malformed customer-list members",
+    }
+    for path, phrase in malformed_customer_guidance.items():
+        if phrase not in read(path):
+            failures.append(f"{path} must retain malformed customer guidance")
 
     recommendation_page = read("pages/4_🤞_Recommendations.py")
     for phrase in [
@@ -709,6 +731,36 @@ def main():
     ]:
         if phrase not in product_name_verification:
             failures.append(f"product name validation verification must record {phrase}")
+
+    malformed_customer_plan = read(MALFORMED_CUSTOMER_PLAN)
+    malformed_customer_status = re.findall(
+        r"(?mi)^status:\s*(.+?)\s*$", malformed_customer_plan
+    )
+    malformed_customer_work = markdown_section(
+        malformed_customer_plan, "Work Completed"
+    )
+    malformed_customer_verification = markdown_section(
+        malformed_customer_plan, "Verification Completed"
+    )
+    if (malformed_customer_status != ["completed"] or not malformed_customer_work or
+            not malformed_customer_verification or re.search(
+                r"(?i)\b(?:pending|todo|tbd|not run|to be recorded)\b",
+                malformed_customer_verification,
+            )):
+        failures.append("malformed customer guard plan must record completed verification")
+    for phrase in [
+        "focused recommendation cases",
+        "no-network suite",
+        "make lint",
+        "make test",
+        "make build",
+        "make check",
+        "external working directory",
+        "isolated hostile mutations",
+        "git diff --check",
+    ]:
+        if phrase not in malformed_customer_verification:
+            failures.append(f"malformed customer verification must record {phrase}")
 
     compatibility = " ".join(read("docs/openai-api-compatibility.md").split())
     for phrase in [

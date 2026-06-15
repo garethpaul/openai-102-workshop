@@ -1,3 +1,4 @@
+from collections.abc import Mapping
 import random
 
 from utils.generate import cosine_similarity
@@ -38,7 +39,12 @@ def recommend_product(
     choose_product=random.choice,
 ):
     customer = next(
-        (item for item in customer_data if item.get("customer_id") == customer_id),
+        (
+            item
+            for item in customer_data
+            if isinstance(item, Mapping)
+            and item.get("customer_id") == customer_id
+        ),
         None,
     )
     similarity_scores = build_similarity_scores(industry_embeddings)
