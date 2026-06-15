@@ -54,12 +54,20 @@ def recommend_product(
         return None, similarity_scores
 
     product_scores = {}
+    validated_products = {}
     for industry, score in customer_scores.items():
         products = industry_products.get(industry)
-        if isinstance(products, list) and products:
+        if not isinstance(products, list):
+            continue
+        product_names = [
+            product.strip()
+            for product in products
+            if isinstance(product, str) and product.strip()
+        ]
+        if product_names:
             product_scores[industry] = score
+            validated_products[industry] = product_names
     if not product_scores:
         return None, similarity_scores
     top_industry = max(product_scores, key=product_scores.get)
-    products = industry_products[top_industry]
-    return choose_product(products), similarity_scores
+    return choose_product(validated_products[top_industry]), similarity_scores

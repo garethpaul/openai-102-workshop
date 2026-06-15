@@ -108,7 +108,7 @@ The setup commands above are derived from repository files. Legacy mobile, Pytho
   and dimension-mismatched vectors before nearest-neighbor lookup.
 - Recommendations compare the selected customer's industry embedding against
   every available industry and choose the nearest product-backed industry with
-  a configured, nonempty product list.
+  a configured list containing at least one nonempty string product name.
 
 ## Testing and Verification
 

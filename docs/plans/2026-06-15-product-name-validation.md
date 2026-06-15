@@ -1,6 +1,6 @@
 # Product Recommendation Name Validation
 
-status: in_progress
+status: completed
 
 ## Context
 
@@ -34,8 +34,27 @@ string product name, and pass only validated names to product selection.
 
 ## Work Completed
 
-Pending implementation.
+- Filtered each product mapping to trimmed, nonempty string names without
+  mutating the source catalog.
+- Scored industries as before while passing only validated names to product
+  selection.
+- Added focused malformed-member and all-invalid-list coverage plus
+  mutation-sensitive static and documentation contracts.
 
 ## Verification Completed
 
-Pending implementation and validation.
+- Eight focused recommendation cases and the 82-test no-network suite passed in
+  an isolated Python 3.12 environment installed from both checked-in locks.
+- `make lint`, `make test`, `make build`, and `make check` passed from the
+  repository, and `make check` passed from an external working directory.
+- Runtime imports and the Streamlit health smoke passed against the full locked
+  application graph.
+- `pip-audit --no-deps --disable-pip` reported no known vulnerabilities for
+  both exact lock files; plain `make audit` could not collect the old source
+  build graph because the host lacks a Rust compiler, so no successful plain
+  audit is claimed.
+- Six isolated hostile mutations covering type validation, blank rejection,
+  filtered-list handoff, focused tests, guidance, and plan evidence were
+  rejected.
+- `git diff --check` plus generated-artifact, dependency-file, credential,
+  binary, mode, and intended-path audits passed.

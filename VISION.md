@@ -50,6 +50,7 @@ Priority:
 - Keep GitHub Actions aligned with the canonical `make check` baseline
 - Keep historical OpenAI SDK and model examples visibly marked until migrated
 - Keep recommendations constrained to validated, product-backed industries
+- Keep each product-backed recommendation limited to a nonempty string product name
 
 Next priorities:
 
