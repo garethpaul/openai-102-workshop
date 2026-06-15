@@ -1,6 +1,6 @@
 # Customer Industry Name Validation
 
-Status: planned
+Status: completed
 
 ## Problem
 
@@ -40,8 +40,20 @@ raises `TypeError` instead of returning the existing no-recommendation result.
 
 ## Work Completed
 
-Pending implementation.
+- Required the matched customer industry to be a nonempty string before
+  embedding lookup.
+- Added parameterized coverage for null, unhashable, empty, and whitespace-only
+  industry values while preserving the similarity-score result.
+- Added mutation-sensitive static contracts and synchronized project guidance.
 
 ## Verification Completed
 
-Pending implementation and verification.
+- Fifteen focused recommendation cases and the complete no-network suite passed
+  in the isolated Python 3.12 environment.
+- All four Make gates passed from the repository and the canonical check passed
+  from an external directory.
+- Six isolated hostile mutations were rejected for missing type or blank
+  validation, missing focused coverage, missing guidance, and stale plan status.
+- Exact diff, generated artifact, credential, dependency, data, conflict-marker,
+  binary, mode, whitespace, and intended-path audits passed.
+- Live or paid OpenAI behavior was not exercised.

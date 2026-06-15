@@ -118,6 +118,23 @@ def test_recommend_product_skips_malformed_customer_entries():
     assert product == "Valid Product"
 
 
+@pytest.mark.parametrize("industry", [None, [], {}, "", "   "])
+def test_recommend_product_rejects_invalid_customer_industry_names(industry):
+    customers = [{"customer_id": 1, "industry": industry}]
+    embeddings = {"Healthcare": [{"embedding": [1.0, 0.0]}]}
+    products = {"Healthcare": ["Valid Product"]}
+
+    product, scores = recommendations.recommend_product(
+        1,
+        customers,
+        embeddings,
+        products,
+    )
+
+    assert product is None
+    assert scores["Healthcare"]["Healthcare"] == 1.0
+
+
 @pytest.mark.parametrize(
     ("customer_id", "customers", "embeddings", "products"),
     [

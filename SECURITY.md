@@ -87,7 +87,8 @@ distance or similarity.
 Customer recommendations should use validated customer-relative cosine
 similarity, ignore malformed customer-list members and malformed or empty
 product mappings, and select only from a product-backed industry with at least
-one nonempty string product name.
+one nonempty string product name. A matched record must provide a nonempty string customer industry
+before dictionary lookup.
 
 ## Dependency and Supply Chain Security
 
