@@ -70,4 +70,14 @@ failures while retaining the historical compatibility warning.
 
 ## Verification Completed
 
-Pending implementation and validation.
+- The focused fine-tuning retry regression passed.
+- The complete no-network suite passed with 100 tests.
+- All four Make gates passed, including the external directory check.
+- Exact test-lock installation and `uv pip check` passed under isolated Python
+  3.12 validation.
+- Six isolated hostile mutations were rejected for the exception type,
+  final-attempt raise, backoff, test registration, maintained guidance, and
+  plan status.
+- `make lock-check` exposed a pre-existing missing Starlette resolver floor;
+  final lock, diff, artifact, secret, mode, and whitespace audits remain
+  pending until that separately planned reproducibility fix passes.
