@@ -90,6 +90,11 @@ The setup commands above are derived from repository files. Legacy mobile, Pytho
 - Treat the checked-in snippets as legacy OpenAI SDK examples pinned to
   `openai==0.28.1`. Model or SDK migrations should be deliberate compatibility
   updates.
+- The fine-tuning retry example retries only the pinned SDK's rate-limit error;
+  other failures surface immediately and the final rate-limit attempt re-raises.
+- The Starlette resolver floor is explicit in `requirements.in` so lock
+  regeneration and audits from the Makefile's public-PyPI contract cannot roll
+  the reviewed 1.3.1 security pin back to 1.2.1 or miss the reviewed release.
 - Retrieval vector math helpers validate dimensionality and zero-vector cosine
   inputs before returning workshop results.
 - Shared vector value validation rejects empty, boolean, string, complex,

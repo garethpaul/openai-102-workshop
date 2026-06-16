@@ -1,6 +1,6 @@
 # Starlette Lock-Floor Reproducibility
 
-status: in_progress
+status: completed
 
 ## Context
 
@@ -13,7 +13,9 @@ the repository's own security contract.
 
 - R1. Encode `starlette==1.3.1` as an explicit application resolver floor.
 - R2. Regenerate the application lock and preserve every unrelated pin.
-- R3. Make `make lock-check` reproducibly retain the reviewed security version.
+- R3. Make `make lock-check` use public PyPI and reproducibly retain the
+  reviewed security version regardless of caller index configuration, and use
+  the same source for vulnerability audits.
 - R4. Keep the verification lock, OpenAI SDK pin, Streamlit pin, and lesson
   behavior unchanged.
 - R5. Add mutation-sensitive input, lock, documentation, and completed-plan
@@ -25,10 +27,11 @@ the repository's own security contract.
 
 ### U1. Resolver input and generated lock
 
-**Files:** `requirements.in`, `requirements.txt`
+**Files:** `requirements.in`, `requirements.txt`, `Makefile`
 
 Add the exact reviewed Starlette constraint to the application input and
-regenerate the universal Python 3.12 lock.
+regenerate the universal Python 3.12 lock from the repository-owned public-PyPI
+index contract.
 
 ### U2. Maintained validation and guidance
 
@@ -56,4 +59,13 @@ transitive security version is now resolver input.
 
 ## Verification Completed
 
-Pending implementation and validation.
+- make lock-check passed twice from the public-PyPI contract while the caller
+  exported a conflicting package index.
+- The complete no-network suite passed with 101 tests.
+- Both exact locks audited with no known vulnerabilities.
+- Application lock compatibility, runtime imports and credential-free Streamlit smoke passed
+  in a fresh 108-package Python 3.12 environment.
+- Six isolated hostile mutations were rejected for the input floor, generated
+  pin, public index contract, checker contract, guidance, and plan status.
+- Exact diff, generated-artifact, added-line secret, unrelated lock drift,
+  mode, and whitespace audits passed before commit.

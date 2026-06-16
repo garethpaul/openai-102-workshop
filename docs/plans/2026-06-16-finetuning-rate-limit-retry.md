@@ -1,6 +1,6 @@
 # Fine-Tuning Rate-Limit Retry Example
 
-status: in_progress
+status: completed
 
 ## Context
 
@@ -25,8 +25,8 @@ workshop intentionally preserves `openai==0.28.1`, and that pinned SDK exposes
 - R4. Preserve exponential backoff with jitter for retryable attempts.
 - R5. Add mutation-sensitive source, checker, documentation, and completed-plan
   contracts.
-- R6. Do not call OpenAI, add credentials, change dependencies, or migrate the
-  historical `openai==0.28.1` API surface.
+- R6. The retry correction must not call OpenAI, add credentials, change
+  dependencies, or migrate the historical `openai==0.28.1` API surface.
 
 ## Implementation Units
 
@@ -65,19 +65,21 @@ failures while retaining the historical compatibility warning.
 ## Scope Boundaries
 
 - Do not make live OpenAI requests or require an API key.
-- Do not update models, CLI commands, SDK versions, or lock files.
+- The retry correction must not update models, CLI commands, SDK versions, or
+  lock files; the separately planned Starlette floor closes a validation
+  blocker without changing this sample's dependency use.
 - Do not redesign the lesson or execute the displayed generation loop.
 
 ## Verification Completed
 
 - The focused fine-tuning retry regression passed.
-- The complete no-network suite passed with 100 tests.
+- The complete no-network suite passed with 101 tests.
 - All four Make gates passed, including the external directory check.
 - Exact test-lock installation and `uv pip check` passed under isolated Python
   3.12 validation.
 - Six isolated hostile mutations were rejected for the exception type,
   final-attempt raise, backoff, test registration, maintained guidance, and
   plan status.
-- `make lock-check` exposed a pre-existing missing Starlette resolver floor;
-  final lock, diff, artifact, secret, mode, and whitespace audits remain
-  pending until that separately planned reproducibility fix passes.
+- make lock-check passed twice after the Starlette resolver floor fix.
+- Exact diff, generated-artifact, added-line secret, dependency/lock drift,
+  mode, and whitespace audits passed.

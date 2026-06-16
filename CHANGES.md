@@ -2,6 +2,11 @@
 
 ## 2026-06-16
 
+- Corrected the displayed fine-tuning retry example to retry only legacy SDK
+  rate limits and re-raise the final attempt instead of masking other failures.
+- Added an explicit Starlette resolver floor so fresh lock generation preserves
+  the reviewed 1.3.1 application security pin from public PyPI regardless of
+  caller index configuration.
 - Added a customer-industry recommendation tie break so equal top scores prefer
   the matched customer's own product-backed industry over mapping order.
 - Updated both generated Python locks to `aiohttp==3.14.1` after the 3.14.0

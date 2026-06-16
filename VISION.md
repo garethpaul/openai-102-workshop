@@ -49,6 +49,8 @@ Priority:
 - Keep a separate hosted full-lock import and headless Streamlit health smoke
 - Keep GitHub Actions aligned with the canonical `make check` baseline
 - Keep historical OpenAI SDK and model examples visibly marked until migrated
+- Keep the fine-tuning retry example narrow so only rate limits are retried
+- Keep the Starlette resolver floor explicit and reproducible from public PyPI
 - Keep recommendations constrained to validated, product-backed industries
 - Keep each product-backed recommendation limited to a nonempty string product name
 - Keep malformed customer-list members from blocking later valid records
