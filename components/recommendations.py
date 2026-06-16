@@ -88,5 +88,11 @@ def recommend_product(
             validated_products[industry] = product_names
     if not product_scores:
         return None, similarity_scores
-    top_industry = max(product_scores, key=product_scores.get)
+    top_industry = max(
+        product_scores,
+        key=lambda industry: (
+            product_scores[industry],
+            industry == customer_industry,
+        ),
+    )
     return choose_product(validated_products[top_industry]), similarity_scores

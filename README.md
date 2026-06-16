@@ -79,6 +79,9 @@ The setup commands above are derived from repository files. Legacy mobile, Pytho
   preferences and rejects drift; `make lock-upgrade` deliberately selects new
   compatible versions for a reviewed dependency update.
 - `make audit` requires both locks to report zero known vulnerabilities.
+- Both generated locks retain the reviewed `aiohttp==3.14.1` security floor;
+  the application lock also retains `starlette==1.3.1`. Dependency updates
+  must keep the application and verification graphs aligned.
 - `make runtime-check` imports every reviewed direct application dependency.
 - `make smoke` launches a bounded headless Streamlit process and requires a
   healthy localhost endpoint without an API credential.
@@ -116,6 +119,9 @@ The setup commands above are derived from repository files. Legacy mobile, Pytho
   embedding, and product collections before iteration or mapping lookup.
 - Invalid recommendation embedding pairs are skipped without discarding valid
   similarity scores or crashing the recommendation page.
+- The customer-industry recommendation tie break prefers the customer's own
+  product-backed industry when equal similarity scores would otherwise depend
+  on mapping insertion order.
 
 ## Testing and Verification
 

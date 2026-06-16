@@ -1,5 +1,14 @@
 # Changes
 
+## 2026-06-16
+
+- Added a customer-industry recommendation tie break so equal top scores prefer
+  the matched customer's own product-backed industry over mapping order.
+- Updated both generated Python locks to `aiohttp==3.14.1` after the 3.14.0
+  release acquired eight published security advisories.
+- Updated the application lock to `starlette==1.3.1` after the 1.2.1 release
+  acquired two published request-processing advisories.
+
 ## 2026-06-15
 
 - Fixed Recommendations to select the nearest industry from the selected

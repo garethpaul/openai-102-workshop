@@ -1,6 +1,6 @@
 ---
 title: Recommendation Tie Breaking
-status: planned
+status: completed
 date: 2026-06-16
 ---
 
@@ -44,7 +44,8 @@ customer away from their own equally ranked industry based on fixture order.
 
 - Prove equal top scores prefer the customer's own product regardless of input
   insertion order.
-- Prove a strictly higher product-backed score still wins.
+- Prove the product-backed fallback still works when the customer's own
+  industry has no valid product.
 - Run the focused recommendation tests, complete no-network suite, all Make
   gates, external-directory gate, and exact test-lock dependency check.
 - Reject isolated score, own-industry preference, regression assertion,
@@ -64,3 +65,28 @@ customer away from their own equally ranked industry based on fixture order.
 - Equal scores no longer let mapping order displace a valid product from the
   customer's own industry.
 - Existing higher-score fallback and invalid-input behavior remain unchanged.
+
+## Work Completed
+
+- Ranked candidate industries by similarity score first and the matched
+  customer's own industry second.
+- Added a regression where an equally embedded competitor is inserted before
+  the customer's own product-backed industry.
+- Extended mutation-sensitive static contracts, maintained guidance, and
+  changelog evidence without changing APIs, models, prompts, direct dependency
+  inputs, or fixtures.
+
+## Verification Completed
+
+- Three focused recommendation cases passed, including equal-score preference
+  and the existing product-backed fallback.
+- The complete no-network suite passed with 99 tests in a disposable Python
+  3.12 environment installed from the exact test lock.
+- All four Make gates passed from the repository root and an external directory.
+- Eight isolated hostile mutations were rejected across score direction,
+  own-industry preference, regression coverage/assertion, README, changelog, and
+  completed-plan status.
+- The disposable environment passed dependency integrity checks, and the
+  separately documented transitive lock remediation restored zero-finding audits.
+- Exact diff, generated artifact, credential, conflict marker, binary,
+  large-file, mode, dependency-lock, fixture, and whitespace audits passed.
