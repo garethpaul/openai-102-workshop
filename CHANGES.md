@@ -2,6 +2,8 @@
 
 ## 2026-06-16
 
+- Made exact-lock vulnerability audits independent of package builds while
+  retaining the separate full application install and compatibility smoke.
 - Added safe JSON embedding fixtures across the shared nearest-neighbor loader,
   step-4 demo, container build, and tracked test data, removing hidden remote
   pickle download and executable deserialization paths.

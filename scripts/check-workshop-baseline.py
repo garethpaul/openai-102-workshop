@@ -46,8 +46,8 @@ lock-check: lock
 \tgit -C "$(ROOT)" diff --exit-code -- requirements.txt requirements-test.txt
 
 audit:
-\tcd "$(ROOT)" && PIP_INDEX_URL="$(PYPI_INDEX)" pip-audit -r requirements-test.txt
-\tcd "$(ROOT)" && PIP_INDEX_URL="$(PYPI_INDEX)" pip-audit -r requirements.txt
+\tcd "$(ROOT)" && PIP_INDEX_URL="$(PYPI_INDEX)" pip-audit --no-deps --disable-pip -r requirements-test.txt
+\tcd "$(ROOT)" && PIP_INDEX_URL="$(PYPI_INDEX)" pip-audit --no-deps --disable-pip -r requirements.txt
 
 runtime-check:
 \tPYTHONDONTWRITEBYTECODE=1 $(PYTHON) "$(ROOT)/scripts/check-runtime-imports.py"
@@ -67,6 +67,7 @@ all: build test run
 CI_PLAN = "docs/plans/2026-06-10-hosted-workshop-validation.md"
 DEPENDENCY_PLAN = "docs/plans/2026-06-12-supported-python-dependency-graph.md"
 TRANSITIVE_SECURITY_PLAN = "docs/plans/2026-06-16-transitive-dependency-security-update.md"
+UNIVERSAL_LOCK_AUDIT_PLAN = "docs/plans/2026-06-16-universal-lock-audit.md"
 EMBEDDING_CACHE_PLAN = "docs/plans/2026-06-13-json-embedding-cache.md"
 API_COMPATIBILITY_PLAN = "docs/plans/2026-06-13-openai-api-compatibility-notes.md"
 LOCATION_INDEPENDENT_MAKE_PLAN = "docs/plans/2026-06-13-location-independent-make.md"
@@ -784,6 +785,29 @@ def main():
     ]:
         if phrase not in transitive_security_verification:
             failures.append(f"transitive dependency security verification must record {phrase}")
+    universal_lock_audit_plan = read(UNIVERSAL_LOCK_AUDIT_PLAN)
+    universal_lock_audit_verification = markdown_section(
+        universal_lock_audit_plan, "Verification Completed"
+    )
+    if (
+        universal_lock_audit_plan.count("status: completed") != 1
+        or not universal_lock_audit_verification
+        or re.search(
+            r"(?i)\b(?:pending|todo|tbd|not run|to be recorded)\b",
+            universal_lock_audit_verification,
+        )
+    ):
+        failures.append("universal lock audit plan must record completed verification")
+    for phrase in [
+        "--no-deps --disable-pip",
+        "make audit",
+        "make lock-check",
+        "no known vulnerabilities",
+        "application-smoke",
+        "hostile mutations",
+    ]:
+        if phrase not in universal_lock_audit_verification:
+            failures.append(f"universal lock audit verification must record {phrase}")
     prepared_ci_plan = read("docs/plans/2026-06-10-ci-baseline.md")
     if "status: completed" not in prepared_ci_plan or "make check" not in prepared_ci_plan:
         failures.append("CI baseline plan must record status and verification")

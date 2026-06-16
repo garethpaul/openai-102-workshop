@@ -78,7 +78,9 @@ The setup commands above are derived from repository files. Legacy mobile, Pytho
 - `make lock-check` regenerates both Python 3.12 locks from their committed
   preferences and rejects drift; `make lock-upgrade` deliberately selects new
   compatible versions for a reviewed dependency update.
-- `make audit` requires both locks to report zero known vulnerabilities.
+- `make audit` checks every exact pin in both complete locks without rebuilding
+  their universal dependency graphs. Hosted application validation separately
+  installs the full application lock and runs `pip check`.
 - Both generated locks retain the reviewed `aiohttp==3.14.1` security floor;
   the application lock also retains `starlette==1.3.1`. Dependency updates
   must keep the application and verification graphs aligned.
