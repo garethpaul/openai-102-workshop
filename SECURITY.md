@@ -37,9 +37,9 @@ Helpful reports include:
   and generated locks must stay synchronized, exactly pinned, and limited to
   packages with a demonstrated runtime or verification purpose.
 - Workshop users should provide OpenAI credentials through local UI input or `OPENAI_API_KEY`; credentials must not be committed, printed, or placed in generated caches.
-- Generated caches under `cache/`, `url_cache/`, and `query_cache/`, plus
-  pickle fixtures, may contain prompts, crawled text, or embeddings. Treat
-  cache refreshes as reviewable data changes.
+- Generated caches under `cache/`, `url_cache/`, and `query_cache/`, plus JSON
+  fixtures, may contain prompts, crawled text, or embeddings. Treat cache and
+  fixture refreshes as reviewable data changes.
 - The writable clustering JSON embedding cache accepts only a UTF-8 object with
   string keys and values. `embedding_cache.json` and its temporary file remain
   ignored; generated cache data must never be loaded with `pickle`.
@@ -66,6 +66,9 @@ For web services, APIs, sockets, or scraping workflows, prioritize reports invol
 For this workshop, also prioritize reports involving API-token persistence,
 unsafe generated cache filenames, untrusted pickle loading, hidden network calls,
 or lesson code that sends data to APIs outside the visible exercise.
+Safe JSON embedding fixtures must fail closed on missing, malformed, non-UTF-8,
+or non-array data before nearest-neighbor training; active lessons and builds
+must not download or deserialize pickle fixtures.
 Both generated dependency locks must keep `aiohttp` at 3.14.1 or newer because
 3.14.0 is affected by multiple request-processing advisories.
 The application lock must also keep `starlette` at 1.3.1 or newer because

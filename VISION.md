@@ -91,9 +91,10 @@ Canonical security policy and reporting:
 Workshop users provide their own API credentials. The app should not persist,
 print, or transmit those credentials except to the APIs that the user
 explicitly enables while running the lesson.
-Generated caches and pickle fixtures should remain reproducible workshop data,
-not private learner output. The writable clustering JSON embedding cache must
-reject malformed data and never deserialize generated data with `pickle`.
+Generated caches and safe JSON embedding fixtures should remain reproducible
+workshop data, not private learner output. Active lessons must reject malformed
+JSON fixture data and never download or deserialize generated data with
+`pickle`.
 Retrieval fixtures should reject stringified numeric embedding values before
 nearest-neighbor training.
 

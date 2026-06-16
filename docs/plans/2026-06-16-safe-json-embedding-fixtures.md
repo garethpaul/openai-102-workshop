@@ -1,6 +1,6 @@
 # Safe JSON Embedding Fixtures
 
-status: in_progress
+status: completed
 
 ## Context
 
@@ -74,3 +74,24 @@ contracts while keeping the existing complete repository gate authoritative.
 - Do not change embedding models, recommendation ranking, or API compatibility.
 - Do not regenerate dependency locks or broaden this change into all workshop
   datasets; only executable embedding fixture paths are in scope.
+
+## Verification Completed
+
+- All 14 focused JSON fixture cases passed, covering valid input, legacy shape
+  validation, missing files, malformed JSON, invalid UTF-8, and non-array data.
+- The standalone demo regression proved a missing fixture fails before any
+  OpenAI embedding API call.
+- The complete no-network suite passed with 107 tests.
+- The repository and external-directory `make check` passed with the pinned Python
+  3.12 test environment.
+- `make build`, deterministic `make lock-check`, direct runtime imports, and the
+  credential-free Streamlit health smoke passed.
+- Both exact generated locks reported no known vulnerabilities with
+  dependency resolution disabled because every transitive requirement is
+  already exactly pinned; the resolving audit path could not install the new
+  source-only PyArrow release without a Rust compiler.
+- Six isolated hostile mutations were rejected for restored pickle loading,
+  remote Docker download, missing demo loader use, removed missing-file
+  coverage, bypassed JSON array validation, and incomplete plan status.
+- Exact artifact, credential-pattern, dependency/workflow drift, file-mode,
+  `git diff --check`, and upstream-base audits passed before commit.

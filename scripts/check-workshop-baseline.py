@@ -81,6 +81,7 @@ RECOMMENDATION_EMBEDDING_PLAN = "docs/plans/2026-06-15-recommendation-embedding-
 RECOMMENDATION_TIE_BREAK_PLAN = "docs/plans/2026-06-16-recommendation-tie-breaking.md"
 FINETUNING_RETRY_PLAN = "docs/plans/2026-06-16-finetuning-rate-limit-retry.md"
 STARLETTE_LOCK_PLAN = "docs/plans/2026-06-16-starlette-lock-floor-reproducibility.md"
+SAFE_JSON_FIXTURE_PLAN = "docs/plans/2026-06-16-safe-json-embedding-fixtures.md"
 REQUIRED = [
     ".github/CODEOWNERS",
     ".github/workflows/check.yml",
@@ -120,6 +121,7 @@ REQUIRED = [
     RECOMMENDATION_TIE_BREAK_PLAN,
     FINETUNING_RETRY_PLAN,
     STARLETTE_LOCK_PLAN,
+    SAFE_JSON_FIXTURE_PLAN,
     "docs/openai-api-compatibility.md",
     CI_PLAN,
     "docs/plans/2026-06-09-make-gate-aliases.md",
@@ -134,6 +136,7 @@ REQUIRED = [
     "scripts/check-workshop-baseline.py",
     "test_app.py",
     "test_embedding_cache.py",
+    "test_embeddings.json",
     "utils/crawler.py",
     "utils/embedding_cache.py",
     "utils/generate.py",
@@ -325,6 +328,12 @@ def main():
         "Vectors must be non-empty numeric finite sequences.",
         "Embedding response items must have the same dimensionality.",
         "Embedding cache must be valid UTF-8 JSON.",
+        'with open(json_file_path, encoding="utf-8") as file:',
+        "saved_embeddings = json.load(file)",
+        "Embedding fixture must be valid UTF-8 JSON.",
+        "if not isinstance(saved_embeddings, list):",
+        "Embedding fixture must be a JSON array.",
+        "Embedding fixture not found:",
     ]:
         if phrase not in generate:
             failures.append(f"utils/generate.py must include {phrase}")
@@ -350,6 +359,8 @@ def main():
         failures.append("cached embeddings must be validated before return")
     if response_validation == -1 or response_write == -1 or response_validation > response_write:
         failures.append("API embeddings must be validated before cache write")
+    if "pickle" in generate:
+        failures.append("shared embedding fixture loading must not retain pickle")
 
     crawler = read("utils/crawler.py")
     if "timeout=15" not in crawler or "raise_for_status()" not in crawler:
@@ -542,17 +553,45 @@ def main():
         failures.append("CODEOWNERS must assign the repository to @garethpaul")
 
     dockerfile = read("Dockerfile")
-    for phrase in ["FROM python:3.12-slim", "ARG EMBEDDINGS_URL", "--no-install-recommends", "wget --https-only"]:
+    for phrase in ["FROM python:3.12-slim", "COPY . ."]:
         if phrase not in dockerfile:
             failures.append(f"Dockerfile must include {phrase}")
+    for forbidden in ["EMBEDDINGS_URL", "embeddings.pkl", "wget"]:
+        if forbidden in dockerfile:
+            failures.append(f"Dockerfile must not retain hidden fixture download {forbidden}")
+
+    demo = read("embeddings_demo_step4.py")
+    for phrase in [
+        'os.environ.get("EMBEDDINGS_FILE_PATH", "embeddings.json")',
+        "load_embeddings_and_train_model(embedding_file_path)",
+    ]:
+        if phrase not in demo:
+            failures.append(f"step-4 demo must include {phrase}")
+    if demo.find("load_embeddings_and_train_model(embedding_file_path)") > demo.find(
+        "openai.Embedding.create"
+    ):
+        failures.append("step-4 demo must validate its local fixture before API use")
+    active_fixture_sources = "\n".join(
+        read(path) for path in [
+            "utils/generate.py",
+            "embeddings_demo_step4.py",
+            "create.py",
+            "pages/3_🔍_Text_Search.py",
+        ]
+    )
+    for forbidden in ["import pickle", "pickle.load", "pickle.dump", "embeddings.pkl"]:
+        if forbidden in active_fixture_sources:
+            failures.append(f"active embedding fixture paths must not retain {forbidden}")
 
     gitignore = read(".gitignore")
-    for expected in [".env", ".env.*", "cache/", "url_cache/", "query_cache/", "embedding_cache.pkl", "embedding_cache.json", "embedding_cache.json.tmp", "embeddings.pkl"]:
+    for expected in [".env", ".env.*", "cache/", "url_cache/", "query_cache/", "embedding_cache.pkl", "embedding_cache.json", "embedding_cache.json.tmp", "embeddings.pkl", "embeddings.json"]:
         if expected not in gitignore:
             failures.append(f".gitignore must include {expected}")
     generated_tracks = tracked(["embedding_cache.pkl", "embedding_cache.json", "embedding_cache.json.tmp", "__pycache__", ".pytest_cache"])
     if generated_tracks:
         failures.append("generated local caches must not be tracked: " + ", ".join(generated_tracks))
+    if (ROOT / "test_embeddings.pkl").exists():
+        failures.append("legacy executable test_embeddings.pkl fixture must not be tracked")
     bytecode_paths = sorted(
         str(path.relative_to(ROOT))
         for pattern in ("__pycache__", "*.pyc")
@@ -575,10 +614,16 @@ def main():
         "test_cosine_similarity_zero_vector",
         "test_record_estimated_cost_adds_first_and_subsequent_values",
         "test_load_embeddings_and_train_model_rejects_empty_fixtures",
+        'Path(__file__).with_name("test_embeddings.json")',
         "test_load_embeddings_and_train_model_rejects_malformed_rows",
         "test_load_embeddings_and_train_model_rejects_dimension_mismatch",
         "test_load_embeddings_and_train_model_rejects_metadata_without_text",
         "test_load_embeddings_and_train_model_rejects_non_finite_embedding_values",
+        "test_load_embeddings_and_train_model_rejects_missing_fixture",
+        "test_load_embeddings_and_train_model_rejects_malformed_json",
+        "test_load_embeddings_and_train_model_rejects_invalid_utf8",
+        "test_load_embeddings_and_train_model_rejects_non_array_json",
+        "test_step4_demo_rejects_missing_fixture_before_api",
         "test_recommend_product_uses_customer_relative_nearest_industry",
         "test_recommend_product_falls_back_to_product_backed_industry",
         "test_recommend_product_filters_malformed_product_names",
@@ -1048,6 +1093,33 @@ def main():
             re.search(r"(?i)\b(?:pending|todo|tbd|not run|to be recorded)\b",
                       starlette_lock_verification)):
         failures.append("Starlette lock-floor plan must record completed verification")
+
+    for path in ["AGENTS.md", "README.md", "SECURITY.md", "VISION.md", "CHANGES.md"]:
+        if "safe json embedding fixtures" not in read(path).lower():
+            failures.append(f"{path} must document safe JSON embedding fixtures")
+
+    safe_json_fixture_plan = read(SAFE_JSON_FIXTURE_PLAN)
+    safe_json_fixture_status = re.findall(
+        r"(?mi)^status:\s*(.+?)\s*$", safe_json_fixture_plan
+    )
+    safe_json_fixture_verification = markdown_section(
+        safe_json_fixture_plan, "Verification Completed"
+    )
+    for phrase in [
+        "14 focused JSON fixture cases passed",
+        "complete no-network suite passed with 107 tests",
+        "repository and external-directory `make check` passed",
+        "Six isolated hostile mutations were rejected",
+        "git diff --check",
+    ]:
+        if phrase not in safe_json_fixture_verification:
+            failures.append(
+                f"safe JSON fixture verification must record {phrase}"
+            )
+    if (safe_json_fixture_status != ["completed"] or
+            re.search(r"(?i)\b(?:pending|todo|tbd|not run|to be recorded)\b",
+                      safe_json_fixture_verification)):
+        failures.append("safe JSON fixture plan must record completed verification")
 
     for path, phrases in {
         "requirements.in": ["openai==0.28.1"],

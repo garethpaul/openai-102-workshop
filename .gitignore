@@ -81,6 +81,7 @@ embedding_cache.pkl
 embedding_cache.json
 embedding_cache.json.tmp
 embeddings.pkl
+embeddings.json
 
 lib/Pipfile.lock
 

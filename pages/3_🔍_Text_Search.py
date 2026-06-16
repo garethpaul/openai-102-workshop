@@ -5,9 +5,6 @@ from components import common
 from uuid import uuid4
 import pandas as pd
 
-PICKLE_FILE_PATH = 'embeddings.pkl'
-
-
 def page():
     st.set_page_config(
         page_title="Text Search",

@@ -1,7 +1,8 @@
 import json
 import math
 import os
-import pickle
+from pathlib import Path
+import runpy
 import sys
 import types
 
@@ -19,16 +20,14 @@ from components import recommendations  # noqa: E402
 from utils import generate, token  # noqa: E402
 
 
-def test_load_embeddings_and_train_model(tmp_path):
-    sample_saved_embeddings = [
-        (1, np.array([0.1, 0.2]), {"text": "sample text 1"}),
-        (2, np.array([0.2, 0.3]), {"text": "sample text 2"}),
-    ]
-    pickle_path = tmp_path / "embeddings.pkl"
-    with pickle_path.open("wb") as file:
-        pickle.dump(sample_saved_embeddings, file)
+def write_embedding_fixture(path, rows):
+    path.write_text(json.dumps(rows), encoding="utf-8")
 
-    nn_model, metadata = generate.load_embeddings_and_train_model(pickle_path)
+
+def test_load_embeddings_and_train_model():
+    fixture_path = Path(__file__).with_name("test_embeddings.json")
+
+    nn_model, metadata = generate.load_embeddings_and_train_model(fixture_path)
 
     assert list(metadata) == [
         {"text": "sample text 1"},
@@ -253,57 +252,109 @@ def test_recommend_product_returns_none_for_unavailable_inputs(
 
 
 def test_load_embeddings_and_train_model_rejects_empty_fixtures(tmp_path):
-    pickle_path = tmp_path / "embeddings.pkl"
-    with pickle_path.open("wb") as file:
-        pickle.dump([], file)
+    fixture_path = tmp_path / "embeddings.json"
+    write_embedding_fixture(fixture_path, [])
 
     with pytest.raises(ValueError, match="embedding fixture row"):
-        generate.load_embeddings_and_train_model(pickle_path)
+        generate.load_embeddings_and_train_model(fixture_path)
 
 
 def test_load_embeddings_and_train_model_rejects_malformed_rows(tmp_path):
-    pickle_path = tmp_path / "embeddings.pkl"
-    with pickle_path.open("wb") as file:
-        pickle.dump([(1, np.array([0.1, 0.2]))], file)
+    fixture_path = tmp_path / "embeddings.json"
+    write_embedding_fixture(fixture_path, [[1, [0.1, 0.2]]])
 
     with pytest.raises(ValueError, match="id, embedding, and metadata"):
-        generate.load_embeddings_and_train_model(pickle_path)
+        generate.load_embeddings_and_train_model(fixture_path)
 
 
 def test_load_embeddings_and_train_model_rejects_dimension_mismatch(tmp_path):
-    pickle_path = tmp_path / "embeddings.pkl"
-    with pickle_path.open("wb") as file:
-        pickle.dump([
-            (1, np.array([0.1, 0.2]), {"text": "sample text 1"}),
-            (2, np.array([0.3]), {"text": "sample text 2"}),
-        ], file)
+    fixture_path = tmp_path / "embeddings.json"
+    write_embedding_fixture(fixture_path, [
+        [1, [0.1, 0.2], {"text": "sample text 1"}],
+        [2, [0.3], {"text": "sample text 2"}],
+    ])
 
     with pytest.raises(ValueError, match="same dimensionality"):
-        generate.load_embeddings_and_train_model(pickle_path)
+        generate.load_embeddings_and_train_model(fixture_path)
 
 
 def test_load_embeddings_and_train_model_rejects_metadata_without_text(tmp_path):
-    pickle_path = tmp_path / "embeddings.pkl"
-    with pickle_path.open("wb") as file:
-        pickle.dump([(1, np.array([0.1, 0.2]), {"title": "missing text"})], file)
+    fixture_path = tmp_path / "embeddings.json"
+    write_embedding_fixture(
+        fixture_path,
+        [[1, [0.1, 0.2], {"title": "missing text"}]],
+    )
 
     with pytest.raises(ValueError, match="metadata must include text"):
-        generate.load_embeddings_and_train_model(pickle_path)
+        generate.load_embeddings_and_train_model(fixture_path)
 
 
 @pytest.mark.parametrize("bad_embedding", [
-    np.array([0.1, "bad"], dtype=object),
-    np.array([0.1, "0.2"], dtype=object),
-    np.array([0.1, np.nan]),
-    np.array([0.1, np.inf]),
+    [0.1, "bad"],
+    [0.1, "0.2"],
+    [0.1, float("nan")],
+    [0.1, float("inf")],
 ])
 def test_load_embeddings_and_train_model_rejects_non_finite_embedding_values(tmp_path, bad_embedding):
-    pickle_path = tmp_path / "embeddings.pkl"
-    with pickle_path.open("wb") as file:
-        pickle.dump([(1, bad_embedding, {"text": "sample text"})], file)
+    fixture_path = tmp_path / "embeddings.json"
+    write_embedding_fixture(
+        fixture_path,
+        [[1, bad_embedding, {"text": "sample text"}]],
+    )
 
     with pytest.raises(ValueError, match="numeric finite numbers"):
-        generate.load_embeddings_and_train_model(pickle_path)
+        generate.load_embeddings_and_train_model(fixture_path)
+
+
+def test_load_embeddings_and_train_model_rejects_missing_fixture(tmp_path):
+    fixture_path = tmp_path / "missing.json"
+
+    with pytest.raises(FileNotFoundError, match="Embedding fixture not found"):
+        generate.load_embeddings_and_train_model(fixture_path)
+
+
+@pytest.mark.parametrize("contents", ["{", "not json"])
+def test_load_embeddings_and_train_model_rejects_malformed_json(
+    tmp_path, contents
+):
+    fixture_path = tmp_path / "embeddings.json"
+    fixture_path.write_text(contents, encoding="utf-8")
+
+    with pytest.raises(ValueError, match="valid UTF-8 JSON"):
+        generate.load_embeddings_and_train_model(fixture_path)
+
+
+def test_load_embeddings_and_train_model_rejects_invalid_utf8(tmp_path):
+    fixture_path = tmp_path / "embeddings.json"
+    fixture_path.write_bytes(b"\xff")
+
+    with pytest.raises(ValueError, match="valid UTF-8 JSON"):
+        generate.load_embeddings_and_train_model(fixture_path)
+
+
+def test_load_embeddings_and_train_model_rejects_non_array_json(tmp_path):
+    fixture_path = tmp_path / "embeddings.json"
+    write_embedding_fixture(fixture_path, {"rows": []})
+
+    with pytest.raises(ValueError, match="must be a JSON array"):
+        generate.load_embeddings_and_train_model(fixture_path)
+
+
+def test_step4_demo_rejects_missing_fixture_before_api(tmp_path, monkeypatch):
+    calls = []
+    fake_openai = types.SimpleNamespace(
+        Embedding=types.SimpleNamespace(
+            create=lambda **kwargs: calls.append(kwargs)
+        )
+    )
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.delenv("EMBEDDINGS_FILE_PATH", raising=False)
+    monkeypatch.setitem(sys.modules, "openai", fake_openai)
+
+    with pytest.raises(FileNotFoundError, match="Embedding fixture not found"):
+        runpy.run_path(str(Path(__file__).with_name("embeddings_demo_step4.py")))
+
+    assert calls == []
 
 
 def test_get_cache_file_does_not_escape_cache_dir(tmp_path):
