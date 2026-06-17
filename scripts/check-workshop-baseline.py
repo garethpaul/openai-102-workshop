@@ -821,6 +821,32 @@ def main():
     ]:
         if phrase not in universal_lock_audit_verification:
             failures.append(f"universal lock audit verification must record {phrase}")
+    hash_verified_lock_plan = read(HASH_VERIFIED_LOCK_PLAN)
+    hash_verified_lock_verification = markdown_section(
+        hash_verified_lock_plan, "Verification Completed"
+    )
+    if (
+        hash_verified_lock_plan.count("status: completed") != 1
+        or not hash_verified_lock_verification
+        or re.search(
+            r"(?i)\b(?:pending|todo|tbd|not run|to be recorded)\b",
+            hash_verified_lock_verification,
+        )
+    ):
+        failures.append("hash-verified universal lock plan must record completed verification")
+    for phrase in [
+        "All four Make gates passed",
+        "Six isolated hostile mutations were rejected",
+        "external directory",
+        "27658071031",
+        "27658078238",
+        "application-smoke",
+    ]:
+        if phrase not in hash_verified_lock_verification:
+            failures.append(f"hash-verified universal lock verification must record {phrase}")
+    for path in ["README.md", "SECURITY.md", "VISION.md", "CHANGES.md"]:
+        if "artifact hashes" not in read(path).lower():
+            failures.append(f"{path} must document universal lock artifact hashes")
     prepared_ci_plan = read("docs/plans/2026-06-10-ci-baseline.md")
     if "status: completed" not in prepared_ci_plan or "make check" not in prepared_ci_plan:
         failures.append("CI baseline plan must record status and verification")

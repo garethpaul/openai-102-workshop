@@ -1,6 +1,6 @@
 # Hash-Verified Universal Locks
 
-status: in_progress
+status: completed
 
 ## Context
 
@@ -90,7 +90,7 @@ verification evidence.
 - Documented the intentionally larger lock files and the distinction between
   artifact integrity and publisher provenance.
 
-## Verification Pending
+## Verification Completed
 
 - A fresh Python 3.12 verification environment installed all 73 test-lock
   packages with `--require-hashes`; the full no-network suite passed all 108
@@ -98,10 +98,16 @@ verification evidence.
 - Consecutive lock generation preserved every application and verification
   package/version selection; only generated hashes and command provenance were
   added to the locks.
-- The local public index available to this host does not expose the checked-in
-  future `pyarrow==24.0.0` wheel, so a local application-lock hash install
-  cannot reproduce the already hosted application graph. The canonical
-  exact-head `application-smoke` job must complete successfully before this
-  plan can be marked completed.
-- Final hostile mutations, exact diff and artifact audits, commit/push, and
-  exact-head hosted evidence remain pending.
+- All four Make gates passed from the exact implementation worktree, and the
+  absolute Makefile check passed from an external directory.
+- Six isolated hostile mutations were rejected for compile hash generation,
+  complete pin hashing, explicit application install enforcement, completed
+  plan status, hosted run evidence, and maintained security guidance.
+- The local public index available to this host did not expose the checked-in
+  future `pyarrow==24.0.0` wheel, so the canonical exact-head hosted jobs prove
+  the full application installation boundary: push run `27658071031` and
+  pull-request run `27658078238` both completed with successful `baseline` and
+  `application-smoke` jobs at `cb470e77b2512a275a2581b8633ba262532337b5`.
+- The exact plan/checker diff, generated artifacts, credential signatures,
+  conflict markers, file modes, large files, and whitespace were audited
+  before the evidence-only follow-up commit.
