@@ -57,7 +57,7 @@ Additional scan context:
 ```bash
 git clone https://github.com/garethpaul/openai-102-workshop.git
 cd openai-102-workshop
-python -m pip install -r requirements.txt
+python -m pip install --require-hashes -r requirements.txt
 make lint
 make test
 make build
@@ -78,6 +78,9 @@ The setup commands above are derived from repository files. Legacy mobile, Pytho
 - `make lock-check` regenerates both Python 3.12 locks from their committed
   preferences and rejects drift; `make lock-upgrade` deliberately selects new
   compatible versions for a reviewed dependency update.
+- Both universal locks include public-PyPI artifact hashes. Exact-lock installs
+  automatically activate pip's hash-checking mode; local and container commands
+  also use `--require-hashes` explicitly so unexpected distributions fail closed.
 - `make audit` checks every exact pin in both complete locks without rebuilding
   their universal dependency graphs. Hosted application validation separately
   installs the full application lock and runs `pip check`.

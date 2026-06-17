@@ -1,5 +1,10 @@
 # Changes
 
+## 2026-06-17
+
+- Added public-PyPI artifact hashes to both universal Python locks and required
+  hash verification for application, test, CI, and container installation.
+
 ## 2026-06-16
 
 - Made exact-lock vulnerability audits independent of package builds while

@@ -35,12 +35,12 @@ static-check:
 \tPYTHONDONTWRITEBYTECODE=1 $(PYTHON) "$(ROOT)/scripts/check-workshop-baseline.py"
 
 lock:
-\tcd "$(ROOT)" && UV_INDEX_URL="$(PYPI_INDEX)" $(UV) pip compile requirements.in --python-version 3.12 --universal --quiet --output-file requirements.txt
-\tcd "$(ROOT)" && UV_INDEX_URL="$(PYPI_INDEX)" $(UV) pip compile requirements-test.in --python-version 3.12 --universal --quiet --output-file requirements-test.txt
+\tcd "$(ROOT)" && UV_INDEX_URL="$(PYPI_INDEX)" $(UV) pip compile requirements.in --python-version 3.12 --universal --generate-hashes --quiet --output-file requirements.txt
+\tcd "$(ROOT)" && UV_INDEX_URL="$(PYPI_INDEX)" $(UV) pip compile requirements-test.in --python-version 3.12 --universal --generate-hashes --quiet --output-file requirements-test.txt
 
 lock-upgrade:
-\tcd "$(ROOT)" && UV_INDEX_URL="$(PYPI_INDEX)" $(UV) pip compile requirements.in --python-version 3.12 --universal --upgrade --quiet --output-file requirements.txt
-\tcd "$(ROOT)" && UV_INDEX_URL="$(PYPI_INDEX)" $(UV) pip compile requirements-test.in --python-version 3.12 --universal --upgrade --quiet --output-file requirements-test.txt
+\tcd "$(ROOT)" && UV_INDEX_URL="$(PYPI_INDEX)" $(UV) pip compile requirements.in --python-version 3.12 --universal --generate-hashes --upgrade --quiet --output-file requirements.txt
+\tcd "$(ROOT)" && UV_INDEX_URL="$(PYPI_INDEX)" $(UV) pip compile requirements-test.in --python-version 3.12 --universal --generate-hashes --upgrade --quiet --output-file requirements-test.txt
 
 lock-check: lock
 \tgit -C "$(ROOT)" diff --exit-code -- requirements.txt requirements-test.txt
@@ -68,6 +68,7 @@ CI_PLAN = "docs/plans/2026-06-10-hosted-workshop-validation.md"
 DEPENDENCY_PLAN = "docs/plans/2026-06-12-supported-python-dependency-graph.md"
 TRANSITIVE_SECURITY_PLAN = "docs/plans/2026-06-16-transitive-dependency-security-update.md"
 UNIVERSAL_LOCK_AUDIT_PLAN = "docs/plans/2026-06-16-universal-lock-audit.md"
+HASH_VERIFIED_LOCK_PLAN = "docs/plans/2026-06-17-hash-verified-universal-locks.md"
 EMBEDDING_CACHE_PLAN = "docs/plans/2026-06-13-json-embedding-cache.md"
 API_COMPATIBILITY_PLAN = "docs/plans/2026-06-13-openai-api-compatibility-notes.md"
 LOCATION_INDEPENDENT_MAKE_PLAN = "docs/plans/2026-06-13-location-independent-make.md"
@@ -109,6 +110,8 @@ REQUIRED = [
     "docs/plans/2026-06-12-vector-value-validation.md",
     DEPENDENCY_PLAN,
     TRANSITIVE_SECURITY_PLAN,
+    UNIVERSAL_LOCK_AUDIT_PLAN,
+    HASH_VERIFIED_LOCK_PLAN,
     EMBEDDING_CACHE_PLAN,
     API_COMPATIBILITY_PLAN,
     LOCATION_INDEPENDENT_MAKE_PLAN,
@@ -459,11 +462,21 @@ def main():
     application_lock = read("requirements.txt")
     test_lock = read("requirements-test.txt")
     for lock_name, lock in [("requirements.txt", application_lock), ("requirements-test.txt", test_lock)]:
+        pin_count = 0
+        hashed_pin_count = 0
         for line in lock.splitlines():
-            if line and not line.startswith(("#", " ")) and not re.match(r"^[A-Za-z0-9_.-]+==[^; ]+(?:\s*;.*)?$", line):
-                failures.append(f"{lock_name} must contain only exact generated pins: {line}")
-        if "--python-version 3.12 --universal" not in lock:
-            failures.append(f"{lock_name} must record the Python 3.12 universal compile contract")
+            if line and not line.startswith(("#", " ")):
+                pin_count += 1
+                if not re.match(r"^[A-Za-z0-9_.-]+==[^; ]+(?:\s*;.*?)? \\$", line):
+                    failures.append(f"{lock_name} must contain only hash-annotated exact generated pins: {line}")
+        hashed_pin_count = len(re.findall(
+            r"(?m)^[A-Za-z0-9_.-]+==.* \\\n    --hash=sha256:[0-9a-f]{64}",
+            lock,
+        ))
+        if pin_count == 0 or hashed_pin_count != pin_count:
+            failures.append(f"{lock_name} must hash every exact generated pin")
+        if "--python-version 3.12 --universal --generate-hashes" not in lock:
+            failures.append(f"{lock_name} must record the hash-generating Python 3.12 universal compile contract")
         if "aiohttp==3.14.1" not in lock or "aiohttp==3.14.0" in lock:
             failures.append(f"{lock_name} must retain the reviewed aiohttp security update")
 
@@ -554,7 +567,7 @@ def main():
         failures.append("CODEOWNERS must assign the repository to @garethpaul")
 
     dockerfile = read("Dockerfile")
-    for phrase in ["FROM python:3.12-slim", "COPY . ."]:
+    for phrase in ["FROM python:3.12-slim", "COPY . .", "python -m pip install --no-cache-dir --require-hashes -r requirements.txt"]:
         if phrase not in dockerfile:
             failures.append(f"Dockerfile must include {phrase}")
     for forbidden in ["EMBEDDINGS_URL", "embeddings.pkl", "wget"]:

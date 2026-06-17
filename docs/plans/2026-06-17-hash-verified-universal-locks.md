@@ -1,6 +1,6 @@
 # Hash-Verified Universal Locks
 
-status: planned
+status: in_progress
 
 ## Context
 
@@ -16,7 +16,9 @@ generation without changing dependency inputs or selected versions.
 - P0. Generate both universal locks with `uv pip compile --generate-hashes`
   while preserving every existing package version and reviewed security floor.
 - P0. Require hashes whenever CI or documented verification installs either
-  generated lock, so the new metadata is enforced rather than decorative.
+  generated lock. Pip automatically enables hash-checking mode when every
+  requirement carries hashes; explicit local and container commands should
+  retain `--require-hashes` for clarity.
 - P1. Keep lock regeneration pinned to the repository-owned public-PyPI source
   and deterministic under hostile caller index environment variables.
 - P1. Add mutation-sensitive static contracts for both compile commands, all
@@ -75,3 +77,31 @@ verification evidence.
   they enforce index artifact integrity for the reviewed lock contents.
 - Do not make live OpenAI requests, use credentials, or merge or close any
   stacked pull request.
+
+## Work Completed
+
+- Added hash generation to normal and upgrade compilation for both universal
+  Python 3.12 locks without changing any dependency input or selected pin.
+- Required hashes for CI application and verification installs through the
+  fully hashed lock files, and made enforcement explicit in the container
+  build and documented local application setup.
+- Added baseline contracts requiring every exact pin to begin a SHA-256 hash
+  block and requiring hash enforcement at maintained install call sites.
+- Documented the intentionally larger lock files and the distinction between
+  artifact integrity and publisher provenance.
+
+## Verification Pending
+
+- A fresh Python 3.12 verification environment installed all 73 test-lock
+  packages with `--require-hashes`; the full no-network suite passed all 108
+  tests and the static baseline passed.
+- Consecutive lock generation preserved every application and verification
+  package/version selection; only generated hashes and command provenance were
+  added to the locks.
+- The local public index available to this host does not expose the checked-in
+  future `pyarrow==24.0.0` wheel, so a local application-lock hash install
+  cannot reproduce the already hosted application graph. The canonical
+  exact-head `application-smoke` job must complete successfully before this
+  plan can be marked completed.
+- Final hostile mutations, exact diff and artifact audits, commit/push, and
+  exact-head hosted evidence remain pending.
