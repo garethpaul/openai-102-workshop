@@ -109,6 +109,8 @@ The setup commands above are derived from repository files. Legacy mobile, Pytho
 - Recommendations compare the selected customer's industry embedding against
   every available industry and choose the nearest product-backed industry with
   a configured list containing at least one nonempty string product name.
+  Malformed customer-list members are ignored so later valid records remain
+  eligible for recommendation.
 
 ## Testing and Verification
 

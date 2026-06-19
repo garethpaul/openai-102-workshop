@@ -51,6 +51,7 @@ Priority:
 - Keep historical OpenAI SDK and model examples visibly marked until migrated
 - Keep recommendations constrained to validated, product-backed industries
 - Keep each product-backed recommendation limited to a nonempty string product name
+- Keep malformed customer-list members from blocking later valid records
 
 Next priorities:
 

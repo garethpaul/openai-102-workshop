@@ -85,8 +85,9 @@ Vector value validation should reject empty, boolean, string, complex,
 non-finite, and overflowing values before workshop math helpers calculate a
 distance or similarity.
 Customer recommendations should use validated customer-relative cosine
-similarity, ignore malformed or empty product mappings, and select only from a
-product-backed industry with at least one nonempty string product name.
+similarity, ignore malformed customer-list members and malformed or empty
+product mappings, and select only from a product-backed industry with at least
+one nonempty string product name.
 
 ## Dependency and Supply Chain Security
 
