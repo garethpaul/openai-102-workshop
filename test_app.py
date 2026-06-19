@@ -186,6 +186,21 @@ def test_recommend_product_skips_invalid_embedding_pairs(
     assert scores.get("Healthcare", {}) == expected_healthcare_scores
 
 
+def test_similarity_matrix_preserves_sparse_embedding_scores():
+    industries, matrix = recommendations.build_similarity_matrix(
+        {
+            "Healthcare": {"Healthcare": 1.0},
+            "Retail": {"Retail": 1.0},
+        }
+    )
+
+    assert industries == ["Healthcare", "Retail"]
+    assert matrix[0][0] == 1.0
+    assert math.isnan(matrix[0][1])
+    assert math.isnan(matrix[1][0])
+    assert matrix[1][1] == 1.0
+
+
 @pytest.mark.parametrize(
     ("customer_id", "customers", "embeddings", "products"),
     [
