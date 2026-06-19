@@ -33,6 +33,16 @@ def build_similarity_scores(industry_embeddings):
     return scores
 
 
+def build_similarity_matrix(similarity_scores, missing_value=float("nan")):
+    industries = list(similarity_scores)
+    matrix = [
+        [similarity_scores[industry1].get(industry2, missing_value)
+         for industry2 in industries]
+        for industry1 in industries
+    ]
+    return industries, matrix
+
+
 def recommend_product(
     customer_id,
     customer_data,
