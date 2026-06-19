@@ -120,7 +120,7 @@ def crawler_get_text(url):
         'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)...`
     }
 
-    response = requests.get(url, headers=headers)
+    response = requests.get(url, headers=headers, timeout=15)
     html_content = response.text
 
     # Parse HTML content using BeautifulSoup

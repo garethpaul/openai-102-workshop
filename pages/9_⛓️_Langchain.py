@@ -134,7 +134,7 @@ st.code("""
 import requests
 
 url = "https://raw.githubusercontent.com/hwchase17/langchain/master/docs/modules/state_of_the_union.txt"
-res = requests.get(url)
+res = requests.get(url, timeout=15)
 with open("state_of_the_union.txt", "w") as f:
   f.write(res.text)
 """)
