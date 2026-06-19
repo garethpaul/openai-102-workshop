@@ -2,6 +2,7 @@ import streamlit as st
 import pandas as pd
 import os
 st.markdown("# Fine-tuning")
+st.warning("Historical OpenAI API example: this workshop preserves openai==0.28.1 and legacy model identifiers. Review docs/openai-api-compatibility.md before building a new integration.")
 
 st.markdown(
     "**Demo**: We will build a tool for this demo to create descriptions of imaginary superanimals. In the end, the tool will receive the age and power of the superhero, and it will automatically produce a description of our superanimal.")

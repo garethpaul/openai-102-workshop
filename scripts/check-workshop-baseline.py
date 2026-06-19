@@ -13,6 +13,8 @@ import xml.etree.ElementTree as ET
 ROOT = Path(__file__).resolve().parents[1]
 CI_PLAN = "docs/plans/2026-06-10-hosted-workshop-validation.md"
 DEPENDENCY_PLAN = "docs/plans/2026-06-12-supported-python-dependency-graph.md"
+EMBEDDING_CACHE_PLAN = "docs/plans/2026-06-13-json-embedding-cache.md"
+API_COMPATIBILITY_PLAN = "docs/plans/2026-06-13-openai-api-compatibility-notes.md"
 REQUIRED = [
     ".github/CODEOWNERS",
     ".github/workflows/check.yml",
@@ -24,6 +26,7 @@ REQUIRED = [
     "SECURITY.md",
     "VISION.md",
     "components/common.py",
+    "customer_cluster.py",
     "docs/plans/2026-06-08-openai-102-workshop-baseline.md",
     "docs/plans/2026-06-09-vector-math-validation.md",
     "docs/plans/2026-06-09-small-embedding-fixtures.md",
@@ -35,6 +38,9 @@ REQUIRED = [
     "docs/plans/2026-06-10-query-embedding-validation.md",
     "docs/plans/2026-06-12-vector-value-validation.md",
     DEPENDENCY_PLAN,
+    EMBEDDING_CACHE_PLAN,
+    API_COMPATIBILITY_PLAN,
+    "docs/openai-api-compatibility.md",
     CI_PLAN,
     "docs/plans/2026-06-09-make-gate-aliases.md",
     "docs/plans/2026-06-09-bytecode-free-tests.md",
@@ -47,7 +53,9 @@ REQUIRED = [
     "scripts/smoke-streamlit.py",
     "scripts/check-workshop-baseline.py",
     "test_app.py",
+    "test_embedding_cache.py",
     "utils/crawler.py",
+    "utils/embedding_cache.py",
     "utils/generate.py",
     "utils/token.py",
 ]
@@ -55,6 +63,14 @@ REQUIRED = [
 
 def read(path):
     return (ROOT / path).read_text(encoding="utf-8", errors="replace")
+
+
+def markdown_section(text, heading):
+    match = re.search(
+        rf"(?ms)^## {re.escape(heading)}\s*$\n(.*?)(?=^## |\Z)",
+        text,
+    )
+    return match.group(1).strip() if match else ""
 
 
 def tracked(paths):
@@ -76,8 +92,11 @@ def main():
 
     for path in [
         "components/common.py",
+        "customer_cluster.py",
         "test_app.py",
+        "test_embedding_cache.py",
         "utils/crawler.py",
+        "utils/embedding_cache.py",
         "utils/generate.py",
     ]:
         try:
@@ -127,13 +146,43 @@ def main():
     if "timeout=15" not in crawler or "raise_for_status()" not in crawler:
         failures.append("crawler requests must use timeout and raise_for_status")
 
+    customer_cluster = read("customer_cluster.py")
+    for forbidden in ["pickle.load", "pickle.dump", "embedding_cache.pkl"]:
+        if forbidden in customer_cluster:
+            failures.append(f"customer clustering must not retain {forbidden}")
+    for phrase in [
+        "EMBEDDING_CACHE_FILE",
+        "load_embedding_cache(embedding_cache_file)",
+        "save_embedding_cache(embedding_cache, embedding_cache_file)",
+    ]:
+        if phrase not in customer_cluster:
+            failures.append(f"customer clustering must use {phrase}")
+
+    embedding_cache = read("utils/embedding_cache.py")
+    for phrase in [
+        'Path("embedding_cache.json")',
+        'read_text(encoding="utf-8")',
+        "json.loads(serialized)",
+        "isinstance(value, dict)",
+        "isinstance(key, str) and isinstance(item, str)",
+        'raise ValueError("embedding cache must be valid UTF-8 JSON") from None',
+        'raise ValueError("embedding cache must contain string keys and values")',
+        'path.with_suffix(path.suffix + ".tmp")',
+        "temporary_path.replace(path)",
+    ]:
+        if phrase not in embedding_cache:
+            failures.append(f"embedding cache helper must retain {phrase}")
+
     makefile = read("Makefile")
     for phrase in [
         ".PHONY: all audit build check lint lock lock-check lock-upgrade run runtime-check smoke static-check test verify",
         "PYTHON ?= python3",
         "UV ?= uv",
         "PYTHONDONTWRITEBYTECODE=1 $(PYTHON) -c \"import pathlib; [compile(pathlib.Path(path).read_text(), path, 'exec')",
-        "PYTHONDONTWRITEBYTECODE=1 $(PYTHON) -m pytest -q test_app.py",
+        "PYTHONDONTWRITEBYTECODE=1 $(PYTHON) -m pytest -q test_app.py test_embedding_cache.py",
+        "'customer_cluster.py'",
+        "'test_embedding_cache.py'",
+        "'utils/embedding_cache.py'",
         "PYTHONDONTWRITEBYTECODE=1 $(PYTHON) scripts/check-workshop-baseline.py",
         "$(UV) pip compile requirements.in --python-version 3.12 --universal --quiet --output-file requirements.txt",
         "$(UV) pip compile requirements.in --python-version 3.12 --universal --upgrade --quiet --output-file requirements.txt",
@@ -277,10 +326,10 @@ def main():
             failures.append(f"Dockerfile must include {phrase}")
 
     gitignore = read(".gitignore")
-    for expected in [".env", ".env.*", "cache/", "url_cache/", "query_cache/", "embedding_cache.pkl", "embeddings.pkl"]:
+    for expected in [".env", ".env.*", "cache/", "url_cache/", "query_cache/", "embedding_cache.pkl", "embedding_cache.json", "embedding_cache.json.tmp", "embeddings.pkl"]:
         if expected not in gitignore:
             failures.append(f".gitignore must include {expected}")
-    generated_tracks = tracked(["embedding_cache.pkl", "__pycache__", ".pytest_cache"])
+    generated_tracks = tracked(["embedding_cache.pkl", "embedding_cache.json", "embedding_cache.json.tmp", "__pycache__", ".pytest_cache"])
     if generated_tracks:
         failures.append("generated local caches must not be tracked: " + ", ".join(generated_tracks))
     bytecode_paths = sorted(
@@ -315,6 +364,16 @@ def main():
     ]:
         if phrase not in tests:
             failures.append(f"test_app.py must include {phrase}")
+
+    cache_tests = read("test_embedding_cache.py")
+    for phrase in [
+        "test_embedding_cache_missing_file_is_empty",
+        "test_embedding_cache_round_trip_uses_json",
+        "test_embedding_cache_rejects_malformed_or_invalid_data",
+        "test_embedding_cache_rejects_invalid_utf8",
+    ]:
+        if phrase not in cache_tests:
+            failures.append(f"test_embedding_cache.py must include {phrase}")
 
     pipfile = read("Pipfile").replace(" ", "")
     for package in [
@@ -352,6 +411,7 @@ def main():
         "requirements.in",
         "make audit",
         "Streamlit health",
+        "JSON embedding cache",
     ]:
         if phrase.lower() not in docs.lower():
             failures.append(f"docs must mention {phrase}")
@@ -421,6 +481,96 @@ def main():
     prepared_ci_plan = read("docs/plans/2026-06-10-ci-baseline.md")
     if "status: completed" not in prepared_ci_plan or "make check" not in prepared_ci_plan:
         failures.append("CI baseline plan must record status and verification")
+    embedding_cache_plan = read(EMBEDDING_CACHE_PLAN)
+    for phrase in [
+        "status: completed",
+        "make check",
+        "test_embedding_cache.py",
+        "six hostile mutations",
+    ]:
+        if phrase not in embedding_cache_plan:
+            failures.append(f"JSON embedding cache plan must record {phrase}")
+
+    compatibility = " ".join(read("docs/openai-api-compatibility.md").split())
+    for phrase in [
+        "Review date: 2026-06-13",
+        "Compatibility status: historical workshop examples; not current integration guidance",
+        "openai.Completion.create",
+        "openai.ChatCompletion.create",
+        "openai.Embedding.create",
+        "openai api fine_tunes.create",
+        "text-embedding-ada-002",
+        "text-davinci-003",
+        "gpt-3.5-turbo",
+        "https://developers.openai.com/api/docs/models",
+        "https://developers.openai.com/api/docs/models/all",
+        "https://developers.openai.com/api/docs/models/text-embedding-3-small",
+        "https://developers.openai.com/api/docs/models/davinci-002",
+        "They do not select a replacement model",
+        "preserve the default no-network `make check` gate",
+    ]:
+        if phrase not in compatibility:
+            failures.append(f"OpenAI API compatibility note must include {phrase}")
+
+    warning = (
+        "Historical OpenAI API example: this workshop preserves openai==0.28.1 "
+        "and legacy model identifiers. Review docs/openai-api-compatibility.md "
+        "before building a new integration."
+    )
+    warning_pages = [
+        "pages/1_🧐_Getting_Started.py",
+        "pages/2_⚡️_API.py",
+        "pages/2_📝_Embeddings.py",
+        "pages/3_🔍_Text_Search.py",
+        "pages/8_🦾_FineTuning.py",
+    ]
+    for page in warning_pages:
+        if read(page).count(warning) != 1:
+            failures.append(f"{page} must show one OpenAI API compatibility warning")
+    if "[`docs/openai-api-compatibility.md`](docs/openai-api-compatibility.md)" not in read("README.md"):
+        failures.append("README must link the OpenAI API compatibility inventory")
+
+    for path, phrases in {
+        "requirements.in": ["openai==0.28.1"],
+        "requirements-test.in": ["openai==0.28.1"],
+        "Pipfile": ['openai = "==0.28.1"'],
+        "utils/generate.py": [
+            "openai.Embedding.create",
+            "openai.ChatCompletion.create",
+            "openai.Completion.create",
+            'engine="text-embedding-ada-002"',
+            'model="gpt-3.5-turbo"',
+            'model="text-davinci-003"',
+        ],
+    }.items():
+        text = read(path)
+        for phrase in phrases:
+            if phrase not in text:
+                failures.append(f"{path} must retain inventoried legacy API surface {phrase}")
+
+    compatibility_plan = read(API_COMPATIBILITY_PLAN)
+    compatibility_status = re.findall(r"(?mi)^status:\s*(.+?)\s*$", compatibility_plan)
+    compatibility_work = markdown_section(compatibility_plan, "Work Completed")
+    compatibility_verification = markdown_section(compatibility_plan, "Verification Completed")
+    if compatibility_status != ["completed"] or not compatibility_work:
+        failures.append("OpenAI API compatibility plan must record completed status and work")
+    if not compatibility_verification or re.search(
+        r"(?i)\b(?:pending|todo|tbd|not run)\b", compatibility_verification
+    ):
+        failures.append("OpenAI API compatibility plan must record completed verification")
+    for evidence in [
+        "python3 -m py_compile scripts/check-workshop-baseline.py",
+        "make lint",
+        "make test",
+        "make build",
+        "make check",
+        "external working directory",
+        "hostile mutations rejected",
+        "legacy API behavior paths had no diff",
+        "git diff --check",
+    ]:
+        if evidence not in compatibility_verification:
+            failures.append(f"OpenAI API compatibility verification must record {evidence}")
 
     try:
         ET.parse(ROOT / "docs/readme-overview.svg")

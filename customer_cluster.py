@@ -1,11 +1,15 @@
 import streamlit as st
 import json
-import pickle
 import numpy as np
 from sklearn.cluster import KMeans
 import openai
 import matplotlib.pyplot as plt
 
+from utils.embedding_cache import (
+    EMBEDDING_CACHE_FILE,
+    load_embedding_cache,
+    save_embedding_cache,
+)
 
 def main():
     st.write("## Clustering w/Augmentation")
@@ -13,14 +17,9 @@ def main():
     with open("customer_data.json", "r") as file:
         customer_data = json.load(file)
 
-    # Create an embedding cache dictionary or load from a pickle file if it exists
-    embedding_cache_file = "embedding_cache.pkl"
-
-    try:
-        with open(embedding_cache_file, "rb") as cache_file:
-            embedding_cache = pickle.load(cache_file)
-    except FileNotFoundError:
-        embedding_cache = {}
+    # Create an embedding cache dictionary or load the generated JSON cache.
+    embedding_cache_file = EMBEDDING_CACHE_FILE
+    embedding_cache = load_embedding_cache(embedding_cache_file)
 
     # Extract customer purchase features
     customer_embeddings = []
@@ -48,9 +47,8 @@ def main():
     # Convert embeddings to NumPy array
     customer_embeddings = np.array(customer_embeddings)
 
-    # Save the embedding cache to a pickle file
-    with open(embedding_cache_file, "wb") as cache_file:
-        pickle.dump(embedding_cache, cache_file)
+    # Save the generated embedding cache without executing serialized code.
+    save_embedding_cache(embedding_cache, embedding_cache_file)
 
     # Perform clustering using K-means
     n_clusters = 3
@@ -121,9 +119,8 @@ def main():
             embedding_cache[reviews] = theme
 
     st.write(themes)
-    # save the embedding cache to a pickle file
-    with open(embedding_cache_file, "wb") as cache_file:
-        pickle.dump(embedding_cache, cache_file)
+    # Save any theme embeddings added after clustering.
+    save_embedding_cache(embedding_cache, embedding_cache_file)
 
     # visualize the clusters using streamlit
 

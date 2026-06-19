@@ -1,5 +1,14 @@
 # Changes
 
+## 2026-06-13
+
+- Replaced the writable clustering pickle with a strict UTF-8 JSON embedding
+  cache that accepts only string keys and values.
+- Added isolated no-network cache tests and static contracts that prevent
+  generated clustering data from returning to executable pickle loading.
+- Added a dated OpenAI API compatibility inventory and learner-visible warnings
+  for preserved SDK 0.28.1, legacy model, embedding, and fine-tuning examples.
+
 ## 2026-06-12
 
 - Added one shared vector-pair validation boundary across cosine, Euclidean,
