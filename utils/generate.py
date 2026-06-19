@@ -5,7 +5,6 @@ import math
 import hashlib
 from uuid import uuid4
 import streamlit as st
-import pickle
 from sklearn.neighbors import NearestNeighbors
 import numpy as np
 import requests
@@ -36,39 +35,45 @@ def get_cache_file(cache_folder, query):
 
 
 @st.cache_resource
-def load_embeddings_and_train_model(pickle_file_path):
+def load_embeddings_and_train_model(json_file_path):
     """
-    Load embeddings from the specified pickle file and train a
+    Load embeddings from the specified JSON file and train a
     NearestNeighbors model.
 
     Args:
-        pickle_file_path (str): The path to the pickle file containing the
+        json_file_path (str): The path to the JSON file containing the
         embeddings.
 
     Returns:
         nn_model (NearestNeighbors): The trained NearestNeighbors model.
         metadata (list): The metadata associated with the embeddings.
     """
-    """
-    # Check if the file already exists
-    if not os.path.exists(pickle_file_path):
-        # Download the pickle file
-        pkl_file_download = requests.get(
-            'https://storage.googleapis.com/artifacts.gjones-webinar.appspot.com/embeddings.pkl')
-
-        # Save the pickle file
-        with open(pickle_file_path, 'wb') as file:
-            file.write(pkl_file_download.content)
-    """
-    with open(pickle_file_path, 'rb') as file:
-        saved_embeddings = pickle.load(file)
+    saved_embeddings = load_embedding_fixture(json_file_path)
     validate_saved_embeddings(saved_embeddings)
-    ids, embeddings, metadata = zip(*saved_embeddings)
+    _, embeddings, metadata = zip(*saved_embeddings)
     embeddings_array = np.stack(embeddings)
     n_neighbors = min(5, len(embeddings_array))
     nn_model = NearestNeighbors(n_neighbors=n_neighbors, algorithm='ball_tree')
     nn_model.fit(embeddings_array)
     return nn_model, metadata
+
+
+def load_embedding_fixture(json_file_path):
+    try:
+        with open(json_file_path, encoding="utf-8") as file:
+            saved_embeddings = json.load(file)
+    except FileNotFoundError:
+        raise FileNotFoundError(
+            f"Embedding fixture not found: {json_file_path}"
+        ) from None
+    except (UnicodeDecodeError, json.JSONDecodeError) as error:
+        raise ValueError(
+            "Embedding fixture must be valid UTF-8 JSON."
+        ) from error
+
+    if not isinstance(saved_embeddings, list):
+        raise ValueError("Embedding fixture must be a JSON array.")
+    return saved_embeddings
 
 
 def validate_saved_embeddings(saved_embeddings):

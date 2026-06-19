@@ -35,19 +35,19 @@ static-check:
 \tPYTHONDONTWRITEBYTECODE=1 $(PYTHON) "$(ROOT)/scripts/check-workshop-baseline.py"
 
 lock:
-\tcd "$(ROOT)" && UV_INDEX_URL="$(PYPI_INDEX)" $(UV) pip compile requirements.in --python-version 3.12 --universal --quiet --output-file requirements.txt
-\tcd "$(ROOT)" && UV_INDEX_URL="$(PYPI_INDEX)" $(UV) pip compile requirements-test.in --python-version 3.12 --universal --quiet --output-file requirements-test.txt
+\tcd "$(ROOT)" && UV_INDEX_URL="$(PYPI_INDEX)" $(UV) pip compile requirements.in --python-version 3.12 --universal --generate-hashes --quiet --output-file requirements.txt
+\tcd "$(ROOT)" && UV_INDEX_URL="$(PYPI_INDEX)" $(UV) pip compile requirements-test.in --python-version 3.12 --universal --generate-hashes --quiet --output-file requirements-test.txt
 
 lock-upgrade:
-\tcd "$(ROOT)" && UV_INDEX_URL="$(PYPI_INDEX)" $(UV) pip compile requirements.in --python-version 3.12 --universal --upgrade --quiet --output-file requirements.txt
-\tcd "$(ROOT)" && UV_INDEX_URL="$(PYPI_INDEX)" $(UV) pip compile requirements-test.in --python-version 3.12 --universal --upgrade --quiet --output-file requirements-test.txt
+\tcd "$(ROOT)" && UV_INDEX_URL="$(PYPI_INDEX)" $(UV) pip compile requirements.in --python-version 3.12 --universal --generate-hashes --upgrade --quiet --output-file requirements.txt
+\tcd "$(ROOT)" && UV_INDEX_URL="$(PYPI_INDEX)" $(UV) pip compile requirements-test.in --python-version 3.12 --universal --generate-hashes --upgrade --quiet --output-file requirements-test.txt
 
 lock-check: lock
 \tgit -C "$(ROOT)" diff --exit-code -- requirements.txt requirements-test.txt
 
 audit:
-\tcd "$(ROOT)" && PIP_INDEX_URL="$(PYPI_INDEX)" pip-audit -r requirements-test.txt
-\tcd "$(ROOT)" && PIP_INDEX_URL="$(PYPI_INDEX)" pip-audit -r requirements.txt
+\tcd "$(ROOT)" && PIP_INDEX_URL="$(PYPI_INDEX)" pip-audit --no-deps --disable-pip -r requirements-test.txt
+\tcd "$(ROOT)" && PIP_INDEX_URL="$(PYPI_INDEX)" pip-audit --no-deps --disable-pip -r requirements.txt
 
 runtime-check:
 \tPYTHONDONTWRITEBYTECODE=1 $(PYTHON) "$(ROOT)/scripts/check-runtime-imports.py"
@@ -67,6 +67,8 @@ all: build test run
 CI_PLAN = "docs/plans/2026-06-10-hosted-workshop-validation.md"
 DEPENDENCY_PLAN = "docs/plans/2026-06-12-supported-python-dependency-graph.md"
 TRANSITIVE_SECURITY_PLAN = "docs/plans/2026-06-16-transitive-dependency-security-update.md"
+UNIVERSAL_LOCK_AUDIT_PLAN = "docs/plans/2026-06-16-universal-lock-audit.md"
+HASH_VERIFIED_LOCK_PLAN = "docs/plans/2026-06-17-hash-verified-universal-locks.md"
 EMBEDDING_CACHE_PLAN = "docs/plans/2026-06-13-json-embedding-cache.md"
 API_COMPATIBILITY_PLAN = "docs/plans/2026-06-13-openai-api-compatibility-notes.md"
 LOCATION_INDEPENDENT_MAKE_PLAN = "docs/plans/2026-06-13-location-independent-make.md"
@@ -81,6 +83,7 @@ RECOMMENDATION_EMBEDDING_PLAN = "docs/plans/2026-06-15-recommendation-embedding-
 RECOMMENDATION_TIE_BREAK_PLAN = "docs/plans/2026-06-16-recommendation-tie-breaking.md"
 FINETUNING_RETRY_PLAN = "docs/plans/2026-06-16-finetuning-rate-limit-retry.md"
 STARLETTE_LOCK_PLAN = "docs/plans/2026-06-16-starlette-lock-floor-reproducibility.md"
+SAFE_JSON_FIXTURE_PLAN = "docs/plans/2026-06-16-safe-json-embedding-fixtures.md"
 REQUIRED = [
     ".github/CODEOWNERS",
     ".github/workflows/check.yml",
@@ -107,6 +110,8 @@ REQUIRED = [
     "docs/plans/2026-06-12-vector-value-validation.md",
     DEPENDENCY_PLAN,
     TRANSITIVE_SECURITY_PLAN,
+    UNIVERSAL_LOCK_AUDIT_PLAN,
+    HASH_VERIFIED_LOCK_PLAN,
     EMBEDDING_CACHE_PLAN,
     API_COMPATIBILITY_PLAN,
     LOCATION_INDEPENDENT_MAKE_PLAN,
@@ -120,6 +125,7 @@ REQUIRED = [
     RECOMMENDATION_TIE_BREAK_PLAN,
     FINETUNING_RETRY_PLAN,
     STARLETTE_LOCK_PLAN,
+    SAFE_JSON_FIXTURE_PLAN,
     "docs/openai-api-compatibility.md",
     CI_PLAN,
     "docs/plans/2026-06-09-make-gate-aliases.md",
@@ -134,6 +140,7 @@ REQUIRED = [
     "scripts/check-workshop-baseline.py",
     "test_app.py",
     "test_embedding_cache.py",
+    "test_embeddings.json",
     "utils/crawler.py",
     "utils/embedding_cache.py",
     "utils/generate.py",
@@ -325,6 +332,12 @@ def main():
         "Vectors must be non-empty numeric finite sequences.",
         "Embedding response items must have the same dimensionality.",
         "Embedding cache must be valid UTF-8 JSON.",
+        'with open(json_file_path, encoding="utf-8") as file:',
+        "saved_embeddings = json.load(file)",
+        "Embedding fixture must be valid UTF-8 JSON.",
+        "if not isinstance(saved_embeddings, list):",
+        "Embedding fixture must be a JSON array.",
+        "Embedding fixture not found:",
     ]:
         if phrase not in generate:
             failures.append(f"utils/generate.py must include {phrase}")
@@ -350,6 +363,8 @@ def main():
         failures.append("cached embeddings must be validated before return")
     if response_validation == -1 or response_write == -1 or response_validation > response_write:
         failures.append("API embeddings must be validated before cache write")
+    if "pickle" in generate:
+        failures.append("shared embedding fixture loading must not retain pickle")
 
     crawler = read("utils/crawler.py")
     if "timeout=15" not in crawler or "raise_for_status()" not in crawler:
@@ -447,11 +462,21 @@ def main():
     application_lock = read("requirements.txt")
     test_lock = read("requirements-test.txt")
     for lock_name, lock in [("requirements.txt", application_lock), ("requirements-test.txt", test_lock)]:
+        pin_count = 0
+        hashed_pin_count = 0
         for line in lock.splitlines():
-            if line and not line.startswith(("#", " ")) and not re.match(r"^[A-Za-z0-9_.-]+==[^; ]+(?:\s*;.*)?$", line):
-                failures.append(f"{lock_name} must contain only exact generated pins: {line}")
-        if "--python-version 3.12 --universal" not in lock:
-            failures.append(f"{lock_name} must record the Python 3.12 universal compile contract")
+            if line and not line.startswith(("#", " ")):
+                pin_count += 1
+                if not re.match(r"^[A-Za-z0-9_.-]+==[^; ]+(?:\s*;.*?)? \\$", line):
+                    failures.append(f"{lock_name} must contain only hash-annotated exact generated pins: {line}")
+        hashed_pin_count = len(re.findall(
+            r"(?m)^[A-Za-z0-9_.-]+==.* \\\n    --hash=sha256:[0-9a-f]{64}",
+            lock,
+        ))
+        if pin_count == 0 or hashed_pin_count != pin_count:
+            failures.append(f"{lock_name} must hash every exact generated pin")
+        if "--python-version 3.12 --universal --generate-hashes" not in lock:
+            failures.append(f"{lock_name} must record the hash-generating Python 3.12 universal compile contract")
         if "aiohttp==3.14.1" not in lock or "aiohttp==3.14.0" in lock:
             failures.append(f"{lock_name} must retain the reviewed aiohttp security update")
 
@@ -542,17 +567,45 @@ def main():
         failures.append("CODEOWNERS must assign the repository to @garethpaul")
 
     dockerfile = read("Dockerfile")
-    for phrase in ["FROM python:3.12-slim", "ARG EMBEDDINGS_URL", "--no-install-recommends", "wget --https-only"]:
+    for phrase in ["FROM python:3.12-slim", "COPY . .", "python -m pip install --no-cache-dir --require-hashes -r requirements.txt"]:
         if phrase not in dockerfile:
             failures.append(f"Dockerfile must include {phrase}")
+    for forbidden in ["EMBEDDINGS_URL", "embeddings.pkl", "wget"]:
+        if forbidden in dockerfile:
+            failures.append(f"Dockerfile must not retain hidden fixture download {forbidden}")
+
+    demo = read("embeddings_demo_step4.py")
+    for phrase in [
+        'os.environ.get("EMBEDDINGS_FILE_PATH", "embeddings.json")',
+        "load_embeddings_and_train_model(embedding_file_path)",
+    ]:
+        if phrase not in demo:
+            failures.append(f"step-4 demo must include {phrase}")
+    if demo.find("load_embeddings_and_train_model(embedding_file_path)") > demo.find(
+        "openai.Embedding.create"
+    ):
+        failures.append("step-4 demo must validate its local fixture before API use")
+    active_fixture_sources = "\n".join(
+        read(path) for path in [
+            "utils/generate.py",
+            "embeddings_demo_step4.py",
+            "create.py",
+            "pages/3_🔍_Text_Search.py",
+        ]
+    )
+    for forbidden in ["import pickle", "pickle.load", "pickle.dump", "embeddings.pkl"]:
+        if forbidden in active_fixture_sources:
+            failures.append(f"active embedding fixture paths must not retain {forbidden}")
 
     gitignore = read(".gitignore")
-    for expected in [".env", ".env.*", "cache/", "url_cache/", "query_cache/", "embedding_cache.pkl", "embedding_cache.json", "embedding_cache.json.tmp", "embeddings.pkl"]:
+    for expected in [".env", ".env.*", "cache/", "url_cache/", "query_cache/", "embedding_cache.pkl", "embedding_cache.json", "embedding_cache.json.tmp", "embeddings.pkl", "embeddings.json"]:
         if expected not in gitignore:
             failures.append(f".gitignore must include {expected}")
     generated_tracks = tracked(["embedding_cache.pkl", "embedding_cache.json", "embedding_cache.json.tmp", "__pycache__", ".pytest_cache"])
     if generated_tracks:
         failures.append("generated local caches must not be tracked: " + ", ".join(generated_tracks))
+    if (ROOT / "test_embeddings.pkl").exists():
+        failures.append("legacy executable test_embeddings.pkl fixture must not be tracked")
     bytecode_paths = sorted(
         str(path.relative_to(ROOT))
         for pattern in ("__pycache__", "*.pyc")
@@ -575,10 +628,16 @@ def main():
         "test_cosine_similarity_zero_vector",
         "test_record_estimated_cost_adds_first_and_subsequent_values",
         "test_load_embeddings_and_train_model_rejects_empty_fixtures",
+        'Path(__file__).with_name("test_embeddings.json")',
         "test_load_embeddings_and_train_model_rejects_malformed_rows",
         "test_load_embeddings_and_train_model_rejects_dimension_mismatch",
         "test_load_embeddings_and_train_model_rejects_metadata_without_text",
         "test_load_embeddings_and_train_model_rejects_non_finite_embedding_values",
+        "test_load_embeddings_and_train_model_rejects_missing_fixture",
+        "test_load_embeddings_and_train_model_rejects_malformed_json",
+        "test_load_embeddings_and_train_model_rejects_invalid_utf8",
+        "test_load_embeddings_and_train_model_rejects_non_array_json",
+        "test_step4_demo_rejects_missing_fixture_before_api",
         "test_recommend_product_uses_customer_relative_nearest_industry",
         "test_recommend_product_falls_back_to_product_backed_industry",
         "test_recommend_product_filters_malformed_product_names",
@@ -739,6 +798,55 @@ def main():
     ]:
         if phrase not in transitive_security_verification:
             failures.append(f"transitive dependency security verification must record {phrase}")
+    universal_lock_audit_plan = read(UNIVERSAL_LOCK_AUDIT_PLAN)
+    universal_lock_audit_verification = markdown_section(
+        universal_lock_audit_plan, "Verification Completed"
+    )
+    if (
+        universal_lock_audit_plan.count("status: completed") != 1
+        or not universal_lock_audit_verification
+        or re.search(
+            r"(?i)\b(?:pending|todo|tbd|not run|to be recorded)\b",
+            universal_lock_audit_verification,
+        )
+    ):
+        failures.append("universal lock audit plan must record completed verification")
+    for phrase in [
+        "--no-deps --disable-pip",
+        "make audit",
+        "make lock-check",
+        "no known vulnerabilities",
+        "application-smoke",
+        "hostile mutations",
+    ]:
+        if phrase not in universal_lock_audit_verification:
+            failures.append(f"universal lock audit verification must record {phrase}")
+    hash_verified_lock_plan = read(HASH_VERIFIED_LOCK_PLAN)
+    hash_verified_lock_verification = markdown_section(
+        hash_verified_lock_plan, "Verification Completed"
+    )
+    if (
+        hash_verified_lock_plan.count("status: completed") != 1
+        or not hash_verified_lock_verification
+        or re.search(
+            r"(?i)\b(?:pending|todo|tbd|not run|to be recorded)\b",
+            hash_verified_lock_verification,
+        )
+    ):
+        failures.append("hash-verified universal lock plan must record completed verification")
+    for phrase in [
+        "All four Make gates passed",
+        "Six isolated hostile mutations were rejected",
+        "external directory",
+        "27658071031",
+        "27658078238",
+        "application-smoke",
+    ]:
+        if phrase not in hash_verified_lock_verification:
+            failures.append(f"hash-verified universal lock verification must record {phrase}")
+    for path in ["README.md", "SECURITY.md", "VISION.md", "CHANGES.md"]:
+        if "artifact hashes" not in read(path).lower():
+            failures.append(f"{path} must document universal lock artifact hashes")
     prepared_ci_plan = read("docs/plans/2026-06-10-ci-baseline.md")
     if "status: completed" not in prepared_ci_plan or "make check" not in prepared_ci_plan:
         failures.append("CI baseline plan must record status and verification")
@@ -1048,6 +1156,33 @@ def main():
             re.search(r"(?i)\b(?:pending|todo|tbd|not run|to be recorded)\b",
                       starlette_lock_verification)):
         failures.append("Starlette lock-floor plan must record completed verification")
+
+    for path in ["AGENTS.md", "README.md", "SECURITY.md", "VISION.md", "CHANGES.md"]:
+        if "safe json embedding fixtures" not in read(path).lower():
+            failures.append(f"{path} must document safe JSON embedding fixtures")
+
+    safe_json_fixture_plan = read(SAFE_JSON_FIXTURE_PLAN)
+    safe_json_fixture_status = re.findall(
+        r"(?mi)^status:\s*(.+?)\s*$", safe_json_fixture_plan
+    )
+    safe_json_fixture_verification = markdown_section(
+        safe_json_fixture_plan, "Verification Completed"
+    )
+    for phrase in [
+        "14 focused JSON fixture cases passed",
+        "complete no-network suite passed with 107 tests",
+        "repository and external-directory `make check` passed",
+        "Six isolated hostile mutations were rejected",
+        "git diff --check",
+    ]:
+        if phrase not in safe_json_fixture_verification:
+            failures.append(
+                f"safe JSON fixture verification must record {phrase}"
+            )
+    if (safe_json_fixture_status != ["completed"] or
+            re.search(r"(?i)\b(?:pending|todo|tbd|not run|to be recorded)\b",
+                      safe_json_fixture_verification)):
+        failures.append("safe JSON fixture plan must record completed verification")
 
     for path, phrases in {
         "requirements.in": ["openai==0.28.1"],

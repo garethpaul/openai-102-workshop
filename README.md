@@ -57,7 +57,7 @@ Additional scan context:
 ```bash
 git clone https://github.com/garethpaul/openai-102-workshop.git
 cd openai-102-workshop
-python -m pip install -r requirements.txt
+python -m pip install --require-hashes -r requirements.txt
 make lint
 make test
 make build
@@ -78,7 +78,12 @@ The setup commands above are derived from repository files. Legacy mobile, Pytho
 - `make lock-check` regenerates both Python 3.12 locks from their committed
   preferences and rejects drift; `make lock-upgrade` deliberately selects new
   compatible versions for a reviewed dependency update.
-- `make audit` requires both locks to report zero known vulnerabilities.
+- Both universal locks include public-PyPI artifact hashes. Exact-lock installs
+  automatically activate pip's hash-checking mode; local and container commands
+  also use `--require-hashes` explicitly so unexpected distributions fail closed.
+- `make audit` checks every exact pin in both complete locks without rebuilding
+  their universal dependency graphs. Hosted application validation separately
+  installs the full application lock and runs `pip check`.
 - Both generated locks retain the reviewed `aiohttp==3.14.1` security floor;
   the application lock also retains `starlette==1.3.1`. Dependency updates
   must keep the application and verification graphs aligned.
@@ -112,6 +117,11 @@ The setup commands above are derived from repository files. Legacy mobile, Pytho
   invalid fixture vectors fail with clear errors.
 - Numeric embedding values must be real numeric types, not stringified numbers,
   before model training.
+- Safe JSON embedding fixtures replace executable pickle data across the shared
+  loader, step-4 demo, container build, and tracked test fixture. The demo uses
+  an explicit local `EMBEDDINGS_FILE_PATH` and never downloads fixture data.
+  Each fixture is a JSON array of `[id, embedding, {"text": "..."}]` rows;
+  missing or invalid data fails before the demo makes an API request.
 - Query embedding validation rejects empty, boolean, non-numeric, non-finite,
   and dimension-mismatched vectors before nearest-neighbor lookup.
 - Recommendations compare the selected customer's industry embedding against
@@ -170,9 +180,8 @@ When the required SDK or runtime is unavailable, use static checks and source re
 - Review changes touching external API calls or credential-adjacent configuration; examples from the scan include Pipfile.
 - Review changes touching network requests, sockets, or service endpoints; examples from the scan include Dockerfile, Pipfile.
 - Review changes touching file, media, JSON, XML, CSV, OCR, or data parsing; examples from the scan include Dockerfile.
-- Review changes touching pickle files carefully; only load trusted workshop
-  fixtures. Writable generated data must use a non-executable format such as
-  the clustering lesson's JSON embedding cache.
+- Safe JSON embedding fixtures must remain the only nearest-neighbor lesson
+  input format; do not restore pickle loading or hidden remote downloads.
 - Review vector math helper changes with no-network tests so retrieval lessons
   fail clearly on invalid fixture data.
 - Review small embedding fixtures with no-network nearest-neighbor tests before

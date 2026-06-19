@@ -6,14 +6,7 @@ WORKDIR /app
 
 # Copy only the requirements file and install dependencies
 COPY requirements.txt .
-RUN python -m pip install --no-cache-dir -r requirements.txt
-
-# Get the workshop embeddings fixture. Override this URL for private mirrors.
-ARG EMBEDDINGS_URL=https://storage.googleapis.com/artifacts.gjones-webinar.appspot.com/embeddings.pkl
-RUN apt-get update \
-    && apt-get install -y --no-install-recommends wget \
-    && rm -rf /var/lib/apt/lists/*
-RUN wget --https-only -O embeddings.pkl "$EMBEDDINGS_URL"
+RUN python -m pip install --no-cache-dir --require-hashes -r requirements.txt
 
 # Copy all the remaining files into the container
 COPY . .

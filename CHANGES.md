@@ -1,7 +1,17 @@
 # Changes
 
+## 2026-06-17
+
+- Added public-PyPI artifact hashes to both universal Python locks and required
+  hash verification for application, test, CI, and container installation.
+
 ## 2026-06-16
 
+- Made exact-lock vulnerability audits independent of package builds while
+  retaining the separate full application install and compatibility smoke.
+- Added safe JSON embedding fixtures across the shared nearest-neighbor loader,
+  step-4 demo, container build, and tracked test data, removing hidden remote
+  pickle download and executable deserialization paths.
 - Corrected the displayed fine-tuning retry example to retry only legacy SDK
   rate limits and re-raise the final attempt instead of masking other failures.
 - Added an explicit Starlette resolver floor so fresh lock generation preserves

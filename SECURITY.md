@@ -37,18 +37,20 @@ Helpful reports include:
   and generated locks must stay synchronized, exactly pinned, and limited to
   packages with a demonstrated runtime or verification purpose.
 - Workshop users should provide OpenAI credentials through local UI input or `OPENAI_API_KEY`; credentials must not be committed, printed, or placed in generated caches.
-- Generated caches under `cache/`, `url_cache/`, and `query_cache/`, plus
-  pickle fixtures, may contain prompts, crawled text, or embeddings. Treat
-  cache refreshes as reviewable data changes.
+- Generated caches under `cache/`, `url_cache/`, and `query_cache/`, plus JSON
+  fixtures, may contain prompts, crawled text, or embeddings. Treat cache and
+  fixture refreshes as reviewable data changes.
 - The writable clustering JSON embedding cache accepts only a UTF-8 object with
   string keys and values. `embedding_cache.json` and its temporary file remain
   ignored; generated cache data must never be loaded with `pickle`.
 - Python bytecode should not remain after local verification; rerun the gates
   with bytecode writes disabled before committing.
 - Hosted Linux validation uses Python 3.12 and separate exact test and
-  application locks. It runs `pip check`, audits both locks, regenerates them,
-  executes `make check`, imports every direct runtime package, and launches a
-  bounded localhost-only Streamlit health smoke without API credentials.
+  application locks. It runs `pip check`, audits every exact pin with pip
+  dependency resolution disabled, regenerates both locks, executes the full
+  `make check` gate, imports every direct runtime package, and launches a bounded
+  localhost-only Streamlit health smoke without API credentials. The separate
+  application-smoke job installs and checks the complete application lock.
 - Keep that hosted path free of private generated caches and customer data.
 - Historical OpenAI API examples are inventoried in
   `docs/openai-api-compatibility.md`; do not remove their learner warnings or
@@ -66,6 +68,9 @@ For web services, APIs, sockets, or scraping workflows, prioritize reports invol
 For this workshop, also prioritize reports involving API-token persistence,
 unsafe generated cache filenames, untrusted pickle loading, hidden network calls,
 or lesson code that sends data to APIs outside the visible exercise.
+Safe JSON embedding fixtures must fail closed on missing, malformed, non-UTF-8,
+or non-array data before nearest-neighbor training; active lessons and builds
+must not download or deserialize pickle fixtures.
 Both generated dependency locks must keep `aiohttp` at 3.14.1 or newer because
 3.14.0 is affected by multiple request-processing advisories.
 The application lock must also keep `starlette` at 1.3.1 or newer because
@@ -114,6 +119,10 @@ tokens, generated secrets, or machine-local configuration. If a vulnerability
 depends on a compromised package, typosquatting risk, insecure transitive
 dependency, or unsafe build step, include the package name, affected version,
 and the path through which it is used.
+
+Both universal locks must retain generated artifact hashes, and exact-lock
+installation must use `--require-hashes`. Hashes enforce the reviewed index
+artifacts but do not independently establish publisher identity or provenance.
 
 The app contains legacy OpenAI SDK examples pinned to `openai==0.28.1`. Model,
 endpoint, or SDK migrations

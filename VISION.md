@@ -76,6 +76,8 @@ Contribution rules:
   changes.
 - Run `make lock-check` and `make audit` for dependency changes, then exercise
   `make runtime-check` and `make smoke` in the application environment.
+- Keep universal lock artifact hashes generated from public PyPI and require
+  them for application and verification lock installation.
 - Preserve metadata text validation when changing retrieval fixture loading.
 - Preserve finite embedding value validation when changing fixture loading.
 - Preserve numeric embedding values validation when changing fixture loading.
@@ -91,9 +93,10 @@ Canonical security policy and reporting:
 Workshop users provide their own API credentials. The app should not persist,
 print, or transmit those credentials except to the APIs that the user
 explicitly enables while running the lesson.
-Generated caches and pickle fixtures should remain reproducible workshop data,
-not private learner output. The writable clustering JSON embedding cache must
-reject malformed data and never deserialize generated data with `pickle`.
+Generated caches and safe JSON embedding fixtures should remain reproducible
+workshop data, not private learner output. Active lessons must reject malformed
+JSON fixture data and never download or deserialize generated data with
+`pickle`.
 Retrieval fixtures should reject stringified numeric embedding values before
 nearest-neighbor training.
 
