@@ -19,14 +19,20 @@ def get_cache_file(cache_folder, query):
     when present, but new writes use a stable SHA-256 filename.
     """
     cache_root = os.path.abspath(cache_folder)
-    legacy_name = os.path.basename(f"{query}.json")
-    legacy_candidate = os.path.abspath(os.path.join(cache_root, legacy_name))
-    if (
-        legacy_name == f"{query}.json"
-        and os.path.commonpath([cache_root, legacy_candidate]) == cache_root
-        and os.path.isfile(legacy_candidate)
-    ):
-        return legacy_candidate
+    legacy_name = f"{query}.json"
+    try:
+        entries = os.scandir(cache_root)
+    except FileNotFoundError:
+        entries = ()
+    with entries:
+        for entry in entries:
+            entry_path = os.path.abspath(entry.path)
+            if (
+                entry.name == legacy_name
+                and os.path.commonpath([cache_root, entry_path]) == cache_root
+                and entry.is_file()
+            ):
+                return entry_path
 
     digest = hashlib.sha256(query.encode("utf-8")).hexdigest()
     return os.path.join(cache_root, f"{digest}.json")
