@@ -2,6 +2,8 @@
 
 ## 2026-06-13
 
+- Made build, test, static, runtime, smoke, lock, audit, and run tooling resolve
+  from the checkout for absolute Makefile invocations.
 - Replaced the writable clustering pickle with a strict UTF-8 JSON embedding
   cache that accepts only string keys and values.
 - Added isolated no-network cache tests and static contracts that prevent
