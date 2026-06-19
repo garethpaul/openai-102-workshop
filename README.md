@@ -92,9 +92,12 @@ The setup commands above are derived from repository files. Legacy mobile, Pytho
   healthy localhost endpoint without an API credential.
 - Run `make run` or `streamlit run 👋_Hello.py` to start the app.
 - Text-search crawling accepts only HTTP(S) URLs whose complete DNS answer set
-  is globally routable. Each outbound connection is pinned to a validated
-  address, automatic redirects and ambient proxy settings are disabled, and
-  every bounded redirect target is resolved and checked again before use.
+  is globally routable under a version-independent IANA special-address
+  policy. Each outbound socket is pinned directly to a validated numeric
+  address while HTTPS retains the original SNI and certificate hostname.
+  Redirects, URL count, DNS/connect/read/total time, wire bytes, decoded bytes,
+  decompression, and aggregate crawl work are bounded; proxy and `.netrc`
+  environment state is not consulted.
 - Enter an OpenAI API key only through the local sidebar or `OPENAI_API_KEY`.
 - Treat the checked-in snippets as legacy OpenAI SDK examples pinned to
   `openai==0.28.1`. Model or SDK migrations should be deliberate compatibility

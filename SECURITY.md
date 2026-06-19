@@ -29,11 +29,21 @@ Helpful reports include:
 - Review found external API integrations or credential-adjacent configuration; changes in those areas should receive security-focused review before merge.
 - Review found network clients, sockets, web APIs, or service endpoints; changes in those areas should receive security-focused review before merge.
 - Treat every text-search crawler URL and redirect as untrusted input. The
-  maintained crawler permits only HTTP(S), rejects URL credentials and any DNS
-  answer that is not globally routable, pins the connection to the validated
-  address, ignores ambient proxies, and revalidates each bounded redirect.
-  Preserve these controls together so a redirect or DNS change cannot turn the
-  workshop into an internal-network request proxy.
+  maintained crawler permits only canonical HTTP(S), rejects URL credentials
+  and every IANA non-global special-use address without relying on the running
+  Python patch release, so only globally routable destinations remain. It pins
+  a direct numeric socket while retaining the
+  original HTTPS SNI and certificate hostname. It revalidates every redirect,
+  ignores proxy and `.netrc` state structurally, and bounds DNS/connect/read and
+  total time plus wire, decoded, decompressed, URL-count, and aggregate work.
+  Preserve these controls together so redirects, DNS changes, slow responses,
+  or compression expansion cannot turn the workshop into an internal-network
+  request proxy or an unauthenticated resource-exhaustion path.
+- Code-scanning alert #8 for `py/full-ssrf` was dismissed as a false positive
+  on 2026-06-19 against the earlier `requests` implementation. That dismissal
+  is historical state, not verification evidence; the maintained transport
+  removes the user-controlled full-URL request sink and must remain clean under
+  fresh exact-head CodeQL analysis.
 - Review found file, document, data, or media parsing flows; changes in those areas should receive security-focused review before merge.
 - Review found database, model, query, or persistence-related code; changes in those areas should receive security-focused review before merge.
 - Review found infrastructure, deployment, proxy, or cloud configuration; changes in those areas should receive security-focused review before merge.

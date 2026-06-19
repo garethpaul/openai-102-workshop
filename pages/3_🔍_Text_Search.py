@@ -43,9 +43,9 @@ def page():
 
     if st.button("Find similar text"):
         chunks = []
-        url_list = [url.strip() for url in text_input.split("\n")]
-        for url in url_list:
-            text = crawler.get_text(url)
+        url_list = [url.strip() for url in text_input.split("\n") if url.strip()]
+        crawled_texts = crawler.get_texts(url_list)
+        for url, text in zip(url_list, crawled_texts):
 
             texts = token.text_splitter.split_text(text)
             chunks.extend([{
@@ -96,8 +96,8 @@ from langchain.text_splitter import RecursiveCharacterTextSplitter
 
 urls = {url_list}
 chunks = []
-for item in urls:
-    text = crawler_get_text(item)
+texts_by_url = crawler.get_texts(urls)
+for item, text in zip(urls, texts_by_url):
     texts = token.text_splitter.split_text(text)
     chunks.extend([{{'id': str(uuid4()), 'text': texts[i],
                   'chunk': i, 'url': item}} for i in range(len(texts))])
@@ -110,10 +110,6 @@ def get_embeddings(query):
             engine="text-embedding-ada-002"
     )
     return res.data[0]['embedding']
-
-def crawler_get_text(url):
-    return crawler.get_text(url)
-
 
 tokenizer = tiktoken.get_encoding('p50k_base')
 

@@ -3,10 +3,18 @@
 ## Unreleased
 
 - Hardened text-search crawling against server-side request forgery by
-  rejecting non-HTTP(S), credentialed, and non-public targets; pinning each
-  connection to its validated globally routable address; disabling ambient
-  proxies and automatic redirects; and revalidating every bounded redirect
-  destination.
+  rejecting non-HTTP(S), credentialed, and IANA non-global targets under a
+  Python-version-independent globally routable policy; pinning direct numeric
+  sockets while preserving HTTPS SNI and certificate checks; structurally
+  avoiding ambient proxies and `.netrc`; and revalidating every bounded
+  redirect destination.
+- Bounded crawler DNS, connect, read, and total time; URL and redirect count;
+  wire and decoded response bytes; incremental gzip/deflate expansion; and
+  aggregate multi-URL work. Redirect headers are handled before any body read,
+  and responses and connections close on every success or failure path.
+- Recorded that CodeQL alert #8 was historically dismissed against the earlier
+  request-URL sink; fresh exact-head analysis, rather than that dismissal, is
+  required for the replacement transport.
 - Replaced the duplicated tutorial request example with the shared guarded
   crawler and added regression coverage for private DNS answers, pinned
   requests, redirect pivots, and redirect limits.

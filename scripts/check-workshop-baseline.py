@@ -29,7 +29,7 @@ run:
 
 # Test the app
 test:
-\tcd "$(ROOT)" && PYTHONDONTWRITEBYTECODE=1 $(PYTHON) -m pytest -q test_app.py test_embedding_cache.py
+\tcd "$(ROOT)" && PYTHONDONTWRITEBYTECODE=1 $(PYTHON) -m pytest -q test_app.py test_crawler.py test_embedding_cache.py
 
 static-check:
 \tPYTHONDONTWRITEBYTECODE=1 $(PYTHON) "$(ROOT)/scripts/check-workshop-baseline.py"
@@ -370,19 +370,24 @@ def main():
 
     crawler = read("utils/crawler.py")
     for phrase in [
-        "address.is_global",
-        "allow_redirects=False",
-        "_PinnedAddressAdapter",
-        "response.raise_for_status()",
-        "session.trust_env = False",
+        "_IPV4_NON_GLOBAL_NETWORKS",
+        "_IPV6_NON_GLOBAL_NETWORKS",
+        "socket.socket(family, socket.SOCK_STREAM)",
+        "server_hostname=self._target.hostname",
+        "decompressor.decompress(chunk, remaining + 1)",
+        "deadline.timeout(READ_TIMEOUT)",
+        "response.close()",
         "urljoin(current_url, location)",
     ]:
         if phrase not in crawler:
             failures.append(f"crawler public-network boundary must retain {phrase}")
+    for forbidden in [".is_global", "requests.Session", "allow_redirects=True"]:
+        if forbidden in crawler:
+            failures.append(f"crawler public-network boundary must reject {forbidden}")
 
     text_search = read("pages/3_🔍_Text_Search.py")
-    if "return crawler.get_text(url)" not in text_search:
-        failures.append("text-search tutorial must use the guarded crawler")
+    if "crawler.get_texts(url_list)" not in text_search:
+        failures.append("text-search page must use the bounded batch crawler")
 
     langchain = read("pages/9_⛓️_Langchain.py")
     if "requests.get(url, timeout=15)" not in langchain:
@@ -1154,12 +1159,19 @@ def main():
     if "test_starlette_security_floor_is_resolver_input" not in read("test_app.py"):
         failures.append("Starlette resolver-floor regression must remain registered")
 
-    crawler_tests = read("test_app.py")
+    crawler_tests = read("test_crawler.py")
     for test_name in [
         "test_crawler_rejects_non_public_dns_answers",
+        "test_crawler_rejects_every_iana_non_global_special_range",
+        "test_crawler_retains_iana_globally_reachable_exceptions",
+        "test_crawler_dns_resolution_obeys_total_deadline",
         "test_crawler_pins_request_to_validated_public_address",
+        "test_crawler_pinned_https_preserves_sni_and_certificate_hostname",
         "test_crawler_revalidates_redirect_destination",
         "test_crawler_limits_redirect_chain",
+        "test_crawler_streams_gzip_without_expanding_zip_bomb",
+        "test_crawler_total_deadline_stops_slow_chunked_response",
+        "test_crawler_limits_url_count_and_aggregate_decoded_bytes",
     ]:
         if test_name not in crawler_tests:
             failures.append(f"crawler SSRF regression must remain registered: {test_name}")
@@ -1224,9 +1236,11 @@ def main():
         crawler_ssrf_plan, "Verification Completed"
     )
     for phrase in [
-        "12 focused crawler cases passed",
-        "complete no-network suite passed with 122 tests",
-        "certificate-verified request",
+        "92 focused crawler cases passed",
+        "complete no-network suite passed with 202 tests",
+        "exact Python 3.12.0",
+        "certificate-verified pinned HTTPS request",
+        "Alert #8",
         "make build",
         "make verify",
         "make lock-check",
