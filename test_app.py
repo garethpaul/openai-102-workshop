@@ -85,6 +85,24 @@ def test_recommend_product_falls_back_to_product_backed_industry():
     )
 
 
+def test_recommend_product_filters_malformed_product_names():
+    customers = [{"customer_id": 1, "industry": "Healthcare"}]
+    embeddings = {"Healthcare": [{"embedding": [1.0, 0.0]}]}
+    products = {"Healthcare": [None, "", "   ", {}, "  Valid Product  "]}
+    selected = []
+
+    product, _ = recommendations.recommend_product(
+        1,
+        customers,
+        embeddings,
+        products,
+        choose_product=lambda choices: selected.extend(choices) or choices[0],
+    )
+
+    assert selected == ["Valid Product"]
+    assert product == "Valid Product"
+
+
 @pytest.mark.parametrize(
     ("customer_id", "customers", "embeddings", "products"),
     [
@@ -101,6 +119,12 @@ def test_recommend_product_falls_back_to_product_backed_industry():
             [{"customer_id": 1, "industry": "Healthcare"}],
             {"Healthcare": [{"embedding": [1.0, 0.0]}]},
             {"Healthcare": "not a product list"},
+        ),
+        (
+            1,
+            [{"customer_id": 1, "industry": "Healthcare"}],
+            {"Healthcare": [{"embedding": [1.0, 0.0]}]},
+            {"Healthcare": [None, "", "   ", {}]},
         ),
     ],
 )

@@ -7,6 +7,7 @@
   fallback.
 - Made Recommendations fall back to the nearest product-backed industry when
   the customer's own industry has no configured catalog entry.
+- Filtered malformed and blank catalog members before product recommendation.
 
 ## 2026-06-14
 

@@ -71,6 +71,7 @@ LOCATION_INDEPENDENT_MAKE_PLAN = "docs/plans/2026-06-13-location-independent-mak
 EMBEDDING_PAYLOAD_PLAN = "docs/plans/2026-06-14-embedding-payload-validation.md"
 CUSTOMER_RECOMMENDATION_PLAN = "docs/plans/2026-06-15-customer-industry-recommendation.md"
 PRODUCT_BACKED_RECOMMENDATION_PLAN = "docs/plans/2026-06-15-product-backed-recommendation.md"
+PRODUCT_NAME_VALIDATION_PLAN = "docs/plans/2026-06-15-product-name-validation.md"
 REQUIRED = [
     ".github/CODEOWNERS",
     ".github/workflows/check.yml",
@@ -101,6 +102,7 @@ REQUIRED = [
     LOCATION_INDEPENDENT_MAKE_PLAN,
     CUSTOMER_RECOMMENDATION_PLAN,
     PRODUCT_BACKED_RECOMMENDATION_PLAN,
+    PRODUCT_NAME_VALIDATION_PLAN,
     "docs/openai-api-compatibility.md",
     CI_PLAN,
     "docs/plans/2026-06-09-make-gate-aliases.md",
@@ -181,9 +183,12 @@ def main():
         "customer_industry = customer.get(\"industry\")",
         "customer_scores = similarity_scores.get(customer_industry, {})",
         "for industry, score in customer_scores.items()",
-        "isinstance(products, list) and products",
+        "if not isinstance(products, list):",
+        "if isinstance(product, str) and product.strip()",
+        "validated_products[industry] = product_names",
         "if not product_scores:",
         "top_industry = max(product_scores, key=product_scores.get)",
+        "choose_product(validated_products[top_industry])",
         "return None, similarity_scores",
     ]:
         if phrase not in recommendations:
@@ -468,6 +473,7 @@ def main():
         "test_load_embeddings_and_train_model_rejects_non_finite_embedding_values",
         "test_recommend_product_uses_customer_relative_nearest_industry",
         "test_recommend_product_falls_back_to_product_backed_industry",
+        "test_recommend_product_filters_malformed_product_names",
         "test_recommend_product_returns_none_for_unavailable_inputs",
         "test_get_top_k_metadata_rejects_invalid_query_embeddings",
         "test_get_top_k_metadata_rejects_dimension_mismatch",
@@ -527,6 +533,7 @@ def main():
         "Streamlit health",
         "JSON embedding cache",
         "product-backed",
+        "nonempty string product name",
     ]:
         if phrase.lower() not in docs.lower():
             failures.append(f"docs must mention {phrase}")
@@ -535,6 +542,8 @@ def main():
     ]
     if not all("product-backed" in document for document in guidance_documents):
         failures.append("all guidance must document product-backed recommendations")
+    if not all("nonempty string product name" in document for document in guidance_documents):
+        failures.append("all guidance must document string product-name validation")
     changes = read("CHANGES.md")
     for phrase in ["make lint", "make test", "make build", "make check"]:
         if phrase not in changes:
@@ -674,6 +683,32 @@ def main():
     ]:
         if phrase not in product_backed_verification:
             failures.append(f"product-backed recommendation verification must record {phrase}")
+    product_name_plan = read(PRODUCT_NAME_VALIDATION_PLAN)
+    product_name_status = re.findall(r"(?mi)^status:\s*(.+?)\s*$", product_name_plan)
+    product_name_work = markdown_section(product_name_plan, "Work Completed")
+    product_name_verification = markdown_section(product_name_plan, "Verification Completed")
+    if (product_name_status != ["completed"] or not product_name_work or
+            not product_name_verification or re.search(
+                r"(?i)\b(?:pending|todo|tbd|not run|to be recorded)\b",
+                product_name_verification,
+            )):
+        failures.append("product name validation plan must record completed verification")
+    for phrase in [
+        "Eight focused recommendation cases",
+        "82-test no-network suite",
+        "make lint",
+        "make test",
+        "make build",
+        "make check",
+        "external working directory",
+        "Runtime imports",
+        "Streamlit health smoke",
+        "no known vulnerabilities",
+        "Six isolated hostile mutations",
+        "git diff --check",
+    ]:
+        if phrase not in product_name_verification:
+            failures.append(f"product name validation verification must record {phrase}")
 
     compatibility = " ".join(read("docs/openai-api-compatibility.md").split())
     for phrase in [
