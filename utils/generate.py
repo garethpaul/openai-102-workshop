@@ -19,13 +19,17 @@ def get_cache_file(cache_folder, query):
     when present, but new writes use a stable SHA-256 filename.
     """
     cache_root = os.path.abspath(cache_folder)
-    legacy_candidate = os.path.abspath(
-        os.path.join(cache_root, f"{query}.json"))
-    if (
-        os.path.commonpath([cache_root, legacy_candidate]) == cache_root
-        and os.path.isfile(legacy_candidate)
-    ):
-        return legacy_candidate
+    legacy_name = f"{query}.json"
+    if os.path.isdir(cache_root):
+        with os.scandir(cache_root) as entries:
+            for entry in entries:
+                entry_path = os.path.abspath(entry.path)
+                if (
+                    entry.name == legacy_name
+                    and os.path.commonpath([cache_root, entry_path]) == cache_root
+                    and entry.is_file()
+                ):
+                    return entry_path
 
     digest = hashlib.sha256(query.encode("utf-8")).hexdigest()
     return os.path.join(cache_root, f"{digest}.json")
@@ -185,6 +189,47 @@ def _record_estimated_cost(num_tokens, cost_per_1k_token):
     st_state['cost'] = f"${current_cost + estimated_cost:.10f}"
 
 
+def validate_embedding_response(data):
+    if not isinstance(data, list) or not data:
+        raise ValueError("Embedding response must contain at least one embedding.")
+
+    expected_dimensions = None
+    for index, item in enumerate(data):
+        if not isinstance(item, dict):
+            raise ValueError(f"Embedding response item {index} must be an object.")
+
+        embedding = item.get("embedding")
+        if not isinstance(embedding, (list, tuple)) or not embedding:
+            raise ValueError(
+                f"Embedding response item {index} must include a non-empty embedding."
+            )
+
+        for value in embedding:
+            if (
+                isinstance(value, (bool, complex, np.complexfloating))
+                or not isinstance(value, (int, float, np.number))
+            ):
+                raise ValueError(
+                    f"Embedding response item {index} values must be numeric finite numbers."
+                )
+            try:
+                numeric_value = float(value)
+            except (TypeError, ValueError, OverflowError):
+                raise ValueError(
+                    f"Embedding response item {index} values must be numeric finite numbers."
+                )
+            if not math.isfinite(numeric_value):
+                raise ValueError(
+                    f"Embedding response item {index} values must be numeric finite numbers."
+                )
+
+        dimensions = len(embedding)
+        if expected_dimensions is None:
+            expected_dimensions = dimensions
+        elif dimensions != expected_dimensions:
+            raise ValueError("Embedding response items must have the same dimensionality.")
+
+
 def get_embeddings(query, embedding_type='text'):
     """
     Retrieve embeddings for the specified query using OpenAI's Embedding API.
@@ -206,14 +251,24 @@ def get_embeddings(query, embedding_type='text'):
 
     # Check if the cache file exists
     if os.path.exists(cache_file):
-        with open(cache_file, "r") as f:
-            cached_response = json.load(f)
+        try:
+            with open(cache_file, "r", encoding="utf-8") as f:
+                cached_response = json.load(f)
+        except (UnicodeDecodeError, json.JSONDecodeError):
+            raise ValueError("Embedding cache must be valid UTF-8 JSON.") from None
+        validate_embedding_response(cached_response)
         return cached_response
 
     res = openai.Embedding.create(
         input=[query],
         engine="text-embedding-ada-002"
     )
+    try:
+        response_data = res['data']
+    except (KeyError, TypeError):
+        raise ValueError("Embedding API response must include data.") from None
+    validate_embedding_response(response_data)
+
     # add to total cost
     num_tokens = res['usage']['total_tokens']
     print(f"Number of tokens: {num_tokens}")
@@ -223,10 +278,10 @@ def get_embeddings(query, embedding_type='text'):
     if not os.path.exists(cache_folder):
         os.makedirs(cache_folder)
 
-    with open(cache_file, "w") as f:
-        json.dump(res['data'], f)
+    with open(cache_file, "w", encoding="utf-8") as f:
+        json.dump(response_data, f)
 
-    return res['data']
+    return response_data
 
 
 def get_top_k_metadata(embedding, nn_model, metadata):

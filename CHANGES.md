@@ -1,5 +1,11 @@
 # Changes
 
+## 2026-06-14
+
+- Added strict validation for cached and API embedding payloads so malformed,
+  non-finite, or dimensionally inconsistent vectors fail before retrieval or
+  cache writes, without turning an invalid cache into a paid API fallback.
+
 ## 2026-06-13
 
 - Made build, test, static, runtime, smoke, lock, audit, and run tooling resolve
