@@ -53,8 +53,13 @@ def recommend_product(
     if not customer_scores:
         return None, similarity_scores
 
-    top_industry = max(customer_scores, key=customer_scores.get)
-    products = industry_products.get(top_industry, [])
-    if not products:
+    product_scores = {}
+    for industry, score in customer_scores.items():
+        products = industry_products.get(industry)
+        if isinstance(products, list) and products:
+            product_scores[industry] = score
+    if not product_scores:
         return None, similarity_scores
+    top_industry = max(product_scores, key=product_scores.get)
+    products = industry_products[top_industry]
     return choose_product(products), similarity_scores

@@ -59,6 +59,32 @@ def test_recommend_product_uses_customer_relative_nearest_industry():
     assert scores["Telecommunications"]["Telecommunications"] == 1.0
 
 
+def test_recommend_product_falls_back_to_product_backed_industry():
+    with open("customer_profiles.json", encoding="utf-8") as file:
+        customers = json.load(file)
+    with open("industry_embeddings.json", encoding="utf-8") as file:
+        embeddings = json.load(file)
+    products = {
+        "E-commerce": ["Twilio Engage"],
+        "Telecommunications": ["Programmable Messaging"],
+    }
+
+    product, scores = recommendations.recommend_product(
+        5,
+        customers,
+        embeddings,
+        products,
+        choose_product=lambda choices: choices[0],
+    )
+
+    assert product == "Programmable Messaging"
+    assert scores["Technology"]["Technology"] == pytest.approx(1.0)
+    assert (
+        scores["Technology"]["Telecommunications"]
+        > scores["Technology"]["E-commerce"]
+    )
+
+
 @pytest.mark.parametrize(
     ("customer_id", "customers", "embeddings", "products"),
     [
@@ -69,6 +95,12 @@ def test_recommend_product_uses_customer_relative_nearest_industry():
             [{"customer_id": 1, "industry": "Healthcare"}],
             {"Healthcare": [{"embedding": [1.0, 0.0]}]},
             {},
+        ),
+        (
+            1,
+            [{"customer_id": 1, "industry": "Healthcare"}],
+            {"Healthcare": [{"embedding": [1.0, 0.0]}]},
+            {"Healthcare": "not a product list"},
         ),
     ],
 )
