@@ -2,7 +2,7 @@
 #    uv pip compile requirements-test.in --python-version 3.12 --universal --output-file requirements-test.txt
 aiohappyeyeballs==2.6.2
     # via aiohttp
-aiohttp==3.14.0
+aiohttp==3.14.1
     # via openai
 aiosignal==1.4.0
     # via aiohttp
