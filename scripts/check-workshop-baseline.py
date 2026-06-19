@@ -17,6 +17,7 @@ EXPECTED_MAKEFILE = """ROOT := $(abspath $(dir $(lastword $(MAKEFILE_LIST))))
 
 PYTHON ?= python3
 UV ?= uv
+PYPI_INDEX := https://pypi.org/simple
 
 # Build the app (compile maintained Python modules)
 build:
@@ -34,19 +35,19 @@ static-check:
 \tPYTHONDONTWRITEBYTECODE=1 $(PYTHON) "$(ROOT)/scripts/check-workshop-baseline.py"
 
 lock:
-\tcd "$(ROOT)" && $(UV) pip compile requirements.in --python-version 3.12 --universal --quiet --output-file requirements.txt
-\tcd "$(ROOT)" && $(UV) pip compile requirements-test.in --python-version 3.12 --universal --quiet --output-file requirements-test.txt
+\tcd "$(ROOT)" && UV_INDEX_URL="$(PYPI_INDEX)" $(UV) pip compile requirements.in --python-version 3.12 --universal --quiet --output-file requirements.txt
+\tcd "$(ROOT)" && UV_INDEX_URL="$(PYPI_INDEX)" $(UV) pip compile requirements-test.in --python-version 3.12 --universal --quiet --output-file requirements-test.txt
 
 lock-upgrade:
-\tcd "$(ROOT)" && $(UV) pip compile requirements.in --python-version 3.12 --universal --upgrade --quiet --output-file requirements.txt
-\tcd "$(ROOT)" && $(UV) pip compile requirements-test.in --python-version 3.12 --universal --upgrade --quiet --output-file requirements-test.txt
+\tcd "$(ROOT)" && UV_INDEX_URL="$(PYPI_INDEX)" $(UV) pip compile requirements.in --python-version 3.12 --universal --upgrade --quiet --output-file requirements.txt
+\tcd "$(ROOT)" && UV_INDEX_URL="$(PYPI_INDEX)" $(UV) pip compile requirements-test.in --python-version 3.12 --universal --upgrade --quiet --output-file requirements-test.txt
 
 lock-check: lock
 \tgit -C "$(ROOT)" diff --exit-code -- requirements.txt requirements-test.txt
 
 audit:
-\tcd "$(ROOT)" && pip-audit -r requirements-test.txt
-\tcd "$(ROOT)" && pip-audit -r requirements.txt
+\tcd "$(ROOT)" && PIP_INDEX_URL="$(PYPI_INDEX)" pip-audit -r requirements-test.txt
+\tcd "$(ROOT)" && PIP_INDEX_URL="$(PYPI_INDEX)" pip-audit -r requirements.txt
 
 runtime-check:
 \tPYTHONDONTWRITEBYTECODE=1 $(PYTHON) "$(ROOT)/scripts/check-runtime-imports.py"
@@ -78,6 +79,8 @@ CUSTOMER_INDUSTRY_NAME_PLAN = "docs/plans/2026-06-15-customer-industry-name-vali
 RECOMMENDATION_CONTAINER_PLAN = "docs/plans/2026-06-15-recommendation-container-validation.md"
 RECOMMENDATION_EMBEDDING_PLAN = "docs/plans/2026-06-15-recommendation-embedding-validation.md"
 RECOMMENDATION_TIE_BREAK_PLAN = "docs/plans/2026-06-16-recommendation-tie-breaking.md"
+FINETUNING_RETRY_PLAN = "docs/plans/2026-06-16-finetuning-rate-limit-retry.md"
+STARLETTE_LOCK_PLAN = "docs/plans/2026-06-16-starlette-lock-floor-reproducibility.md"
 REQUIRED = [
     ".github/CODEOWNERS",
     ".github/workflows/check.yml",
@@ -115,6 +118,8 @@ REQUIRED = [
     RECOMMENDATION_CONTAINER_PLAN,
     RECOMMENDATION_EMBEDDING_PLAN,
     RECOMMENDATION_TIE_BREAK_PLAN,
+    FINETUNING_RETRY_PLAN,
+    STARLETTE_LOCK_PLAN,
     "docs/openai-api-compatibility.md",
     CI_PLAN,
     "docs/plans/2026-06-09-make-gate-aliases.md",
@@ -414,6 +419,7 @@ def main():
         "scikit-learn==1.9.0",
         "seaborn==0.13.2",
         "spacy==3.8.14",
+        "starlette==1.3.1",
         "streamlit==1.58.0",
         "tiktoken==0.11.0",
     }
@@ -978,6 +984,70 @@ def main():
             failures.append(f"{page} must show one OpenAI API compatibility warning")
     if "[`docs/openai-api-compatibility.md`](docs/openai-api-compatibility.md)" not in read("README.md"):
         failures.append("README must link the OpenAI API compatibility inventory")
+
+    finetuning = read("pages/8_🦾_FineTuning.py")
+    retry_loop = finetuning.split("for j in range(10):", 1)[1].split(
+        "new_row =", 1
+    )[0]
+    for contract in [
+        "except openai.error.RateLimitError:",
+        "if j == 9:\n                        raise",
+        "sleep_time = (2 ** j) + random.random()",
+    ]:
+        if contract not in retry_loop:
+            failures.append(f"fine-tuning retry example must retain {contract}")
+    if "except:" in retry_loop:
+        failures.append("fine-tuning retry example must not catch every exception")
+    if "else:\n                    raise" in retry_loop:
+        failures.append("fine-tuning retry example must not retain unreachable rethrow logic")
+
+    if "test_finetuning_example_retries_only_rate_limits" not in read("test_app.py"):
+        failures.append("fine-tuning rate-limit retry regression must remain registered")
+
+    for path in ["AGENTS.md", "README.md", "SECURITY.md", "VISION.md", "CHANGES.md"]:
+        if "fine-tuning retry example" not in read(path).lower():
+            failures.append(f"{path} must document the fine-tuning retry example")
+
+    finetuning_retry_plan = read(FINETUNING_RETRY_PLAN)
+    finetuning_retry_status = re.findall(
+        r"(?mi)^status:\s*(.+?)\s*$", finetuning_retry_plan
+    )
+    finetuning_retry_verification = markdown_section(
+        finetuning_retry_plan, "Verification Completed"
+    )
+    if (finetuning_retry_status != ["completed"] or
+            "focused fine-tuning retry regression passed" not in finetuning_retry_verification or
+            "complete no-network suite passed with 101 tests" not in finetuning_retry_verification or
+            "All four Make gates passed" not in finetuning_retry_verification or
+            "external directory" not in finetuning_retry_verification or
+            "Six isolated hostile mutations were rejected" not in finetuning_retry_verification or
+            re.search(r"(?i)\b(?:pending|todo|tbd|not run|to be recorded)\b",
+                      finetuning_retry_verification)):
+        failures.append("fine-tuning retry plan must record completed verification")
+
+    if "test_starlette_security_floor_is_resolver_input" not in read("test_app.py"):
+        failures.append("Starlette resolver-floor regression must remain registered")
+
+    for path in ["AGENTS.md", "README.md", "SECURITY.md", "VISION.md", "CHANGES.md"]:
+        if "starlette resolver floor" not in read(path).lower():
+            failures.append(f"{path} must document the Starlette resolver floor")
+
+    starlette_lock_plan = read(STARLETTE_LOCK_PLAN)
+    starlette_lock_status = re.findall(
+        r"(?mi)^status:\s*(.+?)\s*$", starlette_lock_plan
+    )
+    starlette_lock_verification = markdown_section(
+        starlette_lock_plan, "Verification Completed"
+    )
+    if (starlette_lock_status != ["completed"] or
+            "make lock-check passed twice" not in starlette_lock_verification or
+            "complete no-network suite passed with 101 tests" not in starlette_lock_verification or
+            "Both exact locks audited with no known vulnerabilities" not in starlette_lock_verification or
+            "runtime imports and credential-free Streamlit smoke passed" not in starlette_lock_verification or
+            "Six isolated hostile mutations were rejected" not in starlette_lock_verification or
+            re.search(r"(?i)\b(?:pending|todo|tbd|not run|to be recorded)\b",
+                      starlette_lock_verification)):
+        failures.append("Starlette lock-floor plan must record completed verification")
 
     for path, phrases in {
         "requirements.in": ["openai==0.28.1"],

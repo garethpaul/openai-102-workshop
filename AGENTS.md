@@ -67,6 +67,11 @@
   exported workstation packages.
 - Preserve `openai==0.28.1` until a dedicated lesson/API migration updates the
   examples and tests together.
+- Keep the fine-tuning retry example limited to `RateLimitError`; other API
+  failures must surface immediately and the final retry must re-raise.
+- Keep the Starlette resolver floor in `requirements.in` synchronized with the
+  reviewed 1.3.1 application-lock security pin, and keep lock generation on
+  the Makefile's public-PyPI lock and audit contract.
 
 ## Agent workflow
 

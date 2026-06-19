@@ -560,3 +560,37 @@ def test_recursive_text_splitter_preserves_token_overlap():
     assert chunks[1].endswith("word489")
     assert chunks[2].startswith("word480")
     assert chunks[2].endswith("word649")
+
+
+def test_finetuning_example_retries_only_rate_limits():
+    with open("pages/8_🦾_FineTuning.py", encoding="utf-8") as file:
+        source = file.read()
+
+    retry_loop = source.split("for j in range(10):", 1)[1].split(
+        "new_row =", 1
+    )[0]
+
+    assert "except openai.error.RateLimitError:" in retry_loop
+    assert "if j == 9:\n                        raise" in retry_loop
+    assert "sleep_time = (2 ** j) + random.random()" in retry_loop
+    assert "except:" not in retry_loop
+    assert "else:\n                    raise" not in retry_loop
+
+
+def test_starlette_security_floor_is_resolver_input():
+    with open("requirements.in", encoding="utf-8") as file:
+        application_inputs = set(file.read().splitlines())
+    with open("scripts/check-workshop-baseline.py", encoding="utf-8") as file:
+        checker = file.read()
+
+    assert "starlette==1.3.1" in application_inputs
+    direct_input_contract = checker.split("expected_direct_requirements = {", 1)[
+        1
+    ].split("}", 1)[0]
+    assert '"starlette==1.3.1",' in direct_input_contract
+    assert "STARLETTE_LOCK_PLAN" in checker
+    with open("Makefile", encoding="utf-8") as file:
+        makefile = file.read()
+    assert "PYPI_INDEX := https://pypi.org/simple" in makefile
+    assert 'UV_INDEX_URL="$(PYPI_INDEX)"' in makefile
+    assert 'PIP_INDEX_URL="$(PYPI_INDEX)"' in makefile

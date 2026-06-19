@@ -44,13 +44,13 @@ for animal in l_animal:
                     finish_reason = response['choices'][0]['finish_reason']
                     response_txt = response['choices'][0]['text']
                     break  # successful request, break the retry loop
-                except:
+                except openai.error.RateLimitError:
+                    if j == 9:
+                        raise
                     sleep_time = (2 ** j) + random.random()  # exponential backoff with jitter
                     print(f"Rate limit hit. Retrying in {sleep_time} seconds")
                     time.sleep(sleep_time)
                     continue
-                else:
-                    raise  # re-throw the exception if it's not a rate limit error
 
             new_row = {
                 'animal': animal,

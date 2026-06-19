@@ -53,6 +53,11 @@ Helpful reports include:
 - Historical OpenAI API examples are inventoried in
   `docs/openai-api-compatibility.md`; do not remove their learner warnings or
   present them as current integration guidance before a credentialed migration.
+- The fine-tuning retry example must catch only the pinned SDK's rate-limit
+  error so authentication, validation, and programming failures are not hidden.
+- The Starlette resolver floor must remain explicit in `requirements.in` so
+  lock regeneration and audits through the Makefile's public-PyPI contract
+  retain and verify 1.3.1 regardless of caller index configuration.
 
 ## Service and API Notes
 
