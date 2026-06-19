@@ -28,6 +28,12 @@ Helpful reports include:
 - Review found authentication, token, or session-related code paths; changes in those areas should receive security-focused review before merge.
 - Review found external API integrations or credential-adjacent configuration; changes in those areas should receive security-focused review before merge.
 - Review found network clients, sockets, web APIs, or service endpoints; changes in those areas should receive security-focused review before merge.
+- Treat every text-search crawler URL and redirect as untrusted input. The
+  maintained crawler permits only HTTP(S), rejects URL credentials and any DNS
+  answer that is not globally routable, pins the connection to the validated
+  address, ignores ambient proxies, and revalidates each bounded redirect.
+  Preserve these controls together so a redirect or DNS change cannot turn the
+  workshop into an internal-network request proxy.
 - Review found file, document, data, or media parsing flows; changes in those areas should receive security-focused review before merge.
 - Review found database, model, query, or persistence-related code; changes in those areas should receive security-focused review before merge.
 - Review found infrastructure, deployment, proxy, or cloud configuration; changes in those areas should receive security-focused review before merge.

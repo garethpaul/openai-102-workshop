@@ -90,8 +90,7 @@ def page():
         st.code("""
 import openai
 import tiktoken
-import requests
-from bs4 import BeautifulSoup
+from utils import crawler
 
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 
@@ -113,22 +112,7 @@ def get_embeddings(query):
     return res.data[0]['embedding']
 
 def crawler_get_text(url):
-    # crawl the url with requests and get the text back
-    # Crawl the URL with requests and get the text back
-    # create fake browser for chrome to send the request
-    headers = {
-        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)...`
-    }
-
-    response = requests.get(url, headers=headers, timeout=15)
-    html_content = response.text
-
-    # Parse HTML content using BeautifulSoup
-    soup = BeautifulSoup(html_content, 'html.parser')
-
-    # Extract the text from the parsed HTML
-    text = soup.get_text()
-    return text
+    return crawler.get_text(url)
 
 
 tokenizer = tiktoken.get_encoding('p50k_base')

@@ -1,5 +1,16 @@
 # Changes
 
+## Unreleased
+
+- Hardened text-search crawling against server-side request forgery by
+  rejecting non-HTTP(S), credentialed, and non-public targets; pinning each
+  connection to its validated globally routable address; disabling ambient
+  proxies and automatic redirects; and revalidating every bounded redirect
+  destination.
+- Replaced the duplicated tutorial request example with the shared guarded
+  crawler and added regression coverage for private DNS answers, pinned
+  requests, redirect pivots, and redirect limits.
+
 ## 2026-06-17
 
 - Added public-PyPI artifact hashes to both universal Python locks and required

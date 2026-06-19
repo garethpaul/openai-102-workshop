@@ -91,6 +91,10 @@ The setup commands above are derived from repository files. Legacy mobile, Pytho
 - `make smoke` launches a bounded headless Streamlit process and requires a
   healthy localhost endpoint without an API credential.
 - Run `make run` or `streamlit run 👋_Hello.py` to start the app.
+- Text-search crawling accepts only HTTP(S) URLs whose complete DNS answer set
+  is globally routable. Each outbound connection is pinned to a validated
+  address, automatic redirects and ambient proxy settings are disabled, and
+  every bounded redirect target is resolved and checked again before use.
 - Enter an OpenAI API key only through the local sidebar or `OPENAI_API_KEY`.
 - Treat the checked-in snippets as legacy OpenAI SDK examples pinned to
   `openai==0.28.1`. Model or SDK migrations should be deliberate compatibility

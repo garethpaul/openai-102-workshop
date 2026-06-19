@@ -17,11 +17,139 @@ fake_streamlit = types.SimpleNamespace(
 sys.modules.setdefault("streamlit", fake_streamlit)
 
 from components import recommendations  # noqa: E402
-from utils import generate, token  # noqa: E402
+from utils import crawler, generate, token  # noqa: E402
 
 
 def write_embedding_fixture(path, rows):
     path.write_text(json.dumps(rows), encoding="utf-8")
+
+
+def public_dns_answer(address="93.184.216.34"):
+    return [(2, 1, 6, "", (address, 443))]
+
+
+class FakeCrawlerResponse:
+    def __init__(self, text="<p>public page</p>", status_code=200, location=None):
+        self.text = text
+        self.status_code = status_code
+        self.headers = {} if location is None else {"Location": location}
+        self.closed = False
+
+    @property
+    def is_redirect(self):
+        return self.status_code in {301, 302, 303, 307, 308} and bool(
+            self.headers.get("Location")
+        )
+
+    def close(self):
+        self.closed = True
+
+    def raise_for_status(self):
+        if self.status_code >= 400:
+            raise RuntimeError(f"HTTP {self.status_code}")
+
+
+@pytest.mark.parametrize(
+    "url",
+    [
+        "file:///etc/passwd",
+        "ftp://example.com/resource",
+        "https://user:password@example.com/",
+        "https:///missing-host",
+    ],
+)
+def test_crawler_rejects_non_web_or_credentialed_urls(url):
+    with pytest.raises(crawler.UnsafeUrlError):
+        crawler._validated_target(url)
+
+
+@pytest.mark.parametrize(
+    "address",
+    ["127.0.0.1", "10.0.0.1", "169.254.169.254", "::1", "fc00::1"],
+)
+def test_crawler_rejects_non_public_dns_answers(monkeypatch, address):
+    monkeypatch.setattr(
+        crawler.socket,
+        "getaddrinfo",
+        lambda *args, **kwargs: public_dns_answer(address),
+    )
+
+    with pytest.raises(crawler.UnsafeUrlError, match="non-public"):
+        crawler._validated_target("https://example.com/private")
+
+
+def test_crawler_pins_request_to_validated_public_address(monkeypatch):
+    calls = []
+    monkeypatch.setattr(
+        crawler.socket,
+        "getaddrinfo",
+        lambda *args, **kwargs: public_dns_answer(),
+    )
+
+    def fake_get(session, url, **kwargs):
+        calls.append((session.trust_env, url, kwargs))
+        return FakeCrawlerResponse()
+
+    monkeypatch.setattr(crawler.requests.Session, "get", fake_get)
+
+    assert crawler.get_text("https://example.com/lesson?q=1") == "public page"
+    assert calls == [
+        (
+            False,
+            "https://93.184.216.34/lesson?q=1",
+            {
+                "headers": {
+                    "User-Agent": crawler.USER_AGENT,
+                    "Host": "example.com",
+                },
+                "timeout": crawler.REQUEST_TIMEOUT,
+                "allow_redirects": False,
+            },
+        )
+    ]
+
+
+def test_crawler_revalidates_redirect_destination(monkeypatch):
+    responses = [
+        FakeCrawlerResponse(
+            status_code=302,
+            location="http://169.254.169.254/latest/meta-data/",
+        )
+    ]
+    monkeypatch.setattr(
+        crawler.socket,
+        "getaddrinfo",
+        lambda hostname, *args, **kwargs: public_dns_answer()
+        if hostname == "example.com"
+        else public_dns_answer("169.254.169.254"),
+    )
+    monkeypatch.setattr(
+        crawler.requests.Session,
+        "get",
+        lambda *args, **kwargs: responses.pop(0),
+    )
+
+    with pytest.raises(crawler.UnsafeUrlError, match="non-public"):
+        crawler.get_text("https://example.com/redirect")
+
+
+def test_crawler_limits_redirect_chain(monkeypatch):
+    monkeypatch.setattr(
+        crawler.socket,
+        "getaddrinfo",
+        lambda *args, **kwargs: public_dns_answer(),
+    )
+    monkeypatch.setattr(
+        crawler.requests.Session,
+        "get",
+        lambda *args, **kwargs: FakeCrawlerResponse(
+            status_code=302,
+            location="/again",
+        ),
+    )
+
+    with pytest.raises(crawler.requests.TooManyRedirects):
+        crawler.get_text("https://example.com/start")
 
 
 def test_load_embeddings_and_train_model():

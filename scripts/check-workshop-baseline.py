@@ -84,6 +84,7 @@ RECOMMENDATION_TIE_BREAK_PLAN = "docs/plans/2026-06-16-recommendation-tie-breaki
 FINETUNING_RETRY_PLAN = "docs/plans/2026-06-16-finetuning-rate-limit-retry.md"
 STARLETTE_LOCK_PLAN = "docs/plans/2026-06-16-starlette-lock-floor-reproducibility.md"
 SAFE_JSON_FIXTURE_PLAN = "docs/plans/2026-06-16-safe-json-embedding-fixtures.md"
+CRAWLER_SSRF_PLAN = "docs/plans/2026-06-19-crawler-ssrf-boundary.md"
 REQUIRED = [
     ".github/CODEOWNERS",
     ".github/workflows/check.yml",
@@ -126,6 +127,7 @@ REQUIRED = [
     FINETUNING_RETRY_PLAN,
     STARLETTE_LOCK_PLAN,
     SAFE_JSON_FIXTURE_PLAN,
+    CRAWLER_SSRF_PLAN,
     "docs/openai-api-compatibility.md",
     CI_PLAN,
     "docs/plans/2026-06-09-make-gate-aliases.md",
@@ -367,12 +369,20 @@ def main():
         failures.append("shared embedding fixture loading must not retain pickle")
 
     crawler = read("utils/crawler.py")
-    if "timeout=15" not in crawler or "raise_for_status()" not in crawler:
-        failures.append("crawler requests must use timeout and raise_for_status")
+    for phrase in [
+        "address.is_global",
+        "allow_redirects=False",
+        "_PinnedAddressAdapter",
+        "response.raise_for_status()",
+        "session.trust_env = False",
+        "urljoin(current_url, location)",
+    ]:
+        if phrase not in crawler:
+            failures.append(f"crawler public-network boundary must retain {phrase}")
 
     text_search = read("pages/3_🔍_Text_Search.py")
-    if "requests.get(url, headers=headers, timeout=15)" not in text_search:
-        failures.append("text-search tutorial requests must use a timeout")
+    if "return crawler.get_text(url)" not in text_search:
+        failures.append("text-search tutorial must use the guarded crawler")
 
     langchain = read("pages/9_⛓️_Langchain.py")
     if "requests.get(url, timeout=15)" not in langchain:
@@ -1144,6 +1154,16 @@ def main():
     if "test_starlette_security_floor_is_resolver_input" not in read("test_app.py"):
         failures.append("Starlette resolver-floor regression must remain registered")
 
+    crawler_tests = read("test_app.py")
+    for test_name in [
+        "test_crawler_rejects_non_public_dns_answers",
+        "test_crawler_pins_request_to_validated_public_address",
+        "test_crawler_revalidates_redirect_destination",
+        "test_crawler_limits_redirect_chain",
+    ]:
+        if test_name not in crawler_tests:
+            failures.append(f"crawler SSRF regression must remain registered: {test_name}")
+
     for path in ["AGENTS.md", "README.md", "SECURITY.md", "VISION.md", "CHANGES.md"]:
         if "starlette resolver floor" not in read(path).lower():
             failures.append(f"{path} must document the Starlette resolver floor")
@@ -1191,6 +1211,36 @@ def main():
             re.search(r"(?i)\b(?:pending|todo|tbd|not run|to be recorded)\b",
                       safe_json_fixture_verification)):
         failures.append("safe JSON fixture plan must record completed verification")
+
+    for path in ["AGENTS.md", "README.md", "SECURITY.md", "VISION.md", "CHANGES.md"]:
+        if "globally routable" not in read(path).lower():
+            failures.append(f"{path} must document the crawler public-address boundary")
+
+    crawler_ssrf_plan = read(CRAWLER_SSRF_PLAN)
+    crawler_ssrf_status = re.findall(
+        r"(?mi)^status:\s*(.+?)\s*$", crawler_ssrf_plan
+    )
+    crawler_ssrf_verification = markdown_section(
+        crawler_ssrf_plan, "Verification Completed"
+    )
+    for phrase in [
+        "12 focused crawler cases passed",
+        "complete no-network suite passed with 122 tests",
+        "certificate-verified request",
+        "make build",
+        "make verify",
+        "make lock-check",
+        "make audit",
+        "make runtime-check",
+        "make smoke",
+        "git diff --check",
+    ]:
+        if phrase not in crawler_ssrf_verification:
+            failures.append(f"crawler SSRF verification must record {phrase}")
+    if (crawler_ssrf_status != ["completed"] or
+            re.search(r"(?i)\b(?:pending|todo|tbd|not run|to be recorded)\b",
+                      crawler_ssrf_verification)):
+        failures.append("crawler SSRF plan must record completed verification")
 
     for path, phrases in {
         "requirements.in": ["openai==0.28.1"],
