@@ -370,6 +370,14 @@ def main():
     if "timeout=15" not in crawler or "raise_for_status()" not in crawler:
         failures.append("crawler requests must use timeout and raise_for_status")
 
+    text_search = read("pages/3_🔍_Text_Search.py")
+    if "requests.get(url, headers=headers, timeout=15)" not in text_search:
+        failures.append("text-search tutorial requests must use a timeout")
+
+    langchain = read("pages/9_⛓️_Langchain.py")
+    if "requests.get(url, timeout=15)" not in langchain:
+        failures.append("LangChain tutorial requests must use a timeout")
+
     customer_cluster = read("customer_cluster.py")
     for forbidden in ["pickle.load", "pickle.dump", "embedding_cache.pkl"]:
         if forbidden in customer_cluster:
