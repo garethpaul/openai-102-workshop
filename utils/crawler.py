@@ -3,7 +3,6 @@ import socket
 from urllib.parse import urljoin, urlsplit, urlunsplit
 
 import requests
-from bs4 import BeautifulSoup
 from requests.adapters import HTTPAdapter
 
 
@@ -125,6 +124,8 @@ def _fetch_html(url):
 
 
 def get_text(url):
+    from bs4 import BeautifulSoup
+
     html_content = _fetch_html(url)
     soup = BeautifulSoup(html_content, "html.parser")
     return soup.get_text()

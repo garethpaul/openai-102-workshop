@@ -92,7 +92,9 @@ def test_crawler_pins_request_to_validated_public_address(monkeypatch):
 
     monkeypatch.setattr(crawler.requests.Session, "get", fake_get)
 
-    assert crawler.get_text("https://example.com/lesson?q=1") == "public page"
+    assert crawler._fetch_html("https://example.com/lesson?q=1") == (
+        "<p>public page</p>"
+    )
     assert calls == [
         (
             False,
@@ -130,7 +132,7 @@ def test_crawler_revalidates_redirect_destination(monkeypatch):
     )
 
     with pytest.raises(crawler.UnsafeUrlError, match="non-public"):
-        crawler.get_text("https://example.com/redirect")
+        crawler._fetch_html("https://example.com/redirect")
 
 
 def test_crawler_limits_redirect_chain(monkeypatch):
@@ -149,7 +151,7 @@ def test_crawler_limits_redirect_chain(monkeypatch):
     )
 
     with pytest.raises(crawler.requests.TooManyRedirects):
-        crawler.get_text("https://example.com/start")
+        crawler._fetch_html("https://example.com/start")
 
 
 def test_load_embeddings_and_train_model():
