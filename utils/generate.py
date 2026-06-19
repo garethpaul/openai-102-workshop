@@ -20,19 +20,16 @@ def get_cache_file(cache_folder, query):
     """
     cache_root = os.path.abspath(cache_folder)
     legacy_name = f"{query}.json"
-    try:
-        entries = os.scandir(cache_root)
-    except FileNotFoundError:
-        entries = ()
-    with entries:
-        for entry in entries:
-            entry_path = os.path.abspath(entry.path)
-            if (
-                entry.name == legacy_name
-                and os.path.commonpath([cache_root, entry_path]) == cache_root
-                and entry.is_file()
-            ):
-                return entry_path
+    if os.path.isdir(cache_root):
+        with os.scandir(cache_root) as entries:
+            for entry in entries:
+                entry_path = os.path.abspath(entry.path)
+                if (
+                    entry.name == legacy_name
+                    and os.path.commonpath([cache_root, entry_path]) == cache_root
+                    and entry.is_file()
+                ):
+                    return entry_path
 
     digest = hashlib.sha256(query.encode("utf-8")).hexdigest()
     return os.path.join(cache_root, f"{digest}.json")
