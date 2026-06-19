@@ -114,6 +114,8 @@ The setup commands above are derived from repository files. Legacy mobile, Pytho
   before embedding lookup.
 - Recommendation container validation rejects malformed top-level customer,
   embedding, and product collections before iteration or mapping lookup.
+- Invalid recommendation embedding pairs are skipped without discarding valid
+  similarity scores or crashing the recommendation page.
 
 ## Testing and Verification
 

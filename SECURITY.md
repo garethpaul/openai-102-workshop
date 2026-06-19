@@ -91,6 +91,8 @@ one nonempty string product name. A matched record must provide a nonempty strin
 before dictionary lookup.
 Recommendation container validation should reject malformed top-level customer,
 embedding, and product collections before iteration or mapping lookup.
+Invalid recommendation embedding pairs should contribute no score while valid
+pairs remain available for product selection.
 
 ## Dependency and Supply Chain Security
 
