@@ -11,6 +11,8 @@
 - Ignored malformed customer-list members during recommendation lookup.
 - Required a nonempty string customer industry before recommendation embedding
   lookup.
+- Added recommendation container validation for malformed top-level customer,
+  embedding, and product collections.
 
 ## 2026-06-14
 

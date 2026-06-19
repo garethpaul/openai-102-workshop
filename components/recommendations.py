@@ -1,4 +1,4 @@
-from collections.abc import Mapping
+from collections.abc import Iterable, Mapping
 import random
 
 from utils.generate import cosine_similarity
@@ -38,6 +38,16 @@ def recommend_product(
     industry_products,
     choose_product=random.choice,
 ):
+    if not isinstance(industry_embeddings, Mapping):
+        return None, {}
+    similarity_scores = build_similarity_scores(industry_embeddings)
+    if (
+        not isinstance(customer_data, Iterable)
+        or isinstance(customer_data, (str, bytes, Mapping))
+        or not isinstance(industry_products, Mapping)
+    ):
+        return None, similarity_scores
+
     customer = next(
         (
             item
@@ -47,7 +57,6 @@ def recommend_product(
         ),
         None,
     )
-    similarity_scores = build_similarity_scores(industry_embeddings)
     if customer is None:
         return None, similarity_scores
 

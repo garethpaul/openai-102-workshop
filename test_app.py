@@ -136,6 +136,28 @@ def test_recommend_product_rejects_invalid_customer_industry_names(industry):
 
 
 @pytest.mark.parametrize(
+    ("customers", "embeddings", "products", "expected_score_keys"),
+    [
+        (None, {"Healthcare": [{"embedding": [1.0, 0.0]}]}, {}, {"Healthcare"}),
+        ({"customer_id": 1}, {"Healthcare": [{"embedding": [1.0, 0.0]}]}, {}, {"Healthcare"}),
+        ([], None, {}, set()),
+        ([], [], {}, set()),
+        ([], {"Healthcare": [{"embedding": [1.0, 0.0]}]}, None, {"Healthcare"}),
+        ([], {"Healthcare": [{"embedding": [1.0, 0.0]}]}, [], {"Healthcare"}),
+    ],
+)
+def test_recommend_product_rejects_invalid_top_level_containers(
+    customers, embeddings, products, expected_score_keys
+):
+    product, scores = recommendations.recommend_product(
+        1, customers, embeddings, products
+    )
+
+    assert product is None
+    assert set(scores) == expected_score_keys
+
+
+@pytest.mark.parametrize(
     ("customer_id", "customers", "embeddings", "products"),
     [
         (99, [], {"E-commerce": [{"embedding": [1.0, 0.0]}]}, {}),
