@@ -22,12 +22,12 @@ static-check:
 	PYTHONDONTWRITEBYTECODE=1 $(PYTHON) "$(ROOT)/scripts/check-workshop-baseline.py"
 
 lock:
-	cd "$(ROOT)" && UV_INDEX_URL="$(PYPI_INDEX)" $(UV) pip compile requirements.in --python-version 3.12 --universal --quiet --output-file requirements.txt
-	cd "$(ROOT)" && UV_INDEX_URL="$(PYPI_INDEX)" $(UV) pip compile requirements-test.in --python-version 3.12 --universal --quiet --output-file requirements-test.txt
+	cd "$(ROOT)" && UV_INDEX_URL="$(PYPI_INDEX)" $(UV) pip compile requirements.in --python-version 3.12 --universal --generate-hashes --quiet --output-file requirements.txt
+	cd "$(ROOT)" && UV_INDEX_URL="$(PYPI_INDEX)" $(UV) pip compile requirements-test.in --python-version 3.12 --universal --generate-hashes --quiet --output-file requirements-test.txt
 
 lock-upgrade:
-	cd "$(ROOT)" && UV_INDEX_URL="$(PYPI_INDEX)" $(UV) pip compile requirements.in --python-version 3.12 --universal --upgrade --quiet --output-file requirements.txt
-	cd "$(ROOT)" && UV_INDEX_URL="$(PYPI_INDEX)" $(UV) pip compile requirements-test.in --python-version 3.12 --universal --upgrade --quiet --output-file requirements-test.txt
+	cd "$(ROOT)" && UV_INDEX_URL="$(PYPI_INDEX)" $(UV) pip compile requirements.in --python-version 3.12 --universal --generate-hashes --upgrade --quiet --output-file requirements.txt
+	cd "$(ROOT)" && UV_INDEX_URL="$(PYPI_INDEX)" $(UV) pip compile requirements-test.in --python-version 3.12 --universal --generate-hashes --upgrade --quiet --output-file requirements-test.txt
 
 lock-check: lock
 	git -C "$(ROOT)" diff --exit-code -- requirements.txt requirements-test.txt

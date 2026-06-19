@@ -120,6 +120,10 @@ depends on a compromised package, typosquatting risk, insecure transitive
 dependency, or unsafe build step, include the package name, affected version,
 and the path through which it is used.
 
+Both universal locks must retain generated artifact hashes, and exact-lock
+installation must use `--require-hashes`. Hashes enforce the reviewed index
+artifacts but do not independently establish publisher identity or provenance.
+
 The app contains legacy OpenAI SDK examples pinned to `openai==0.28.1`. Model,
 endpoint, or SDK migrations
 should be reviewed as compatibility work and verified with `make lint`,

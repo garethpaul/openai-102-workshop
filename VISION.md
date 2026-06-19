@@ -76,6 +76,8 @@ Contribution rules:
   changes.
 - Run `make lock-check` and `make audit` for dependency changes, then exercise
   `make runtime-check` and `make smoke` in the application environment.
+- Keep universal lock artifact hashes generated from public PyPI and require
+  them for application and verification lock installation.
 - Preserve metadata text validation when changing retrieval fixture loading.
 - Preserve finite embedding value validation when changing fixture loading.
 - Preserve numeric embedding values validation when changing fixture loading.
