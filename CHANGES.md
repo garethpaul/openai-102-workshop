@@ -1,5 +1,11 @@
 # Changes
 
+## 2026-06-15
+
+- Fixed Recommendations to select the nearest industry from the selected
+  customer's embedding instead of the first JSON key, with a safe no-product
+  fallback.
+
 ## 2026-06-14
 
 - Added strict validation for cached and API embedding payloads so malformed,

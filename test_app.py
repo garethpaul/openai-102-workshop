@@ -15,6 +15,7 @@ fake_streamlit = types.SimpleNamespace(
 )
 sys.modules.setdefault("streamlit", fake_streamlit)
 
+from components import recommendations  # noqa: E402
 from utils import generate, token  # noqa: E402
 
 
@@ -36,6 +37,50 @@ def test_load_embeddings_and_train_model(tmp_path):
     distances, indices = nn_model.kneighbors([[0.1, 0.2]])
     assert distances.shape == (1, 2)
     assert indices.shape == (1, 2)
+
+
+def test_recommend_product_uses_customer_relative_nearest_industry():
+    customers = [{"customer_id": 7, "industry": "Telecommunications"}]
+    embeddings = {
+        "E-commerce": [{"embedding": [1.0, 0.0]}],
+        "Telecommunications": [{"embedding": [0.0, 1.0]}],
+    }
+    products = {
+        "E-commerce": ["commerce product"],
+        "Telecommunications": ["telecom product"],
+    }
+
+    product, scores = recommendations.recommend_product(
+        7, customers, embeddings, products
+    )
+
+    assert product == "telecom product"
+    assert scores["E-commerce"]["Telecommunications"] == 0.0
+    assert scores["Telecommunications"]["Telecommunications"] == 1.0
+
+
+@pytest.mark.parametrize(
+    ("customer_id", "customers", "embeddings", "products"),
+    [
+        (99, [], {"E-commerce": [{"embedding": [1.0, 0.0]}]}, {}),
+        (1, [{"customer_id": 1, "industry": "Missing"}], {}, {}),
+        (
+            1,
+            [{"customer_id": 1, "industry": "Healthcare"}],
+            {"Healthcare": [{"embedding": [1.0, 0.0]}]},
+            {},
+        ),
+    ],
+)
+def test_recommend_product_returns_none_for_unavailable_inputs(
+    customer_id, customers, embeddings, products
+):
+    product, scores = recommendations.recommend_product(
+        customer_id, customers, embeddings, products
+    )
+
+    assert product is None
+    assert isinstance(scores, dict)
 
 
 def test_load_embeddings_and_train_model_rejects_empty_fixtures(tmp_path):
