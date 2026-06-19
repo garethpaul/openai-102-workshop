@@ -242,6 +242,19 @@ def test_get_cache_file_does_not_escape_cache_dir(tmp_path):
     assert ".." not in os.path.basename(cache_file)
 
 
+def test_get_cache_file_only_reads_flat_legacy_names(tmp_path):
+    cache_dir = tmp_path / "cache"
+    nested_dir = cache_dir / "nested"
+    nested_dir.mkdir(parents=True)
+    legacy_file = nested_dir / "pizza.json"
+    legacy_file.write_text("[]", encoding="utf-8")
+
+    cache_file = generate.get_cache_file(str(cache_dir), "nested/pizza")
+
+    assert cache_file != str(legacy_file)
+    assert os.path.dirname(cache_file) == str(cache_dir)
+
+
 def test_get_embeddings_reads_cache_without_api_call(tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)
     cache_dir = tmp_path / "cache"
