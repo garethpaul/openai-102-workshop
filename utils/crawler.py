@@ -97,7 +97,8 @@ def _fetch_html(url):
         )
 
         try:
-            # lgtm[py/full-ssrf] The request is pinned to a validated public IP.
+            # The request URL contains only a server-validated, globally routable IP.
+            # codeql[py/full-ssrf]
             response = session.get(
                 pinned_url,
                 headers={"User-Agent": USER_AGENT, "Host": host_header},
