@@ -617,3 +617,17 @@ def test_starlette_security_floor_is_resolver_input():
     assert "PYPI_INDEX := https://pypi.org/simple" in makefile
     assert 'UV_INDEX_URL="$(PYPI_INDEX)"' in makefile
     assert 'PIP_INDEX_URL="$(PYPI_INDEX)"' in makefile
+
+
+def test_exact_locks_are_audited_without_dependency_resolution():
+    with open("Makefile", encoding="utf-8") as file:
+        makefile = file.read()
+    with open("scripts/check-workshop-baseline.py", encoding="utf-8") as file:
+        checker = file.read()
+
+    audit_target = makefile.split("audit:\n", 1)[1].split("\nruntime-check:", 1)[0]
+    assert audit_target.count("pip-audit --no-deps --disable-pip -r") == 2
+    assert "requirements-test.txt" in audit_target
+    assert "requirements.txt" in audit_target
+    assert audit_target.replace("\t", "\\t") in checker
+    assert "UNIVERSAL_LOCK_AUDIT_PLAN" in checker

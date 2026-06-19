@@ -33,8 +33,8 @@ lock-check: lock
 	git -C "$(ROOT)" diff --exit-code -- requirements.txt requirements-test.txt
 
 audit:
-	cd "$(ROOT)" && PIP_INDEX_URL="$(PYPI_INDEX)" pip-audit -r requirements-test.txt
-	cd "$(ROOT)" && PIP_INDEX_URL="$(PYPI_INDEX)" pip-audit -r requirements.txt
+	cd "$(ROOT)" && PIP_INDEX_URL="$(PYPI_INDEX)" pip-audit --no-deps --disable-pip -r requirements-test.txt
+	cd "$(ROOT)" && PIP_INDEX_URL="$(PYPI_INDEX)" pip-audit --no-deps --disable-pip -r requirements.txt
 
 runtime-check:
 	PYTHONDONTWRITEBYTECODE=1 $(PYTHON) "$(ROOT)/scripts/check-runtime-imports.py"

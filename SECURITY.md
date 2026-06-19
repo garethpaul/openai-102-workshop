@@ -46,9 +46,11 @@ Helpful reports include:
 - Python bytecode should not remain after local verification; rerun the gates
   with bytecode writes disabled before committing.
 - Hosted Linux validation uses Python 3.12 and separate exact test and
-  application locks. It runs `pip check`, audits both locks, regenerates them,
-  executes `make check`, imports every direct runtime package, and launches a
-  bounded localhost-only Streamlit health smoke without API credentials.
+  application locks. It runs `pip check`, audits every exact pin with pip
+  dependency resolution disabled, regenerates both locks, executes the full
+  `make check` gate, imports every direct runtime package, and launches a bounded
+  localhost-only Streamlit health smoke without API credentials. The separate
+  application-smoke job installs and checks the complete application lock.
 - Keep that hosted path free of private generated caches and customer data.
 - Historical OpenAI API examples are inventoried in
   `docs/openai-api-compatibility.md`; do not remove their learner warnings or
