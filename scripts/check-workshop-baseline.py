@@ -376,6 +376,8 @@ def main():
         "server_hostname=self._target.hostname",
         "decompressor.decompress(chunk, remaining + 1)",
         "deadline.timeout(READ_TIMEOUT)",
+        "_get_response_with_deadline(connection, deadline)",
+        "sock.shutdown(socket.SHUT_RDWR)",
         "response.close()",
         "urljoin(current_url, location)",
     ]:
@@ -1171,6 +1173,7 @@ def main():
         "test_crawler_limits_redirect_chain",
         "test_crawler_streams_gzip_without_expanding_zip_bomb",
         "test_crawler_total_deadline_stops_slow_chunked_response",
+        "test_crawler_total_deadline_bounds_status_and_header_parsing",
         "test_crawler_limits_url_count_and_aggregate_decoded_bytes",
     ]:
         if test_name not in crawler_tests:
@@ -1236,8 +1239,8 @@ def main():
         crawler_ssrf_plan, "Verification Completed"
     )
     for phrase in [
-        "92 focused crawler cases passed",
-        "complete no-network suite passed with 202 tests",
+        "94 focused crawler cases passed",
+        "complete no-network suite passed with 204 tests",
         "exact Python 3.12.0",
         "certificate-verified pinned HTTPS request",
         "Alert #8",

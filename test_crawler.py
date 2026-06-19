@@ -5,6 +5,7 @@ import socket
 import ssl
 import subprocess
 import threading
+import time
 import zlib
 
 import pytest
@@ -106,6 +107,33 @@ class FakeClock:
 
     def advance(self, seconds):
         self.now += seconds
+
+
+def start_trickling_http_server(chunks, delay):
+    listener = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    listener.bind(("127.0.0.1", 0))
+    listener.listen(1)
+    port = listener.getsockname()[1]
+    finished = threading.Event()
+
+    def serve():
+        try:
+            client, _ = listener.accept()
+            with client:
+                client.recv(8192)
+                for chunk in chunks:
+                    try:
+                        client.sendall(chunk)
+                    except (BrokenPipeError, ConnectionResetError):
+                        break
+                    time.sleep(delay)
+        finally:
+            listener.close()
+            finished.set()
+
+    thread = threading.Thread(target=serve, daemon=True)
+    thread.start()
+    return port, thread, finished
 
 
 @pytest.mark.parametrize(
@@ -470,6 +498,41 @@ def test_crawler_total_deadline_stops_slow_chunked_response(monkeypatch):
             response,
             crawler._Deadline(crawler.TOTAL_TIMEOUT),
         )
+
+
+@pytest.mark.parametrize(
+    "chunks",
+    [
+        [b"H", b"T", b"T", b"P", b"/1.1 200 OK\r\n", b"Content-Length: 0\r\n\r\n"],
+        [b"HTTP/1.1 200 OK\r\n", b"X-Slow: ", b"a", b"b", b"c", b"\r\n", b"Content-Length: 0\r\n\r\n"],
+    ],
+    ids=["partial-status-line", "partial-headers"],
+)
+def test_crawler_total_deadline_bounds_status_and_header_parsing(
+    monkeypatch,
+    chunks,
+):
+    port, server, finished = start_trickling_http_server(chunks, delay=0.04)
+    monkeypatch.setattr(
+        crawler,
+        "_public_addresses",
+        lambda hostname, requested_port, deadline: [
+            crawler.ipaddress.ip_address("127.0.0.1")
+        ],
+    )
+    started = time.monotonic()
+
+    with pytest.raises(crawler.CrawlerDeadlineExceeded):
+        crawler._fetch_html(
+            f"http://example.test:{port}/",
+            deadline=crawler._Deadline(0.09),
+        )
+
+    elapsed = time.monotonic() - started
+    assert elapsed < 0.16
+    assert finished.wait(timeout=0.5)
+    server.join(timeout=0.1)
+    assert not server.is_alive()
 
 
 def test_crawler_sets_each_read_timeout_from_remaining_deadline():

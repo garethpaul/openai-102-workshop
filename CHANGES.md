@@ -12,6 +12,9 @@
   wire and decoded response bytes; incremental gzip/deflate expansion; and
   aggregate multi-URL work. Redirect headers are handled before any body read,
   and responses and connections close on every success or failure path.
+- Enforced the remaining wall-clock deadline while parsing HTTP status lines
+  and headers, aborting slow trickle connections instead of waiting for header
+  parsing to finish before noticing an expired total budget.
 - Recorded that CodeQL alert #8 was historically dismissed against the earlier
   request-URL sink; fresh exact-head analysis, rather than that dismissal, is
   required for the replacement transport.

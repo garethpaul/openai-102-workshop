@@ -34,8 +34,9 @@ Helpful reports include:
   Python patch release, so only globally routable destinations remain. It pins
   a direct numeric socket while retaining the
   original HTTPS SNI and certificate hostname. It revalidates every redirect,
-  ignores proxy and `.netrc` state structurally, and bounds DNS/connect/read and
-  total time plus wire, decoded, decompressed, URL-count, and aggregate work.
+  ignores proxy and `.netrc` state structurally, and bounds DNS/connect/status
+  and header parsing/read/total time plus wire, decoded, decompressed,
+  URL-count, and aggregate work.
   Preserve these controls together so redirects, DNS changes, slow responses,
   or compression expansion cannot turn the workshop into an internal-network
   request proxy or an unauthenticated resource-exhaustion path.

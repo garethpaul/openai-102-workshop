@@ -32,6 +32,8 @@ not verification evidence for this replacement.
 - Avoid proxy, `.netrc`, and automatic redirect behavior structurally.
 - Bound DNS, connect, read, parsing, and total wall-clock time; URL and redirect
   count; wire bytes; decoded bytes; decompression; and aggregate crawl work.
+- Apply the remaining total and read deadlines while parsing the HTTP status
+  line and headers, aborting the socket if a peer trickles partial metadata.
 - Inspect redirect headers before reading a redirect body and close every
   response and connection on success or failure.
 - Keep the rendered tutorial on the bounded multi-URL implementation.
@@ -51,7 +53,7 @@ not verification evidence for this replacement.
 
 ## Verification Completed
 
-- 92 focused crawler cases passed on Python 3.10.16, exact Python 3.12.0, and
+- 94 focused crawler cases passed on Python 3.10.16, exact Python 3.12.0, and
   Python 3.14.5.
 - The exact Python 3.12.0 probe reproduced the stdlib mismatch: it marked
   `192.0.0.8` and `64:ff9b:1::1` global and `2001:1::1` private, while the
@@ -59,7 +61,9 @@ not verification evidence for this replacement.
 - A real local certificate-verified pinned HTTPS request passed with direct-IP
   connection, original `Host`, original SNI, certificate hostname validation,
   and hostile proxy/`.netrc` environment variables present.
-- The complete no-network suite passed with 202 tests.
+- Real partial-status-line and partial-header servers were cut off within the
+  total deadline and observed prompt connection cleanup.
+- The complete no-network suite passed with 204 tests.
 - `make build`, `make verify`, and `make lock-check` passed.
 - Both exact-lock `make audit` checks reported no known vulnerabilities.
 - `make runtime-check` passed for all reviewed direct dependencies.

@@ -98,6 +98,7 @@ _IPV6_NON_GLOBAL_NETWORKS = tuple(
 _IPV6_GLOBAL_UNICAST = ipaddress.ip_network("2000::/3")
 _NAT64_WELL_KNOWN_PREFIX = ipaddress.ip_network("64:ff9b::/96")
 _DNS_SLOTS = threading.BoundedSemaphore(4)
+_HEADER_SLOTS = threading.BoundedSemaphore(4)
 _PARSER_SLOTS = threading.BoundedSemaphore(2)
 
 
@@ -323,6 +324,48 @@ def _open_connection(target, timeout):
     return _PinnedHTTPConnection(target, timeout)
 
 
+def _abort_connection(connection):
+    sock = getattr(connection, "sock", None)
+    if sock is not None:
+        try:
+            sock.shutdown(socket.SHUT_RDWR)
+        except OSError:
+            pass
+    connection.close()
+
+
+def _get_response_with_deadline(connection, deadline):
+    timeout = deadline.timeout(READ_TIMEOUT, "HTTP header deadline")
+    sock = getattr(connection, "sock", None)
+    if sock is not None:
+        sock.settimeout(timeout)
+    if not _HEADER_SLOTS.acquire(timeout=deadline.remaining("HTTP header deadline")):
+        raise CrawlerDeadlineExceeded("HTTP header deadline exceeded")
+
+    result_queue = queue.Queue(maxsize=1)
+
+    def parse_headers():
+        try:
+            result_queue.put((True, connection.getresponse()))
+        except BaseException as error:
+            result_queue.put((False, error))
+        finally:
+            _HEADER_SLOTS.release()
+
+    threading.Thread(target=parse_headers, daemon=True).start()
+    try:
+        succeeded, result = result_queue.get(
+            timeout=deadline.remaining("HTTP header deadline")
+        )
+    except queue.Empty as error:
+        _abort_connection(connection)
+        raise CrawlerDeadlineExceeded("HTTP header deadline exceeded") from error
+    deadline.check("HTTP header deadline")
+    if not succeeded:
+        raise result
+    return result
+
+
 def _response_status(response):
     return getattr(response, "status", getattr(response, "status_code", 0))
 
@@ -424,8 +467,7 @@ def _fetch_html(url, deadline=None, maximum=MAX_DECODED_BYTES):
                     "User-Agent": USER_AGENT,
                 },
             )
-            response = connection.getresponse()
-            deadline.check()
+            response = _get_response_with_deadline(connection, deadline)
             status = _response_status(response)
 
             if status in {301, 302, 303, 307, 308}:
