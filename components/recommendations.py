@@ -52,6 +52,8 @@ def recommend_product(
         return None, similarity_scores
 
     customer_industry = customer.get("industry")
+    if not isinstance(customer_industry, str) or not customer_industry.strip():
+        return None, similarity_scores
     if _embedding_for(industry_embeddings, customer_industry) is None:
         return None, similarity_scores
 

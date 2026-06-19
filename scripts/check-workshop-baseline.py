@@ -73,6 +73,7 @@ CUSTOMER_RECOMMENDATION_PLAN = "docs/plans/2026-06-15-customer-industry-recommen
 PRODUCT_BACKED_RECOMMENDATION_PLAN = "docs/plans/2026-06-15-product-backed-recommendation.md"
 PRODUCT_NAME_VALIDATION_PLAN = "docs/plans/2026-06-15-product-name-validation.md"
 MALFORMED_CUSTOMER_PLAN = "docs/plans/2026-06-15-malformed-customer-entry-guard.md"
+CUSTOMER_INDUSTRY_NAME_PLAN = "docs/plans/2026-06-15-customer-industry-name-validation.md"
 REQUIRED = [
     ".github/CODEOWNERS",
     ".github/workflows/check.yml",
@@ -105,6 +106,7 @@ REQUIRED = [
     PRODUCT_BACKED_RECOMMENDATION_PLAN,
     PRODUCT_NAME_VALIDATION_PLAN,
     MALFORMED_CUSTOMER_PLAN,
+    CUSTOMER_INDUSTRY_NAME_PLAN,
     "docs/openai-api-compatibility.md",
     CI_PLAN,
     "docs/plans/2026-06-09-make-gate-aliases.md",
@@ -185,6 +187,7 @@ def main():
         "from utils.generate import cosine_similarity",
         "if isinstance(item, Mapping)",
         "customer_industry = customer.get(\"industry\")",
+        "if not isinstance(customer_industry, str) or not customer_industry.strip():",
         "customer_scores = similarity_scores.get(customer_industry, {})",
         "for industry, score in customer_scores.items()",
         "if not isinstance(products, list):",
@@ -217,6 +220,16 @@ def main():
     for path, phrase in malformed_customer_guidance.items():
         if phrase not in read(path):
             failures.append(f"{path} must retain malformed customer guidance")
+
+    for phrase in [
+        "def test_recommend_product_rejects_invalid_customer_industry_names",
+        '@pytest.mark.parametrize("industry", [None, [], {}, "", "   "])',
+    ]:
+        if phrase not in tests:
+            failures.append(f"customer industry validation coverage must retain {phrase}")
+    for path in ["README.md", "SECURITY.md", "VISION.md", "CHANGES.md"]:
+        if "nonempty string customer industry" not in read(path).lower():
+            failures.append(f"{path} must document nonempty string customer industry validation")
 
     recommendation_page = read("pages/4_🤞_Recommendations.py")
     for phrase in [
@@ -761,6 +774,23 @@ def main():
     ]:
         if phrase not in malformed_customer_verification:
             failures.append(f"malformed customer verification must record {phrase}")
+
+    customer_industry_plan = read(CUSTOMER_INDUSTRY_NAME_PLAN)
+    customer_industry_status = re.findall(
+        r"(?mi)^status:\s*(.+?)\s*$", customer_industry_plan
+    )
+    customer_industry_verification = markdown_section(
+        customer_industry_plan, "Verification Completed"
+    )
+    if (customer_industry_status != ["completed"] or
+            "focused recommendation cases" not in customer_industry_verification or
+            "complete no-network suite" not in customer_industry_verification or
+            "All four Make gates passed" not in customer_industry_verification or
+            "external directory" not in customer_industry_verification or
+            "Six isolated hostile mutations were rejected" not in customer_industry_verification or
+            re.search(r"(?i)\b(?:pending|todo|tbd|not run|to be recorded)\b",
+                      customer_industry_verification)):
+        failures.append("customer industry name plan must record completed verification")
 
     compatibility = " ".join(read("docs/openai-api-compatibility.md").split())
     for phrase in [

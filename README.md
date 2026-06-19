@@ -110,7 +110,8 @@ The setup commands above are derived from repository files. Legacy mobile, Pytho
   every available industry and choose the nearest product-backed industry with
   a configured list containing at least one nonempty string product name.
   Malformed customer-list members are ignored so later valid records remain
-  eligible for recommendation.
+  eligible for recommendation, and each match must provide a nonempty string customer industry
+  before embedding lookup.
 
 ## Testing and Verification
 
