@@ -39,11 +39,16 @@ Priority:
 - Keep query embedding validation ahead of nearest-neighbor lookup
 - Keep verification targets from leaving Python bytecode behind
 - Keep the no-network baseline running in pinned, read-only hosted Linux CI
-- Keep hosted test dependencies minimal and explicit in `requirements-test.txt`
+- Keep Python 3.12 direct dependency inputs and generated exact locks small,
+  synchronized, and audit-clean
+- Keep unused exported-environment packages out of the application graph
+- Keep hosted test dependencies minimal and explicit in
+  `requirements-test.in`
+- Keep a separate hosted full-lock import and headless Streamlit health smoke
+- Keep GitHub Actions aligned with the canonical `make check` baseline
 
 Next priorities:
 
-- Add a single quickstart that verifies the app boots without paid API calls
 - Mark stale API examples before updating them
 - Add lightweight tests for embedding-cache loading and nearest-neighbor lookup
 - Add more fixture tests for malformed retrieval data
@@ -58,6 +63,8 @@ Contribution rules:
 - Explain model or API migrations in the README.
 - Run `make lint`, `make test`, `make build`, and `make check` before pushing
   changes.
+- Run `make lock-check` and `make audit` for dependency changes, then exercise
+  `make runtime-check` and `make smoke` in the application environment.
 - Preserve metadata text validation when changing retrieval fixture loading.
 - Preserve finite embedding value validation when changing fixture loading.
 - Preserve numeric embedding values validation when changing fixture loading.

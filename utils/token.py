@@ -1,6 +1,6 @@
 
 import tiktoken
-from langchain.text_splitter import RecursiveCharacterTextSplitter
+from langchain_text_splitters import RecursiveCharacterTextSplitter
 
 tokenizer = tiktoken.get_encoding('p50k_base')
 

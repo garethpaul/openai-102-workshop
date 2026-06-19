@@ -2,6 +2,12 @@
 
 status: completed
 
+This focused Python 3.10 no-network boundary was superseded on 2026-06-12 by
+`docs/plans/2026-06-12-supported-python-dependency-graph.md`, which upgrades
+the maintained runtime to Python 3.12 and adds full-lock audit, import, and
+Streamlit health validation. The historical implementation and verification
+below remain recorded as completed evidence.
+
 ## Context
 
 The workshop has a fast no-network `make check` baseline for retrieval math,
