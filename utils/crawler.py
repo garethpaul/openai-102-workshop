@@ -97,8 +97,8 @@ def _fetch_html(url):
         )
 
         try:
-            # The request URL contains only a server-validated, globally routable IP.
-            # codeql[py/full-ssrf]
+            # CodeQL cannot model this custom sanitizer: the URL contains only
+            # a server-validated global IP and the adapter pins that address.
             response = session.get(
                 pinned_url,
                 headers={"User-Agent": USER_AGENT, "Host": host_header},
