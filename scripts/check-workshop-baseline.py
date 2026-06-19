@@ -65,6 +65,7 @@ all: build test run
 """
 CI_PLAN = "docs/plans/2026-06-10-hosted-workshop-validation.md"
 DEPENDENCY_PLAN = "docs/plans/2026-06-12-supported-python-dependency-graph.md"
+TRANSITIVE_SECURITY_PLAN = "docs/plans/2026-06-16-transitive-dependency-security-update.md"
 EMBEDDING_CACHE_PLAN = "docs/plans/2026-06-13-json-embedding-cache.md"
 API_COMPATIBILITY_PLAN = "docs/plans/2026-06-13-openai-api-compatibility-notes.md"
 LOCATION_INDEPENDENT_MAKE_PLAN = "docs/plans/2026-06-13-location-independent-make.md"
@@ -76,6 +77,7 @@ MALFORMED_CUSTOMER_PLAN = "docs/plans/2026-06-15-malformed-customer-entry-guard.
 CUSTOMER_INDUSTRY_NAME_PLAN = "docs/plans/2026-06-15-customer-industry-name-validation.md"
 RECOMMENDATION_CONTAINER_PLAN = "docs/plans/2026-06-15-recommendation-container-validation.md"
 RECOMMENDATION_EMBEDDING_PLAN = "docs/plans/2026-06-15-recommendation-embedding-validation.md"
+RECOMMENDATION_TIE_BREAK_PLAN = "docs/plans/2026-06-16-recommendation-tie-breaking.md"
 REQUIRED = [
     ".github/CODEOWNERS",
     ".github/workflows/check.yml",
@@ -101,6 +103,7 @@ REQUIRED = [
     "docs/plans/2026-06-10-query-embedding-validation.md",
     "docs/plans/2026-06-12-vector-value-validation.md",
     DEPENDENCY_PLAN,
+    TRANSITIVE_SECURITY_PLAN,
     EMBEDDING_CACHE_PLAN,
     API_COMPATIBILITY_PLAN,
     LOCATION_INDEPENDENT_MAKE_PLAN,
@@ -111,6 +114,7 @@ REQUIRED = [
     CUSTOMER_INDUSTRY_NAME_PLAN,
     RECOMMENDATION_CONTAINER_PLAN,
     RECOMMENDATION_EMBEDDING_PLAN,
+    RECOMMENDATION_TIE_BREAK_PLAN,
     "docs/openai-api-compatibility.md",
     CI_PLAN,
     "docs/plans/2026-06-09-make-gate-aliases.md",
@@ -198,7 +202,7 @@ def main():
         "if isinstance(product, str) and product.strip()",
         "validated_products[industry] = product_names",
         "if not product_scores:",
-        "top_industry = max(product_scores, key=product_scores.get)",
+        "top_industry = max(",
         "choose_product(validated_products[top_industry])",
         "return None, similarity_scores",
         "if not isinstance(industry_embeddings, Mapping):",
@@ -211,6 +215,17 @@ def main():
             failures.append(f"customer recommendation logic must retain {phrase}")
     if "list(sorted_scores.keys())[0]" in recommendations:
         failures.append("customer recommendations must not select the first mapping key")
+    for phrase in [
+        "product_scores[industry]",
+        "industry == customer_industry",
+    ]:
+        if phrase not in recommendations:
+            failures.append(f"recommendation tie breaking must retain {phrase}")
+    tie_break = recommendations.split("top_industry = max(", 1)[-1].split(")\n    return", 1)[0]
+    score_index = tie_break.find("product_scores[industry]")
+    own_industry_index = tie_break.find("industry == customer_industry")
+    if not 0 <= score_index < own_industry_index:
+        failures.append("recommendation tie breaking must rank score before own-industry preference")
 
     tests = read("test_app.py")
     for phrase in [
@@ -260,6 +275,14 @@ def main():
     ]:
         if phrase not in tests:
             failures.append(f"recommendation embedding coverage must retain {phrase}")
+    for phrase in [
+        "def test_recommend_product_prefers_customer_industry_on_equal_score",
+        '"Retail": [{"embedding": [1.0, 0.0]}]',
+        '"Healthcare": [{"embedding": [1.0, 0.0]}]',
+        'assert product == "healthcare product"',
+    ]:
+        if phrase not in tests:
+            failures.append(f"recommendation tie-break coverage must retain {phrase}")
 
     recommendation_page = read("pages/4_🤞_Recommendations.py")
     for phrase in [
@@ -423,6 +446,8 @@ def main():
                 failures.append(f"{lock_name} must contain only exact generated pins: {line}")
         if "--python-version 3.12 --universal" not in lock:
             failures.append(f"{lock_name} must record the Python 3.12 universal compile contract")
+        if "aiohttp==3.14.1" not in lock or "aiohttp==3.14.0" in lock:
+            failures.append(f"{lock_name} must retain the reviewed aiohttp security update")
 
     for removed_package in ["torch", "transformers", "sentencepiece", "virtualenv", "python-dotenv"]:
         if re.search(rf"^{re.escape(removed_package)}==", application_lock, re.MULTILINE | re.IGNORECASE):
@@ -430,6 +455,18 @@ def main():
     for safe_pin in ["jinja2==3.1.6", "pyarrow==24.0.0", "pygments==2.20.0", "requests==2.34.2", "streamlit==1.58.0"]:
         if safe_pin not in application_lock:
             failures.append(f"requirements.txt must retain reviewed pin {safe_pin}")
+    if "starlette==1.3.1" not in application_lock or "starlette==1.2.1" in application_lock:
+        failures.append("requirements.txt must retain the reviewed starlette security update")
+
+    for document, phrases in {
+        "README.md": ["aiohttp==3.14.1", "starlette==1.3.1"],
+        "SECURITY.md": ["`aiohttp` at 3.14.1", "`starlette` at 1.3.1"],
+        "CHANGES.md": ["`aiohttp==3.14.1`", "`starlette==1.3.1`"],
+    }.items():
+        content = read(document)
+        for phrase in phrases:
+            if phrase not in content:
+                failures.append(f"{document} must document the reviewed security floor {phrase}")
 
     token_helper = read("utils/token.py")
     if "from langchain_text_splitters import RecursiveCharacterTextSplitter" not in token_helper:
@@ -672,6 +709,30 @@ def main():
             failures.append(f"dependency graph plan must record {phrase}")
     if re.search(r"\b(?:planned|pending|todo|tbd)\b", dependency_plan, re.IGNORECASE):
         failures.append("dependency graph plan must not retain incomplete status markers")
+    transitive_security_plan = read(TRANSITIVE_SECURITY_PLAN)
+    transitive_security_verification = markdown_section(
+        transitive_security_plan, "Verification Completed"
+    )
+    if (
+        transitive_security_plan.count("status: completed") != 1
+        or not transitive_security_verification
+        or re.search(
+            r"(?i)\b(?:pending|todo|tbd|not run|to be recorded)\b",
+            transitive_security_verification,
+        )
+    ):
+        failures.append("transitive dependency security plan must record completed verification")
+    for phrase in [
+        "aiohttp==3.14.1",
+        "starlette==1.3.1",
+        "requirements.txt",
+        "requirements-test.txt",
+        "pip-audit",
+        "make lock-check",
+        "no known vulnerabilities",
+    ]:
+        if phrase not in transitive_security_verification:
+            failures.append(f"transitive dependency security verification must record {phrase}")
     prepared_ci_plan = read("docs/plans/2026-06-10-ci-baseline.md")
     if "status: completed" not in prepared_ci_plan or "make check" not in prepared_ci_plan:
         failures.append("CI baseline plan must record status and verification")
@@ -859,6 +920,25 @@ def main():
     for path in ["README.md", "SECURITY.md", "VISION.md", "CHANGES.md"]:
         if "invalid recommendation embedding pairs" not in read(path).lower():
             failures.append(f"{path} must document invalid recommendation embedding pairs")
+        if "customer-industry recommendation tie break" not in read(path).lower():
+            failures.append(f"{path} must document customer-industry recommendation tie break")
+
+    recommendation_tie_break_plan = read(RECOMMENDATION_TIE_BREAK_PLAN)
+    recommendation_tie_break_status = re.findall(
+        r"(?mi)^status:\s*(.+?)\s*$", recommendation_tie_break_plan
+    )
+    recommendation_tie_break_verification = markdown_section(
+        recommendation_tie_break_plan, "Verification Completed"
+    )
+    if (recommendation_tie_break_status != ["completed"] or
+            "Three focused recommendation cases passed" not in recommendation_tie_break_verification or
+            "complete no-network suite passed with 99 tests" not in recommendation_tie_break_verification or
+            "All four Make gates passed" not in recommendation_tie_break_verification or
+            "external directory" not in recommendation_tie_break_verification or
+            "Eight isolated hostile mutations were rejected" not in recommendation_tie_break_verification or
+            re.search(r"(?i)\b(?:pending|todo|tbd|not run|to be recorded)\b",
+                      recommendation_tie_break_verification)):
+        failures.append("recommendation tie-breaking plan must record completed verification")
 
     compatibility = " ".join(read("docs/openai-api-compatibility.md").split())
     for phrase in [

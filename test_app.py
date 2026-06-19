@@ -59,6 +59,30 @@ def test_recommend_product_uses_customer_relative_nearest_industry():
     assert scores["Telecommunications"]["Telecommunications"] == 1.0
 
 
+def test_recommend_product_prefers_customer_industry_on_equal_score():
+    customers = [{"customer_id": 7, "industry": "Healthcare"}]
+    embeddings = {
+        "Retail": [{"embedding": [1.0, 0.0]}],
+        "Healthcare": [{"embedding": [1.0, 0.0]}],
+    }
+    products = {
+        "Retail": ["retail product"],
+        "Healthcare": ["healthcare product"],
+    }
+
+    product, scores = recommendations.recommend_product(
+        7,
+        customers,
+        embeddings,
+        products,
+        choose_product=lambda choices: choices[0],
+    )
+
+    assert product == "healthcare product"
+    assert scores["Healthcare"]["Retail"] == pytest.approx(1.0)
+    assert scores["Healthcare"]["Healthcare"] == pytest.approx(1.0)
+
+
 def test_recommend_product_falls_back_to_product_backed_industry():
     with open("customer_profiles.json", encoding="utf-8") as file:
         customers = json.load(file)

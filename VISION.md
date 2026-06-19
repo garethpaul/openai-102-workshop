@@ -55,6 +55,7 @@ Priority:
 - Keep each matched record limited to a nonempty string customer industry
 - Keep recommendation container validation ahead of iteration and mapping lookup
 - Keep invalid recommendation embedding pairs out of similarity scoring
+- Keep the customer-industry recommendation tie break independent of mapping order
 
 Next priorities:
 

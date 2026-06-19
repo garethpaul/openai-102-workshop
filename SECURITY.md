@@ -61,6 +61,10 @@ For web services, APIs, sockets, or scraping workflows, prioritize reports invol
 For this workshop, also prioritize reports involving API-token persistence,
 unsafe generated cache filenames, untrusted pickle loading, hidden network calls,
 or lesson code that sends data to APIs outside the visible exercise.
+Both generated dependency locks must keep `aiohttp` at 3.14.1 or newer because
+3.14.0 is affected by multiple request-processing advisories.
+The application lock must also keep `starlette` at 1.3.1 or newer because
+1.2.1 is affected by request-processing advisories.
 Retrieval vector math should fail closed on malformed fixture vectors instead of
 silently truncating dimensions or dividing by zero.
 Small embedding fixtures should cap nearest-neighbor lookup to the available
@@ -93,6 +97,8 @@ Recommendation container validation should reject malformed top-level customer,
 embedding, and product collections before iteration or mapping lookup.
 Invalid recommendation embedding pairs should contribute no score while valid
 pairs remain available for product selection.
+The customer-industry recommendation tie break should prefer the matched
+customer's own product-backed industry when top scores are equal.
 
 ## Dependency and Supply Chain Security
 
