@@ -4,6 +4,7 @@ import json
 import matplotlib.pyplot as plt
 import seaborn as sns
 
+from components.recommendations import build_similarity_matrix
 from components.recommendations import recommend_product
 
 # Load customer data from JSON file
@@ -61,10 +62,7 @@ def main():
     # Visualize similarity scores as a bar chart
     if similarity_scores:
         st.subheader("Similarity Scores")
-        industries = list(similarity_scores.keys())
-        similarities = [
-            list(scores.values()) for scores in similarity_scores.values()
-        ]
+        industries, similarities = build_similarity_matrix(similarity_scores)
 
         fig, ax = plt.subplots()
         for i, industry in enumerate(industries):
@@ -79,13 +77,7 @@ def main():
     # Visualize similarity scores as a heatmap
     if similarity_scores:
         st.subheader("Similarity Scores Heatmap")
-        scores_array = np.array(
-            [
-                [similarity_scores[industry1][industry2]
-                    for industry2 in industries]
-                for industry1 in industries
-            ]
-        )
+        scores_array = np.array(similarities)
 
         fig, ax = plt.subplots(figsize=(10, 8))
 
