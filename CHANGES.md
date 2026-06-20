@@ -1,5 +1,31 @@
 # Changes
 
+## Unreleased
+
+- Hardened text-search crawling against server-side request forgery by
+  rejecting non-HTTP(S), credentialed, and IANA non-global targets under a
+  Python-version-independent globally routable policy; pinning direct numeric
+  sockets while preserving HTTPS SNI and certificate checks; structurally
+  avoiding ambient proxies and `.netrc`; and revalidating every bounded
+  redirect destination.
+- Bounded crawler DNS, connect, read, and total time; URL and redirect count;
+  wire and decoded response bytes; incremental gzip/deflate expansion; and
+  aggregate multi-URL work. Redirect headers are handled before any body read,
+  and responses and connections close on every success or failure path.
+- Enforced the remaining wall-clock deadline while parsing HTTP status lines
+  and headers, aborting slow trickle connections instead of waiting for header
+  parsing to finish before noticing an expired total budget.
+- Verified that the connected socket peer exactly matches the DNS-validated
+  address, rejected non-DNS IDN labels, required HTML/XHTML media types before
+  reading successful bodies, and closed header responses that arrive after a
+  deadline instead of leaving stale parser results open.
+- Recorded that CodeQL alert #8 was historically dismissed against the earlier
+  request-URL sink; fresh exact-head analysis, rather than that dismissal, is
+  required for the replacement transport.
+- Replaced the duplicated tutorial request example with the shared guarded
+  crawler and added regression coverage for private DNS answers, pinned
+  requests, redirect pivots, and redirect limits.
+
 ## 2026-06-17
 
 - Added public-PyPI artifact hashes to both universal Python locks and required
@@ -23,6 +49,8 @@
   release acquired eight published security advisories.
 - Updated the application lock to `starlette==1.3.1` after the 1.2.1 release
   acquired two published request-processing advisories.
+- Updated both generated locks to `langsmith==0.8.18` and the verification
+  lock to `msgpack==1.2.1` after new advisories affected the prior pins.
 
 ## 2026-06-15
 

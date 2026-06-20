@@ -955,10 +955,12 @@ langchain-text-splitters==1.1.2 \
     --hash=sha256:782a723db0a4746ac91e251c7c1d57fd23636e4f38ed733074e28d7a86f41627 \
     --hash=sha256:a2de0d799ff31886429fd6e2e0032df275b60ec817c19059a7b46181cc1c2f10
     # via -r requirements.in
-langsmith==0.8.9 \
-    --hash=sha256:c9519cabc75568d088df045710d1b86eae9780c91054528b2aa7e6cb1fc80c52 \
-    --hash=sha256:f16e37fcd5a8a2d4db30eae0e399a866a65ce5cc86218825c59409ed57a3bf53
-    # via langchain-core
+langsmith==0.8.18 \
+    --hash=sha256:32dde9c0e67e053e0fb738921fc8ced768af7b8fa83d7a0e3fd63597cf8776dd \
+    --hash=sha256:3940183349993faef48e6c7d08e4822ee9cefd906b362d0e3c2d650314d2f282
+    # via
+    #   -r requirements.in
+    #   langchain-core
 markdown-it-py==4.2.0 \
     --hash=sha256:04a21681d6fbb623de53f6f364d352309d4094dd4194040a10fd51833e418d49 \
     --hash=sha256:9f7ebbcd14fe59494226453aed97c1070d83f8d24b6fc3a3bcf9a38092641c4a

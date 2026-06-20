@@ -43,9 +43,9 @@ def page():
 
     if st.button("Find similar text"):
         chunks = []
-        url_list = [url.strip() for url in text_input.split("\n")]
-        for url in url_list:
-            text = crawler.get_text(url)
+        url_list = [url.strip() for url in text_input.split("\n") if url.strip()]
+        crawled_texts = crawler.get_texts(url_list)
+        for url, text in zip(url_list, crawled_texts):
 
             texts = token.text_splitter.split_text(text)
             chunks.extend([{
@@ -90,15 +90,14 @@ def page():
         st.code("""
 import openai
 import tiktoken
-import requests
-from bs4 import BeautifulSoup
+from utils import crawler
 
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 
 urls = {url_list}
 chunks = []
-for item in urls:
-    text = crawler_get_text(item)
+texts_by_url = crawler.get_texts(urls)
+for item, text in zip(urls, texts_by_url):
     texts = token.text_splitter.split_text(text)
     chunks.extend([{{'id': str(uuid4()), 'text': texts[i],
                   'chunk': i, 'url': item}} for i in range(len(texts))])
@@ -111,25 +110,6 @@ def get_embeddings(query):
             engine="text-embedding-ada-002"
     )
     return res.data[0]['embedding']
-
-def crawler_get_text(url):
-    # crawl the url with requests and get the text back
-    # Crawl the URL with requests and get the text back
-    # create fake browser for chrome to send the request
-    headers = {
-        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)...`
-    }
-
-    response = requests.get(url, headers=headers, timeout=15)
-    html_content = response.text
-
-    # Parse HTML content using BeautifulSoup
-    soup = BeautifulSoup(html_content, 'html.parser')
-
-    # Extract the text from the parsed HTML
-    text = soup.get_text()
-    return text
-
 
 tokenizer = tiktoken.get_encoding('p50k_base')
 

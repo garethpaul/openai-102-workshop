@@ -37,6 +37,8 @@ Priority:
 - Keep finite embedding values validated before nearest-neighbor training
 - Keep numeric embedding values validated as numeric types before training
 - Keep query embedding validation ahead of nearest-neighbor lookup
+- Keep text-search crawling pinned to globally routable HTTP(S) addresses and
+  revalidate every bounded redirect before connecting
 - Validate generated per-query embedding cache and API payloads before they
   reach retrieval code or are persisted
 - Keep verification targets from leaving Python bytecode behind
@@ -82,6 +84,8 @@ Contribution rules:
 - Preserve finite embedding value validation when changing fixture loading.
 - Preserve numeric embedding values validation when changing fixture loading.
 - Preserve query embedding validation when changing retrieval lookup.
+- Preserve the crawler's globally routable address checks, connection pinning,
+  proxy isolation, and redirect revalidation when changing URL retrieval.
 - Preserve bytecode-free test execution when changing Makefile gates.
 
 ## Security And Responsible Use

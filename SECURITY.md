@@ -28,6 +28,23 @@ Helpful reports include:
 - Review found authentication, token, or session-related code paths; changes in those areas should receive security-focused review before merge.
 - Review found external API integrations or credential-adjacent configuration; changes in those areas should receive security-focused review before merge.
 - Review found network clients, sockets, web APIs, or service endpoints; changes in those areas should receive security-focused review before merge.
+- Treat every text-search crawler URL and redirect as untrusted input. The
+  maintained crawler permits only canonical HTTP(S), rejects URL credentials
+  and every IANA non-global special-use address without relying on the running
+  Python patch release, so only globally routable destinations remain. It pins
+  a direct numeric socket while retaining the
+  original HTTPS SNI and certificate hostname. It revalidates every redirect,
+  ignores proxy and `.netrc` state structurally, and bounds DNS/connect/status
+  and header parsing/read/total time plus wire, decoded, decompressed,
+  URL-count, and aggregate work.
+  Preserve these controls together so redirects, DNS changes, slow responses,
+  or compression expansion cannot turn the workshop into an internal-network
+  request proxy or an unauthenticated resource-exhaustion path.
+- Code-scanning alert #8 for `py/full-ssrf` was dismissed as a false positive
+  on 2026-06-19 against the earlier `requests` implementation. That dismissal
+  is historical state, not verification evidence; the maintained transport
+  removes the user-controlled full-URL request sink and must remain clean under
+  fresh exact-head CodeQL analysis.
 - Review found file, document, data, or media parsing flows; changes in those areas should receive security-focused review before merge.
 - Review found database, model, query, or persistence-related code; changes in those areas should receive security-focused review before merge.
 - Review found infrastructure, deployment, proxy, or cloud configuration; changes in those areas should receive security-focused review before merge.
@@ -75,6 +92,9 @@ Both generated dependency locks must keep `aiohttp` at 3.14.1 or newer because
 3.14.0 is affected by multiple request-processing advisories.
 The application lock must also keep `starlette` at 1.3.1 or newer because
 1.2.1 is affected by request-processing advisories.
+Both locks must keep `langsmith` at 0.8.18 or newer, and the verification lock
+must keep `msgpack` at 1.2.1 or newer, because earlier versions contain
+reviewed security advisories.
 Retrieval vector math should fail closed on malformed fixture vectors instead of
 silently truncating dimensions or dividing by zero.
 Small embedding fixtures should cap nearest-neighbor lookup to the available

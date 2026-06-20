@@ -29,7 +29,7 @@ run:
 
 # Test the app
 test:
-\tcd "$(ROOT)" && PYTHONDONTWRITEBYTECODE=1 $(PYTHON) -m pytest -q test_app.py test_embedding_cache.py
+\tcd "$(ROOT)" && PYTHONDONTWRITEBYTECODE=1 $(PYTHON) -m pytest -q test_app.py test_crawler.py test_embedding_cache.py
 
 static-check:
 \tPYTHONDONTWRITEBYTECODE=1 $(PYTHON) "$(ROOT)/scripts/check-workshop-baseline.py"
@@ -84,6 +84,7 @@ RECOMMENDATION_TIE_BREAK_PLAN = "docs/plans/2026-06-16-recommendation-tie-breaki
 FINETUNING_RETRY_PLAN = "docs/plans/2026-06-16-finetuning-rate-limit-retry.md"
 STARLETTE_LOCK_PLAN = "docs/plans/2026-06-16-starlette-lock-floor-reproducibility.md"
 SAFE_JSON_FIXTURE_PLAN = "docs/plans/2026-06-16-safe-json-embedding-fixtures.md"
+CRAWLER_SSRF_PLAN = "docs/plans/2026-06-19-crawler-ssrf-boundary.md"
 REQUIRED = [
     ".github/CODEOWNERS",
     ".github/workflows/check.yml",
@@ -126,6 +127,7 @@ REQUIRED = [
     FINETUNING_RETRY_PLAN,
     STARLETTE_LOCK_PLAN,
     SAFE_JSON_FIXTURE_PLAN,
+    CRAWLER_SSRF_PLAN,
     "docs/openai-api-compatibility.md",
     CI_PLAN,
     "docs/plans/2026-06-09-make-gate-aliases.md",
@@ -367,12 +369,31 @@ def main():
         failures.append("shared embedding fixture loading must not retain pickle")
 
     crawler = read("utils/crawler.py")
-    if "timeout=15" not in crawler or "raise_for_status()" not in crawler:
-        failures.append("crawler requests must use timeout and raise_for_status")
+    for phrase in [
+        "_IPV4_NON_GLOBAL_NETWORKS",
+        "_IPV6_NON_GLOBAL_NETWORKS",
+        "socket.socket(family, socket.SOCK_STREAM)",
+        "server_hostname=self._target.hostname",
+        "sock.getpeername()",
+        "peer_address != self._target.address",
+        "_response_html_encoding(response)",
+        "decompressor.decompress(chunk, remaining + 1)",
+        "deadline.timeout(READ_TIMEOUT)",
+        "_get_response_with_deadline(connection, deadline)",
+        "sock.shutdown(socket.SHUT_RDWR)",
+        "response.close()",
+        "abandoned.set()",
+        "urljoin(current_url, location)",
+    ]:
+        if phrase not in crawler:
+            failures.append(f"crawler public-network boundary must retain {phrase}")
+    for forbidden in [".is_global", "requests.Session", "allow_redirects=True"]:
+        if forbidden in crawler:
+            failures.append(f"crawler public-network boundary must reject {forbidden}")
 
     text_search = read("pages/3_🔍_Text_Search.py")
-    if "requests.get(url, headers=headers, timeout=15)" not in text_search:
-        failures.append("text-search tutorial requests must use a timeout")
+    if "crawler.get_texts(url_list)" not in text_search:
+        failures.append("text-search page must use the bounded batch crawler")
 
     langchain = read("pages/9_⛓️_Langchain.py")
     if "requests.get(url, timeout=15)" not in langchain:
@@ -434,6 +455,7 @@ def main():
     expected_direct_requirements = {
         "beautifulsoup4==4.14.3",
         "langchain-text-splitters==1.1.2",
+        "langsmith==0.8.18",
         "matplotlib==3.10.9",
         "numpy==2.4.6",
         "openai==0.28.1",
@@ -455,6 +477,8 @@ def main():
     }
     expected_direct_test_requirements = {
         "langchain-text-splitters==1.1.2",
+        "langsmith==0.8.18",
+        "msgpack==1.2.1",
         "numpy==2.4.6",
         "openai==0.28.1",
         "pip-audit==2.10.0",
@@ -487,6 +511,11 @@ def main():
             failures.append(f"{lock_name} must record the hash-generating Python 3.12 universal compile contract")
         if "aiohttp==3.14.1" not in lock or "aiohttp==3.14.0" in lock:
             failures.append(f"{lock_name} must retain the reviewed aiohttp security update")
+        if "langsmith==0.8.18" not in lock or "langsmith==0.8.9" in lock:
+            failures.append(f"{lock_name} must retain the reviewed langsmith security update")
+
+    if "msgpack==1.2.1" not in test_lock or "msgpack==1.1.2" in test_lock:
+        failures.append("requirements-test.txt must retain the reviewed msgpack security update")
 
     for removed_package in ["torch", "transformers", "sentencepiece", "virtualenv", "python-dotenv"]:
         if re.search(rf"^{re.escape(removed_package)}==", application_lock, re.MULTILINE | re.IGNORECASE):
@@ -498,9 +527,9 @@ def main():
         failures.append("requirements.txt must retain the reviewed starlette security update")
 
     for document, phrases in {
-        "README.md": ["aiohttp==3.14.1", "starlette==1.3.1"],
-        "SECURITY.md": ["`aiohttp` at 3.14.1", "`starlette` at 1.3.1"],
-        "CHANGES.md": ["`aiohttp==3.14.1`", "`starlette==1.3.1`"],
+        "README.md": ["aiohttp==3.14.1", "starlette==1.3.1", "langsmith==0.8.18", "msgpack==1.2.1"],
+        "SECURITY.md": ["`aiohttp` at 3.14.1", "`starlette` at 1.3.1", "`langsmith` at 0.8.18", "`msgpack` at 1.2.1"],
+        "CHANGES.md": ["`aiohttp==3.14.1`", "`starlette==1.3.1`", "`langsmith==0.8.18`", "`msgpack==1.2.1`"],
     }.items():
         content = read(document)
         for phrase in phrases:
@@ -1144,6 +1173,24 @@ def main():
     if "test_starlette_security_floor_is_resolver_input" not in read("test_app.py"):
         failures.append("Starlette resolver-floor regression must remain registered")
 
+    crawler_tests = read("test_crawler.py")
+    for test_name in [
+        "test_crawler_rejects_non_public_dns_answers",
+        "test_crawler_rejects_every_iana_non_global_special_range",
+        "test_crawler_retains_iana_globally_reachable_exceptions",
+        "test_crawler_dns_resolution_obeys_total_deadline",
+        "test_crawler_pins_request_to_validated_public_address",
+        "test_crawler_pinned_https_preserves_sni_and_certificate_hostname",
+        "test_crawler_revalidates_redirect_destination",
+        "test_crawler_limits_redirect_chain",
+        "test_crawler_streams_gzip_without_expanding_zip_bomb",
+        "test_crawler_total_deadline_stops_slow_chunked_response",
+        "test_crawler_total_deadline_bounds_status_and_header_parsing",
+        "test_crawler_limits_url_count_and_aggregate_decoded_bytes",
+    ]:
+        if test_name not in crawler_tests:
+            failures.append(f"crawler SSRF regression must remain registered: {test_name}")
+
     for path in ["AGENTS.md", "README.md", "SECURITY.md", "VISION.md", "CHANGES.md"]:
         if "starlette resolver floor" not in read(path).lower():
             failures.append(f"{path} must document the Starlette resolver floor")
@@ -1191,6 +1238,38 @@ def main():
             re.search(r"(?i)\b(?:pending|todo|tbd|not run|to be recorded)\b",
                       safe_json_fixture_verification)):
         failures.append("safe JSON fixture plan must record completed verification")
+
+    for path in ["AGENTS.md", "README.md", "SECURITY.md", "VISION.md", "CHANGES.md"]:
+        if "globally routable" not in read(path).lower():
+            failures.append(f"{path} must document the crawler public-address boundary")
+
+    crawler_ssrf_plan = read(CRAWLER_SSRF_PLAN)
+    crawler_ssrf_status = re.findall(
+        r"(?mi)^status:\s*(.+?)\s*$", crawler_ssrf_plan
+    )
+    crawler_ssrf_verification = markdown_section(
+        crawler_ssrf_plan, "Verification Completed"
+    )
+    for phrase in [
+        "108 focused crawler cases cover",
+        "complete no-network suite passed with 219 tests",
+        "exact Python 3.12.0",
+        "certificate-verified pinned HTTPS request",
+        "Alert #8",
+        "make build",
+        "make verify",
+        "make lock-check",
+        "make audit",
+        "make runtime-check",
+        "make smoke",
+        "git diff --check",
+    ]:
+        if phrase not in crawler_ssrf_verification:
+            failures.append(f"crawler SSRF verification must record {phrase}")
+    if (crawler_ssrf_status != ["completed"] or
+            re.search(r"(?i)\b(?:pending|todo|tbd|not run|to be recorded)\b",
+                      crawler_ssrf_verification)):
+        failures.append("crawler SSRF plan must record completed verification")
 
     for path, phrases in {
         "requirements.in": ["openai==0.28.1"],
