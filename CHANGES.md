@@ -15,6 +15,10 @@
 - Enforced the remaining wall-clock deadline while parsing HTTP status lines
   and headers, aborting slow trickle connections instead of waiting for header
   parsing to finish before noticing an expired total budget.
+- Verified that the connected socket peer exactly matches the DNS-validated
+  address, rejected non-DNS IDN labels, required HTML/XHTML media types before
+  reading successful bodies, and closed header responses that arrive after a
+  deadline instead of leaving stale parser results open.
 - Recorded that CodeQL alert #8 was historically dismissed against the earlier
   request-URL sink; fresh exact-head analysis, rather than that dismissal, is
   required for the replacement transport.

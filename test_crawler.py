@@ -26,7 +26,8 @@ class FakeCrawlerResponse:
         raw=None,
     ):
         self.status_code = status_code
-        self.headers = dict(headers or {})
+        self.headers = {"Content-Type": "text/html; charset=utf-8"}
+        self.headers.update(headers or {})
         if location is not None:
             self.headers["Location"] = location
         self.raw = raw or FakeCrawlerRaw(body)
@@ -90,12 +91,42 @@ class FakeCrawlerConnection:
         self.closed = True
 
 
+class DelayedCrawlerConnection(FakeCrawlerConnection):
+    def __init__(self, response, release):
+        super().__init__(response)
+        self.release = release
+
+    def getresponse(self):
+        self.release.wait(timeout=1)
+        return self.response
+
+
 class FakeCrawlerSocket:
     def __init__(self):
         self.timeouts = []
 
     def settimeout(self, timeout):
         self.timeouts.append(timeout)
+
+
+class FakeConnectedSocket:
+    def __init__(self, peer):
+        self.peer = peer
+        self.closed = False
+        self.destination = None
+        self.timeout = None
+
+    def settimeout(self, timeout):
+        self.timeout = timeout
+
+    def connect(self, destination):
+        self.destination = destination
+
+    def getpeername(self):
+        return self.peer
+
+    def close(self):
+        self.closed = True
 
 
 class FakeClock:
@@ -300,6 +331,47 @@ def test_crawler_canonicalizes_idna_host_and_default_port(monkeypatch):
     assert calls == [("xn--bcher-kva.example", 443)]
 
 
+@pytest.mark.parametrize(
+    "url",
+    [
+        "https://bad_host.example/",
+        "https://-leading.example/",
+        "https://trailing-.example/",
+        "https://double..example/",
+    ],
+)
+def test_crawler_rejects_non_dns_host_labels(monkeypatch, url):
+    monkeypatch.setattr(
+        crawler.socket,
+        "getaddrinfo",
+        lambda *args, **kwargs: public_dns_answer(),
+    )
+
+    with pytest.raises(crawler.UnsafeUrlError, match="hostname"):
+        crawler._validated_target(url)
+
+
+def test_crawler_rejects_connected_peer_that_differs_from_validated_address(
+    monkeypatch,
+):
+    fake_socket = FakeConnectedSocket(("127.0.0.1", 443))
+    monkeypatch.setattr(crawler.socket, "socket", lambda *args: fake_socket)
+    target = crawler._ValidatedTarget(
+        scheme="http",
+        hostname="example.com",
+        port=443,
+        address=crawler.ipaddress.ip_address("93.184.216.34"),
+        host_header="example.com:443",
+        request_target="/",
+    )
+
+    connection = crawler._PinnedHTTPConnection(target, crawler.CONNECT_TIMEOUT)
+
+    with pytest.raises(crawler.UnsafeUrlError, match="peer"):
+        connection.connect()
+    assert fake_socket.closed
+
+
 def test_crawler_dns_resolution_obeys_total_deadline(monkeypatch):
     blocker = socket.socketpair()
 
@@ -345,6 +417,7 @@ def test_crawler_pins_request_to_validated_public_address(monkeypatch):
             "GET",
             "/lesson?q=1",
             {
+                "Accept": "text/html, application/xhtml+xml",
                 "Accept-Encoding": "gzip, deflate",
                 "Host": "example.com",
                 "User-Agent": crawler.USER_AGENT,
@@ -417,6 +490,98 @@ def test_crawler_revalidates_redirect_destination(monkeypatch):
         crawler._fetch_html("https://example.com/redirect")
     assert responses[0].closed
     assert responses[0].raw.read_calls == 0
+
+
+def test_crawler_cross_origin_redirect_forwards_no_credentials(monkeypatch):
+    responses = [
+        FakeCrawlerResponse(status_code=302, location="https://other.example/final"),
+        FakeCrawlerResponse(),
+    ]
+    connections = []
+    monkeypatch.setattr(
+        crawler.socket,
+        "getaddrinfo",
+        lambda *args, **kwargs: public_dns_answer(),
+    )
+
+    def fake_open(target, timeout):
+        connection = FakeCrawlerConnection(responses[len(connections)])
+        connections.append(connection)
+        return connection
+
+    monkeypatch.setattr(crawler, "_open_connection", fake_open)
+
+    assert crawler._fetch_html("https://user.example/start") == "<p>public page</p>"
+    assert len(connections) == 2
+    for connection in connections:
+        headers = connection.requests[0][2]
+        assert set(headers) == {"Accept", "Accept-Encoding", "Host", "User-Agent"}
+        assert "Authorization" not in headers
+        assert "Cookie" not in headers
+        assert "Proxy-Authorization" not in headers
+    assert connections[0].requests[0][2]["Host"] == "user.example"
+    assert connections[1].requests[0][2]["Host"] == "other.example"
+
+
+@pytest.mark.parametrize(
+    ("content_type", "body", "expected"),
+    [
+        ("text/html; charset=iso-8859-1", b"<p>caf\xe9</p>", "<p>caf\xe9</p>"),
+        ("application/xhtml+xml; charset=utf-8", b"<p>safe</p>", "<p>safe</p>"),
+    ],
+)
+def test_crawler_accepts_only_html_media_types_and_declared_charset(
+    monkeypatch,
+    content_type,
+    body,
+    expected,
+):
+    response = FakeCrawlerResponse(body=body, headers={"Content-Type": content_type})
+    monkeypatch.setattr(
+        crawler.socket,
+        "getaddrinfo",
+        lambda *args, **kwargs: public_dns_answer(),
+    )
+    monkeypatch.setattr(
+        crawler,
+        "_open_connection",
+        lambda *args: FakeCrawlerConnection(response),
+    )
+
+    assert crawler._fetch_html("https://example.com/") == expected
+
+
+@pytest.mark.parametrize(
+    "content_type",
+    [
+        None,
+        "application/json",
+        "image/svg+xml",
+        "text/plain",
+        "text/html, application/json",
+    ],
+)
+def test_crawler_rejects_non_html_success_responses_before_reading(
+    monkeypatch,
+    content_type,
+):
+    headers = {} if content_type is None else {"Content-Type": content_type}
+    response = FakeCrawlerResponse(headers=headers)
+    if content_type is None:
+        response.headers.pop("Content-Type")
+    connection = FakeCrawlerConnection(response)
+    monkeypatch.setattr(
+        crawler.socket,
+        "getaddrinfo",
+        lambda *args, **kwargs: public_dns_answer(),
+    )
+    monkeypatch.setattr(crawler, "_open_connection", lambda *args: connection)
+
+    with pytest.raises(crawler.CrawlerLimitError, match="content type"):
+        crawler._fetch_html("https://example.com/")
+    assert response.raw.read_calls == 0
+    assert response.closed
+    assert connection.closed
 
 
 def test_crawler_limits_redirect_chain(monkeypatch):
@@ -533,6 +698,23 @@ def test_crawler_total_deadline_bounds_status_and_header_parsing(
     assert finished.wait(timeout=0.5)
     server.join(timeout=0.1)
     assert not server.is_alive()
+
+
+def test_crawler_closes_header_response_that_arrives_after_deadline():
+    response = FakeCrawlerResponse()
+    release = threading.Event()
+    connection = DelayedCrawlerConnection(response, release)
+
+    with pytest.raises(crawler.CrawlerDeadlineExceeded, match="header"):
+        crawler._get_response_with_deadline(connection, crawler._Deadline(0.01))
+
+    release.set()
+    for _ in range(100):
+        if response.closed:
+            break
+        time.sleep(0.005)
+    assert response.closed
+    assert connection.closed
 
 
 def test_crawler_sets_each_read_timeout_from_remaining_deadline():
@@ -670,7 +852,9 @@ def test_crawler_pinned_https_preserves_sni_and_certificate_hostname(
         with server_context.wrap_socket(client, server_side=True) as tls_client:
             observed["request"] = tls_client.recv(8192)
             tls_client.sendall(
-                b"HTTP/1.1 200 OK\r\nContent-Length: 13\r\n\r\n<p>pinned</p>"
+                b"HTTP/1.1 200 OK\r\n"
+                b"Content-Type: text/html; charset=utf-8\r\n"
+                b"Content-Length: 13\r\n\r\n<p>pinned</p>"
             )
         listener.close()
 

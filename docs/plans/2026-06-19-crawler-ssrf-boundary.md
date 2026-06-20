@@ -28,7 +28,7 @@ not verification evidence for this replacement.
   not globally reachable under the same policy.
 - Connect a numeric socket only to the validated address while retaining the
   original hostname solely for the HTTP `Host` header, TLS SNI, and certificate
-  verification.
+  verification, then verify the connected peer still matches that address.
 - Avoid proxy, `.netrc`, and automatic redirect behavior structurally.
 - Bound DNS, connect, read, parsing, and total wall-clock time; URL and redirect
   count; wire bytes; decoded bytes; decompression; and aggregate crawl work.
@@ -36,13 +36,16 @@ not verification evidence for this replacement.
   line and headers, aborting the socket if a peer trickles partial metadata.
 - Inspect redirect headers before reading a redirect body and close every
   response and connection on success or failure.
+- Require an explicit HTML or XHTML media type before reading a successful
+  response and decode only a bounded, valid declared charset.
 - Keep the rendered tutorial on the bounded multi-URL implementation.
 
 ## Implementation
 
 - `utils/crawler.py` owns explicit IPv4/IPv6 policy tables, bounded DNS and HTML
   parsing workers, direct numeric HTTP(S) connections, hostname-preserving TLS,
-  redirect revalidation, incremental gzip/deflate decoding, and hard budgets.
+  exact peer validation, redirect revalidation, HTML media-type enforcement,
+  incremental gzip/deflate decoding, and hard budgets.
 - `pages/3_🔍_Text_Search.py` uses `crawler.get_texts()` for the live page and
   rendered tutorial so URL count and aggregate work share one deadline.
 - `test_crawler.py` isolates the crawler suite from scientific application
@@ -53,8 +56,9 @@ not verification evidence for this replacement.
 
 ## Verification Completed
 
-- 94 focused crawler cases passed on Python 3.10.16, exact Python 3.12.0, and
-  Python 3.14.5.
+- 108 focused crawler cases cover URL/IDN parsing, IANA IPv4/IPv6 policy,
+  mixed DNS answers, peer pinning, redirects, credential-free headers, HTML
+  media types, body budgets, deadlines, and stale header completion.
 - The exact Python 3.12.0 probe reproduced the stdlib mismatch: it marked
   `192.0.0.8` and `64:ff9b:1::1` global and `2001:1::1` private, while the
   explicit crawler policy returned the IANA registry outcomes.
@@ -63,7 +67,9 @@ not verification evidence for this replacement.
   and hostile proxy/`.netrc` environment variables present.
 - Real partial-status-line and partial-header servers were cut off within the
   total deadline and observed prompt connection cleanup.
-- The complete no-network suite passed with 204 tests.
+- Four hostile mutations removing peer, hostname, media-type, or stale-response
+  enforcement were killed by focused regression tests.
+- The complete no-network suite passed with 219 tests.
 - `make build`, `make verify`, and `make lock-check` passed.
 - Both exact-lock `make audit` checks reported no known vulnerabilities.
 - `make runtime-check` passed for all reviewed direct dependencies.

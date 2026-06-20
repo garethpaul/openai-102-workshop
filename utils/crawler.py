@@ -1,3 +1,4 @@
+import codecs
 import http.client
 import ipaddress
 import itertools
@@ -29,6 +30,8 @@ USER_AGENT = (
     "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.114 "
     "Safari/537.36"
 )
+_HTML_MEDIA_TYPES = frozenset({"application/xhtml+xml", "text/html"})
+_MAX_CONTENT_TYPE_LENGTH = 1024
 
 _IPV4_GLOBAL_EXCEPTIONS = tuple(
     ipaddress.ip_network(network)
@@ -161,6 +164,12 @@ class _PinnedHTTPConnection(http.client.HTTPConnection):
             else:
                 destination = (str(self._target.address), self._target.port)
             sock.connect(destination)
+            peer = sock.getpeername()[0]
+            if "%" in peer:
+                raise UnsafeUrlError("crawler connected to an invalid peer address")
+            peer_address = ipaddress.ip_address(peer)
+            if peer_address != self._target.address:
+                raise UnsafeUrlError("crawler connected to an unexpected peer address")
         except BaseException:
             sock.close()
             raise
@@ -268,6 +277,16 @@ def _canonical_hostname(hostname):
             raise UnsafeUrlError("URL hostname is invalid") from error
         if not hostname or len(hostname) > 253:
             raise UnsafeUrlError("URL hostname is invalid")
+        labels = hostname.split(".")
+        if any(
+            not label
+            or len(label) > 63
+            or label.startswith("-")
+            or label.endswith("-")
+            or any(not (character.isalnum() or character == "-") for character in label)
+            for label in labels
+        ):
+            raise UnsafeUrlError("URL hostname is invalid")
         return hostname
     return str(literal)
 
@@ -343,11 +362,18 @@ def _get_response_with_deadline(connection, deadline):
         raise CrawlerDeadlineExceeded("HTTP header deadline exceeded")
 
     result_queue = queue.Queue(maxsize=1)
+    abandoned = threading.Event()
 
     def parse_headers():
         try:
-            result_queue.put((True, connection.getresponse()))
+            response = connection.getresponse()
+            if abandoned.is_set():
+                response.close()
+                return
+            result_queue.put((True, response))
         except BaseException as error:
+            if abandoned.is_set():
+                return
             result_queue.put((False, error))
         finally:
             _HEADER_SLOTS.release()
@@ -357,10 +383,18 @@ def _get_response_with_deadline(connection, deadline):
         succeeded, result = result_queue.get(
             timeout=deadline.remaining("HTTP header deadline")
         )
-    except queue.Empty as error:
+    except (queue.Empty, CrawlerDeadlineExceeded) as error:
+        abandoned.set()
         _abort_connection(connection)
         raise CrawlerDeadlineExceeded("HTTP header deadline exceeded") from error
-    deadline.check("HTTP header deadline")
+    try:
+        deadline.check("HTTP header deadline")
+    except BaseException:
+        abandoned.set()
+        if succeeded:
+            result.close()
+        _abort_connection(connection)
+        raise
     if not succeeded:
         raise result
     return result
@@ -374,6 +408,44 @@ def _response_header(response, name, default=None):
     if hasattr(response, "getheader"):
         return response.getheader(name, default)
     return response.headers.get(name, default)
+
+
+def _response_html_encoding(response):
+    content_type = _response_header(response, "Content-Type")
+    if not isinstance(content_type, str) or not content_type:
+        raise CrawlerLimitError("crawler received missing content type")
+    if len(content_type) > _MAX_CONTENT_TYPE_LENGTH:
+        raise CrawlerLimitError("crawler received invalid content type")
+
+    parts = [part.strip() for part in content_type.split(";")]
+    if not parts or parts[0].lower() not in _HTML_MEDIA_TYPES:
+        raise CrawlerLimitError("crawler received unsupported content type")
+
+    charsets = []
+    for parameter in parts[1:]:
+        if not parameter or "=" not in parameter:
+            continue
+        name, value = parameter.split("=", 1)
+        if name.strip().lower() != "charset":
+            continue
+        charset = value.strip()
+        if len(charset) >= 2 and charset[0] == charset[-1] and charset[0] in "\"'":
+            charset = charset[1:-1].strip()
+        if (
+            not charset
+            or len(charset) > 64
+            or any(ord(character) < 33 or ord(character) > 126 for character in charset)
+        ):
+            raise CrawlerLimitError("crawler received invalid content charset")
+        try:
+            canonical_charset = codecs.lookup(charset).name
+        except LookupError as error:
+            raise CrawlerLimitError("crawler received unsupported content charset") from error
+        charsets.append(canonical_charset)
+
+    if len(set(charsets)) > 1:
+        raise CrawlerLimitError("crawler received conflicting content charsets")
+    return charsets[0] if charsets else "utf-8"
 
 
 def _bounded_append(chunks, chunk, decoded_bytes, maximum):
@@ -462,6 +534,7 @@ def _fetch_html(url, deadline=None, maximum=MAX_DECODED_BYTES):
                 "GET",
                 target.request_target,
                 headers={
+                    "Accept": "text/html, application/xhtml+xml",
                     "Accept-Encoding": "gzip, deflate",
                     "Host": target.host_header,
                     "User-Agent": USER_AGENT,
@@ -483,8 +556,8 @@ def _fetch_html(url, deadline=None, maximum=MAX_DECODED_BYTES):
 
             if status < 200 or status >= 300:
                 raise requests.HTTPError(f"crawler HTTP status {status}")
+            encoding = _response_html_encoding(response)
             body = _read_response_body(response, deadline, connection, maximum)
-            encoding = getattr(response, "encoding", None) or "utf-8"
             return body.decode(encoding, errors="replace")
         finally:
             if response is not None:

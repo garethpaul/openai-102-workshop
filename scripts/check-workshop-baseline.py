@@ -374,11 +374,15 @@ def main():
         "_IPV6_NON_GLOBAL_NETWORKS",
         "socket.socket(family, socket.SOCK_STREAM)",
         "server_hostname=self._target.hostname",
+        "sock.getpeername()",
+        "peer_address != self._target.address",
+        "_response_html_encoding(response)",
         "decompressor.decompress(chunk, remaining + 1)",
         "deadline.timeout(READ_TIMEOUT)",
         "_get_response_with_deadline(connection, deadline)",
         "sock.shutdown(socket.SHUT_RDWR)",
         "response.close()",
+        "abandoned.set()",
         "urljoin(current_url, location)",
     ]:
         if phrase not in crawler:
@@ -1247,8 +1251,8 @@ def main():
         crawler_ssrf_plan, "Verification Completed"
     )
     for phrase in [
-        "94 focused crawler cases passed",
-        "complete no-network suite passed with 204 tests",
+        "108 focused crawler cases cover",
+        "complete no-network suite passed with 219 tests",
         "exact Python 3.12.0",
         "certificate-verified pinned HTTPS request",
         "Alert #8",
