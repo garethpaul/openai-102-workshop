@@ -647,6 +647,23 @@ def test_starlette_security_floor_is_resolver_input():
     assert 'PIP_INDEX_URL="$(PYPI_INDEX)"' in makefile
 
 
+def test_new_transitive_security_floors_are_resolver_inputs():
+    with open("requirements.in", encoding="utf-8") as file:
+        application_inputs = set(file.read().splitlines())
+    with open("requirements-test.in", encoding="utf-8") as file:
+        test_inputs = set(file.read().splitlines())
+    with open("scripts/check-workshop-baseline.py", encoding="utf-8") as file:
+        checker = file.read()
+
+    assert "langsmith==0.8.18" in application_inputs
+    assert "langsmith==0.8.18" in test_inputs
+    assert "msgpack==1.2.1" in test_inputs
+    assert checker.count('"langsmith==0.8.18",') >= 2
+    assert '"msgpack==1.2.1",' in checker
+    assert '"langsmith==0.8.9"' in checker
+    assert '"msgpack==1.1.2"' in checker
+
+
 def test_exact_locks_are_audited_without_dependency_resolution():
     with open("Makefile", encoding="utf-8") as file:
         makefile = file.read()

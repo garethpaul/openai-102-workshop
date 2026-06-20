@@ -84,9 +84,10 @@ The setup commands above are derived from repository files. Legacy mobile, Pytho
 - `make audit` checks every exact pin in both complete locks without rebuilding
   their universal dependency graphs. Hosted application validation separately
   installs the full application lock and runs `pip check`.
-- Both generated locks retain the reviewed `aiohttp==3.14.1` security floor;
-  the application lock also retains `starlette==1.3.1`. Dependency updates
-  must keep the application and verification graphs aligned.
+- Both generated locks retain the reviewed `aiohttp==3.14.1` and
+  `langsmith==0.8.18` security floors; the application lock also retains
+  `starlette==1.3.1`, and the verification lock retains `msgpack==1.2.1`.
+  Dependency updates must keep the application and verification graphs aligned.
 - `make runtime-check` imports every reviewed direct application dependency.
 - `make smoke` launches a bounded headless Streamlit process and requires a
   healthy localhost endpoint without an API credential.

@@ -451,6 +451,7 @@ def main():
     expected_direct_requirements = {
         "beautifulsoup4==4.14.3",
         "langchain-text-splitters==1.1.2",
+        "langsmith==0.8.18",
         "matplotlib==3.10.9",
         "numpy==2.4.6",
         "openai==0.28.1",
@@ -472,6 +473,8 @@ def main():
     }
     expected_direct_test_requirements = {
         "langchain-text-splitters==1.1.2",
+        "langsmith==0.8.18",
+        "msgpack==1.2.1",
         "numpy==2.4.6",
         "openai==0.28.1",
         "pip-audit==2.10.0",
@@ -504,6 +507,11 @@ def main():
             failures.append(f"{lock_name} must record the hash-generating Python 3.12 universal compile contract")
         if "aiohttp==3.14.1" not in lock or "aiohttp==3.14.0" in lock:
             failures.append(f"{lock_name} must retain the reviewed aiohttp security update")
+        if "langsmith==0.8.18" not in lock or "langsmith==0.8.9" in lock:
+            failures.append(f"{lock_name} must retain the reviewed langsmith security update")
+
+    if "msgpack==1.2.1" not in test_lock or "msgpack==1.1.2" in test_lock:
+        failures.append("requirements-test.txt must retain the reviewed msgpack security update")
 
     for removed_package in ["torch", "transformers", "sentencepiece", "virtualenv", "python-dotenv"]:
         if re.search(rf"^{re.escape(removed_package)}==", application_lock, re.MULTILINE | re.IGNORECASE):
@@ -515,9 +523,9 @@ def main():
         failures.append("requirements.txt must retain the reviewed starlette security update")
 
     for document, phrases in {
-        "README.md": ["aiohttp==3.14.1", "starlette==1.3.1"],
-        "SECURITY.md": ["`aiohttp` at 3.14.1", "`starlette` at 1.3.1"],
-        "CHANGES.md": ["`aiohttp==3.14.1`", "`starlette==1.3.1`"],
+        "README.md": ["aiohttp==3.14.1", "starlette==1.3.1", "langsmith==0.8.18", "msgpack==1.2.1"],
+        "SECURITY.md": ["`aiohttp` at 3.14.1", "`starlette` at 1.3.1", "`langsmith` at 0.8.18", "`msgpack` at 1.2.1"],
+        "CHANGES.md": ["`aiohttp==3.14.1`", "`starlette==1.3.1`", "`langsmith==0.8.18`", "`msgpack==1.2.1`"],
     }.items():
         content = read(document)
         for phrase in phrases:

@@ -45,6 +45,8 @@
   release acquired eight published security advisories.
 - Updated the application lock to `starlette==1.3.1` after the 1.2.1 release
   acquired two published request-processing advisories.
+- Updated both generated locks to `langsmith==0.8.18` and the verification
+  lock to `msgpack==1.2.1` after new advisories affected the prior pins.
 
 ## 2026-06-15
 

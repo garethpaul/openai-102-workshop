@@ -1,5 +1,9 @@
 # Direct no-network verification dependencies for Python 3.12.
 langchain-text-splitters==1.1.2
+# Reviewed transitive security floor required by langchain-core.
+langsmith==0.8.18
+# Reviewed transitive security floor required by pip-audit.
+msgpack==1.2.1
 numpy==2.4.6
 openai==0.28.1
 pip-audit==2.10.0

@@ -92,6 +92,9 @@ Both generated dependency locks must keep `aiohttp` at 3.14.1 or newer because
 3.14.0 is affected by multiple request-processing advisories.
 The application lock must also keep `starlette` at 1.3.1 or newer because
 1.2.1 is affected by request-processing advisories.
+Both locks must keep `langsmith` at 0.8.18 or newer, and the verification lock
+must keep `msgpack` at 1.2.1 or newer, because earlier versions contain
+reviewed security advisories.
 Retrieval vector math should fail closed on malformed fixture vectors instead of
 silently truncating dimensions or dividing by zero.
 Small embedding fixtures should cap nearest-neighbor lookup to the available
