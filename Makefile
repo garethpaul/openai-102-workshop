@@ -1,6 +1,9 @@
-override ROOT := $(abspath $(dir $(lastword $(MAKEFILE_LIST))))
+ifneq ($(origin MAKEFILE_LIST),file)
+$(error MAKEFILE_LIST must not be overridden)
+endif
+override ROOT := $(shell path='$(subst ','"'"',$(MAKEFILE_LIST))'; path=$$(printf '%s' "$$path" | /usr/bin/sed 's/^ //'); /usr/bin/dirname -- "$$path")
 
-.PHONY: all audit build check lint lock lock-check lock-upgrade run runtime-check smoke static-check test verify
+.PHONY: all audit build check lint lock lock-check lock-upgrade root-test run runtime-check smoke static-check test verify
 
 PYTHON ?= python3
 UV ?= uv
@@ -42,9 +45,12 @@ runtime-check:
 smoke:
 	PYTHONDONTWRITEBYTECODE=1 $(PYTHON) "$(ROOT)/scripts/smoke-streamlit.py"
 
+root-test:
+	PYTHONDONTWRITEBYTECODE=1 $(PYTHON) "$(ROOT)/scripts/test-makefile-root.py"
+
 lint: static-check
 
-verify: lint test
+verify: lint test root-test
 
 check: verify
 

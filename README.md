@@ -155,6 +155,9 @@ The setup commands above are derived from repository files. Legacy mobile, Pytho
 - The Make gates are location-independent. From another directory, pass the
   checkout's Makefile by absolute path, such as
   `make -f /path/to/openai-102-workshop/Makefile check`.
+- Absolute Makefile paths may contain spaces or apostrophes. Command-line and
+  environment `MAKEFILE_LIST` overrides fail closed, while caller-provided
+  `ROOT` values are ignored.
 - `make lock-check`
 - `make audit`
 - `make runtime-check`

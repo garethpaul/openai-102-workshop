@@ -11,9 +11,12 @@ import xml.etree.ElementTree as ET
 
 
 ROOT = Path(__file__).resolve().parents[1]
-EXPECTED_MAKEFILE = """override ROOT := $(abspath $(dir $(lastword $(MAKEFILE_LIST))))
+EXPECTED_MAKEFILE = """ifneq ($(origin MAKEFILE_LIST),file)
+$(error MAKEFILE_LIST must not be overridden)
+endif
+override ROOT := $(shell path='$(subst ','"'"',$(MAKEFILE_LIST))'; path=$$(printf '%s' "$$path" | /usr/bin/sed 's/^ //'); /usr/bin/dirname -- "$$path")
 
-.PHONY: all audit build check lint lock lock-check lock-upgrade run runtime-check smoke static-check test verify
+.PHONY: all audit build check lint lock lock-check lock-upgrade root-test run runtime-check smoke static-check test verify
 
 PYTHON ?= python3
 UV ?= uv
@@ -55,9 +58,12 @@ runtime-check:
 smoke:
 \tPYTHONDONTWRITEBYTECODE=1 $(PYTHON) "$(ROOT)/scripts/smoke-streamlit.py"
 
+root-test:
+\tPYTHONDONTWRITEBYTECODE=1 $(PYTHON) "$(ROOT)/scripts/test-makefile-root.py"
+
 lint: static-check
 
-verify: lint test
+verify: lint test root-test
 
 check: verify
 
@@ -85,6 +91,7 @@ FINETUNING_RETRY_PLAN = "docs/plans/2026-06-16-finetuning-rate-limit-retry.md"
 STARLETTE_LOCK_PLAN = "docs/plans/2026-06-16-starlette-lock-floor-reproducibility.md"
 SAFE_JSON_FIXTURE_PLAN = "docs/plans/2026-06-16-safe-json-embedding-fixtures.md"
 CRAWLER_SSRF_PLAN = "docs/plans/2026-06-19-crawler-ssrf-boundary.md"
+SAFE_MAKE_ROOT_PLAN = "docs/plans/2026-06-21-safe-make-root.md"
 REQUIRED = [
     ".github/CODEOWNERS",
     ".github/workflows/check.yml",
@@ -128,6 +135,7 @@ REQUIRED = [
     STARLETTE_LOCK_PLAN,
     SAFE_JSON_FIXTURE_PLAN,
     CRAWLER_SSRF_PLAN,
+    SAFE_MAKE_ROOT_PLAN,
     "docs/openai-api-compatibility.md",
     CI_PLAN,
     "docs/plans/2026-06-09-make-gate-aliases.md",
@@ -139,6 +147,7 @@ REQUIRED = [
     "requirements-test.txt",
     "scripts/check-runtime-imports.py",
     "scripts/smoke-streamlit.py",
+    "scripts/test-makefile-root.py",
     "scripts/check-workshop-baseline.py",
     "test_app.py",
     "test_embedding_cache.py",
@@ -436,6 +445,18 @@ def main():
     location_independent_make_plan = read(LOCATION_INDEPENDENT_MAKE_PLAN)
     if "make -f /path/to/openai-102-workshop/Makefile check" not in readme:
         failures.append("README must document location-independent Makefile invocation")
+    safe_make_root_plan = read(SAFE_MAKE_ROOT_PLAN)
+    if not all(
+        evidence in safe_make_root_plan
+        for evidence in [
+            "all fifteen public Make targets",
+            "command-line and environment `ROOT`",
+            "command-line and environment `MAKEFILE_LIST`",
+        ]
+    ):
+        failures.append(
+            "safe Make root plan must cover aliases and both override channels"
+        )
     if not all(
         evidence in location_independent_make_plan.lower()
         for evidence in [

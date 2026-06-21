@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Kept all workshop Make targets rooted in absolute checkout paths containing
+  spaces or apostrophes, ignored caller-provided `ROOT`, and rejected
+  command-line or environment `MAKEFILE_LIST` injection before verification.
+- Added dry-run root-policy coverage for all fifteen public Make targets.
 - Hardened text-search crawling against server-side request forgery by
   rejecting non-HTTP(S), credentialed, and IANA non-global targets under a
   Python-version-independent globally routable policy; pinning direct numeric
