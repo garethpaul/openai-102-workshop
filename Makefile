@@ -1,6 +1,9 @@
-override ROOT := $(abspath $(dir $(lastword $(MAKEFILE_LIST))))
+ifneq ($(origin MAKEFILE_LIST),file)
+$(error MAKEFILE_LIST must not be overridden)
+endif
+override ROOT := $(shell path='$(subst ','"'"',$(MAKEFILE_LIST))'; path=$$(printf '%s' "$$path" | /usr/bin/sed 's/^ //'); /usr/bin/dirname -- "$$path")
 
-.PHONY: all audit build check lint lock lock-check lock-upgrade run runtime-check smoke static-check test verify
+.PHONY: all audit build check lint lock lock-check lock-upgrade root-test run runtime-check smoke static-check test verify
 
 PYTHON ?= python3
 UV ?= uv
@@ -20,6 +23,9 @@ test:
 
 static-check:
 	PYTHONDONTWRITEBYTECODE=1 $(PYTHON) "$(ROOT)/scripts/check-workshop-baseline.py"
+
+root-test:
+	PYTHONDONTWRITEBYTECODE=1 $(PYTHON) "$(ROOT)/scripts/test-makefile-root.py"
 
 lock:
 	cd "$(ROOT)" && UV_INDEX_URL="$(PYPI_INDEX)" $(UV) pip compile requirements.in --python-version 3.12 --universal --generate-hashes --quiet --output-file requirements.txt
@@ -44,7 +50,7 @@ smoke:
 
 lint: static-check
 
-verify: lint test
+verify: lint test root-test
 
 check: verify
 

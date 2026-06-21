@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Made absolute Makefile verification safe for spaces and apostrophes,
+  ignored caller-provided `ROOT` values, and rejected command-line or
+  environment `MAKEFILE_LIST` injection before workshop gates run.
+- Added root-policy regression coverage for every public Make target.
 - Hardened text-search crawling against server-side request forgery by
   rejecting non-HTTP(S), credentialed, and IANA non-global targets under a
   Python-version-independent globally routable policy; pinning direct numeric

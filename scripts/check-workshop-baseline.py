@@ -11,9 +11,12 @@ import xml.etree.ElementTree as ET
 
 
 ROOT = Path(__file__).resolve().parents[1]
-EXPECTED_MAKEFILE = """override ROOT := $(abspath $(dir $(lastword $(MAKEFILE_LIST))))
+EXPECTED_MAKEFILE = """ifneq ($(origin MAKEFILE_LIST),file)
+$(error MAKEFILE_LIST must not be overridden)
+endif
+override ROOT := $(shell path='$(subst ','"'"',$(MAKEFILE_LIST))'; path=$$(printf '%s' "$$path" | /usr/bin/sed 's/^ //'); /usr/bin/dirname -- "$$path")
 
-.PHONY: all audit build check lint lock lock-check lock-upgrade run runtime-check smoke static-check test verify
+.PHONY: all audit build check lint lock lock-check lock-upgrade root-test run runtime-check smoke static-check test verify
 
 PYTHON ?= python3
 UV ?= uv
@@ -33,6 +36,9 @@ test:
 
 static-check:
 \tPYTHONDONTWRITEBYTECODE=1 $(PYTHON) "$(ROOT)/scripts/check-workshop-baseline.py"
+
+root-test:
+\tPYTHONDONTWRITEBYTECODE=1 $(PYTHON) "$(ROOT)/scripts/test-makefile-root.py"
 
 lock:
 \tcd "$(ROOT)" && UV_INDEX_URL="$(PYPI_INDEX)" $(UV) pip compile requirements.in --python-version 3.12 --universal --generate-hashes --quiet --output-file requirements.txt
@@ -57,7 +63,7 @@ smoke:
 
 lint: static-check
 
-verify: lint test
+verify: lint test root-test
 
 check: verify
 
@@ -72,6 +78,7 @@ HASH_VERIFIED_LOCK_PLAN = "docs/plans/2026-06-17-hash-verified-universal-locks.m
 EMBEDDING_CACHE_PLAN = "docs/plans/2026-06-13-json-embedding-cache.md"
 API_COMPATIBILITY_PLAN = "docs/plans/2026-06-13-openai-api-compatibility-notes.md"
 LOCATION_INDEPENDENT_MAKE_PLAN = "docs/plans/2026-06-13-location-independent-make.md"
+SAFE_MAKE_ROOT_PLAN = "docs/plans/2026-06-21-safe-make-root.md"
 EMBEDDING_PAYLOAD_PLAN = "docs/plans/2026-06-14-embedding-payload-validation.md"
 CUSTOMER_RECOMMENDATION_PLAN = "docs/plans/2026-06-15-customer-industry-recommendation.md"
 PRODUCT_BACKED_RECOMMENDATION_PLAN = "docs/plans/2026-06-15-product-backed-recommendation.md"
@@ -116,6 +123,7 @@ REQUIRED = [
     EMBEDDING_CACHE_PLAN,
     API_COMPATIBILITY_PLAN,
     LOCATION_INDEPENDENT_MAKE_PLAN,
+    SAFE_MAKE_ROOT_PLAN,
     CUSTOMER_RECOMMENDATION_PLAN,
     PRODUCT_BACKED_RECOMMENDATION_PLAN,
     PRODUCT_NAME_VALIDATION_PLAN,
@@ -140,6 +148,7 @@ REQUIRED = [
     "scripts/check-runtime-imports.py",
     "scripts/smoke-streamlit.py",
     "scripts/check-workshop-baseline.py",
+    "scripts/test-makefile-root.py",
     "test_app.py",
     "test_embedding_cache.py",
     "test_embeddings.json",

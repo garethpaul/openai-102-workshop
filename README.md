@@ -210,7 +210,9 @@ When the required SDK or runtime is unavailable, use static checks and source re
 ## Maintenance Notes
 
 - Use an absolute Makefile path when running workshop tooling outside the
-  checkout.
+  checkout. Paths containing spaces or apostrophes remain supported, caller
+  `ROOT` values are ignored, and `MAKEFILE_LIST` overrides fail closed before
+  workshop verification runs.
 - See `SECURITY.md` for vulnerability reporting and safe research guidance.
 - See `CHANGES.md` and `docs/plans/2026-06-08-openai-102-workshop-baseline.md` for the current verification baseline.
 - See `docs/plans/2026-06-09-make-gate-aliases.md` for the local verification
