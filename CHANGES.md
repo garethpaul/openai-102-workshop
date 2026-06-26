@@ -1,5 +1,24 @@
 # Changes
 
+## 2026-06-26 14:58 PDT - P1 - Bind clustering cache file ownership
+
+- Summary: rejected symbolic-link, hard-link, and path-swap aliases when
+  loading the writable clustering cache, and prevented pre-created temporary
+  aliases from redirecting cache writes outside the intended path.
+- Files: tightened `utils/embedding_cache.py`, expanded focused cache tests,
+  strengthened the static baseline, and documented the cache ownership model.
+- Tests: nine focused cache tests passed after three regressions first failed;
+  the exact Python 3.12 test lock passed all 222 tests, six hostile mutations,
+  build compilation, three Make authority tests, root and external `make check`,
+  strict Git validation, generated-artifact checks, and secret/conflict scans.
+- Findings: strict JSON validation did not protect filesystem identity because
+  `Path.read_text()` followed aliases and `Path.write_text()` followed a
+  pre-existing `.tmp` symlink.
+- Blockers: Codex review may remain unavailable because prior attempts return
+  HTTP 401; skip after one attempt if unchanged.
+- Next action: open the focused PR, attempt Codex review once, and merge only an
+  exact hosted-green head.
+
 ## Unreleased
 
 - Made absolute Makefile verification safe for spaces and apostrophes,

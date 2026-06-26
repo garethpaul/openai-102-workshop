@@ -22,6 +22,8 @@ Priority:
 - Keep generated caches and prepared data clearly separated from source logic
 - Keep local generated cache files such as `embedding_cache.json` out of source
   control and use strict non-executable formats for writable caches
+- Bind writable cache reads to singly linked regular-file descriptors and keep
+  temporary writes exclusive and no-follow before atomic replacement
 - Make API-token handling explicit and local to the learner
 - Document model, SDK, and Pinecone assumptions when examples depend on them
 - Keep `make lint`, `make test`, `make build`, and `make check` available for

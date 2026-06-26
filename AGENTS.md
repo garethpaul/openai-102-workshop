@@ -59,6 +59,9 @@
 - Detected references to OpenAI. Keep API keys, OAuth credentials, tokens, and account-specific values in local configuration only.
 - Generated caches live under `cache/`, `url_cache/`, `query_cache/`, and files such as `embedding_cache.json`. Do not add private cache refreshes or customer data.
 - The writable clustering cache is strict UTF-8 JSON and should remain untracked; do not restore generated-data loading with `pickle`.
+- Keep clustering cache reads descriptor-bound and singly linked, and keep
+  temporary writes exclusive and no-follow so local aliases cannot escape the
+  cache path.
 - Safe JSON embedding fixtures are required for nearest-neighbor lessons; do
   not restore pickle deserialization or hidden fixture downloads.
 - New text embedding cache writes use hashed filenames so user input cannot escape the cache directory.

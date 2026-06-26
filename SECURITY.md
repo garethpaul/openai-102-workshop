@@ -59,7 +59,9 @@ Helpful reports include:
   fixture refreshes as reviewable data changes.
 - The writable clustering JSON embedding cache accepts only a UTF-8 object with
   string keys and values. `embedding_cache.json` and its temporary file remain
-  ignored; generated cache data must never be loaded with `pickle`.
+  ignored; generated cache data must never be loaded with `pickle`. Reads reject
+  symbolic links, hard links, and path/descriptor swaps; writes reject any
+  pre-existing temporary path before atomic replacement.
 - Python bytecode should not remain after local verification; rerun the gates
   with bytecode writes disabled before committing.
 - Hosted Linux validation uses Python 3.12 and separate exact test and
