@@ -33,6 +33,7 @@ run:
 # Test the app
 test:
 \tcd "$(ROOT)" && PYTHONDONTWRITEBYTECODE=1 $(PYTHON) -m pytest -q test_app.py test_crawler.py test_embedding_cache.py
+\tcd "$(ROOT)" && PYTHONDONTWRITEBYTECODE=1 $(PYTHON) scripts/test-embedding-cache-mutations.py
 
 static-check:
 \tPYTHONDONTWRITEBYTECODE=1 $(PYTHON) "$(ROOT)/scripts/check-workshop-baseline.py"
@@ -76,6 +77,7 @@ TRANSITIVE_SECURITY_PLAN = "docs/plans/2026-06-16-transitive-dependency-security
 UNIVERSAL_LOCK_AUDIT_PLAN = "docs/plans/2026-06-16-universal-lock-audit.md"
 HASH_VERIFIED_LOCK_PLAN = "docs/plans/2026-06-17-hash-verified-universal-locks.md"
 EMBEDDING_CACHE_PLAN = "docs/plans/2026-06-13-json-embedding-cache.md"
+EMBEDDING_CACHE_OWNERSHIP_PLAN = "docs/plans/2026-06-26-embedding-cache-ownership.md"
 API_COMPATIBILITY_PLAN = "docs/plans/2026-06-13-openai-api-compatibility-notes.md"
 LOCATION_INDEPENDENT_MAKE_PLAN = "docs/plans/2026-06-13-location-independent-make.md"
 SAFE_MAKE_ROOT_PLAN = "docs/plans/2026-06-21-safe-make-root.md"
@@ -121,6 +123,7 @@ REQUIRED = [
     UNIVERSAL_LOCK_AUDIT_PLAN,
     HASH_VERIFIED_LOCK_PLAN,
     EMBEDDING_CACHE_PLAN,
+    EMBEDDING_CACHE_OWNERSHIP_PLAN,
     API_COMPATIBILITY_PLAN,
     LOCATION_INDEPENDENT_MAKE_PLAN,
     SAFE_MAKE_ROOT_PLAN,
@@ -149,6 +152,7 @@ REQUIRED = [
     "scripts/smoke-streamlit.py",
     "scripts/check-workshop-baseline.py",
     "scripts/test-makefile-root.py",
+    "scripts/test-embedding-cache-mutations.py",
     "test_app.py",
     "test_embedding_cache.py",
     "test_embeddings.json",
@@ -423,13 +427,21 @@ def main():
     embedding_cache = read("utils/embedding_cache.py")
     for phrase in [
         'Path("embedding_cache.json")',
-        'read_text(encoding="utf-8")',
+        "path.lstat()",
+        "stat.S_ISREG(path_stat.st_mode)",
+        "path_stat.st_nlink != 1",
+        "os.O_RDONLY | os.O_NOFOLLOW",
+        "os.fstat(descriptor)",
+        "(descriptor_stat.st_dev, descriptor_stat.st_ino)",
+        "with os.fdopen(descriptor, \"r\", encoding=\"utf-8\")",
         "json.loads(serialized)",
         "isinstance(value, dict)",
         "isinstance(key, str) and isinstance(item, str)",
         'raise ValueError("embedding cache must be valid UTF-8 JSON") from None',
         'raise ValueError("embedding cache must contain string keys and values")',
         'path.with_suffix(path.suffix + ".tmp")',
+        "os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW",
+        "os.fsync(cache_file.fileno())",
         "temporary_path.replace(path)",
     ]:
         if phrase not in embedding_cache:
@@ -704,9 +716,25 @@ def main():
         "test_embedding_cache_round_trip_uses_json",
         "test_embedding_cache_rejects_malformed_or_invalid_data",
         "test_embedding_cache_rejects_invalid_utf8",
+        "test_embedding_cache_rejects_symlink_and_hard_link_reads",
+        "test_embedding_cache_save_rejects_symlinked_temporary_path",
+        "test_embedding_cache_rejects_symlink_swap_during_open",
     ]:
         if phrase not in cache_tests:
             failures.append(f"test_embedding_cache.py must include {phrase}")
+
+    cache_mutations = read("scripts/test-embedding-cache-mutations.py")
+    for phrase in [
+        '"path-lstat"',
+        '"read-no-follow"',
+        '"single-link-check"',
+        '"exclusive-temp"',
+        '"regression-test"',
+        '"completed-plan"',
+        "Embedding cache ownership mutation tests passed for 6 hostile changes.",
+    ]:
+        if phrase not in cache_mutations:
+            failures.append(f"embedding cache mutation suite must retain {phrase}")
 
     pipfile = read("Pipfile").replace(" ", "")
     for package in [
@@ -905,6 +933,27 @@ def main():
     ]:
         if phrase not in embedding_cache_plan:
             failures.append(f"JSON embedding cache plan must record {phrase}")
+    embedding_cache_ownership_plan = read(EMBEDDING_CACHE_OWNERSHIP_PLAN)
+    embedding_cache_ownership_verification = markdown_section(
+        embedding_cache_ownership_plan, "Verification Completed"
+    )
+    if (
+        embedding_cache_ownership_plan.count("status: completed") != 1
+        or not embedding_cache_ownership_verification
+        or re.search(
+            r"(?i)\b(?:pending|todo|tbd|not run|to be recorded)\b",
+            embedding_cache_ownership_verification,
+        )
+    ):
+        failures.append("embedding cache ownership plan must record completed verification")
+    for phrase in [
+        "nine focused tests",
+        "six isolated hostile mutations",
+        "make check",
+        "external working directory",
+    ]:
+        if phrase not in embedding_cache_ownership_verification:
+            failures.append(f"embedding cache ownership verification must record {phrase}")
     embedding_payload_plan = read(EMBEDDING_PAYLOAD_PLAN)
     for phrase in [
         "status: completed",
